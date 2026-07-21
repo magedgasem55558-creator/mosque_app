@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:just_audio_background/just_audio_background.dart'; // ✅ أضفنا حزمة تشغيل الصوت في الخلفية
+import 'package:just_audio_background/just_audio_background.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/notification_service.dart';
@@ -10,27 +10,30 @@ import 'services/notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ تهيئة خدمة تشغيل الصوت في الخلفية (لتفعيل التحكم من شاشة القفل والإشعارات)
-  await JustAudioBackground.init(
-    androidNotificationChannelId: 'com.mosque.system.channel.audio',
-    androidNotificationChannelName: 'تشغيل القرآن الكريم',
-    androidNotificationOngoing: true,
-  );
+  // 1. تهيئة خدمة تشغيل الصوت في الخلفية بأمان
+  try {
+    await JustAudioBackground.init(
+      androidNotificationChannelId: 'com.u.audio.channel',
+      androidNotificationChannelName: 'تشغيل القرآن الكريم',
+      androidNotificationOngoing: true,
+    );
+  } catch (e) {
+    debugPrint('Audio service init warning: $e');
+  }
 
-  // ✅ تهيئة Firebase بنفس الطريقة القديمة الناجحة
-  await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: "AIzaSyC06KKxkehT1uPBT9k-r-d6MmB4RUuVy9Y",
-      authDomain: "mosque-system.firebaseapp.com",
-      projectId: "mosque-system",
-      storageBucket: "mosque-system.firebasestorage.app",
-      messagingSenderId: "905816133159",
-      appId: "1:905816133159:web:3b95d858815f91780e0802",
-    ),
-  );
+  // 2. تهيئة Firebase تلقائياً من ملف google-services.json الأصلي بدون options الـ Web
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('Firebase init error: $e');
+  }
 
-  // طلب إذن الإشعارات (خفيف ولا يؤثر)
-  FirebaseMessaging.instance.requestPermission();
+  // 3. طلب إذن الإشعارات
+  try {
+    await FirebaseMessaging.instance.requestPermission();
+  } catch (e) {
+    debugPrint('Firebase messaging permission error: $e');
+  }
 
   runApp(const MosqueApp());
 }
@@ -46,7 +49,6 @@ class _MosqueAppState extends State<MosqueApp> {
   @override
   void initState() {
     super.initState();
-    // 🔔 نبدأ الإشعارات والأذكار بعد أن يصبح التطبيق جاهزاً
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initNotifications();
     });
@@ -84,14 +86,17 @@ class _MosqueAppState extends State<MosqueApp> {
             );
           }
 
-          // تفعيل أو إيقاف إشعارات الأبناء
           if (snapshot.hasData) {
             final user = snapshot.data!;
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              NotificationService.startListeningToChildrenGrades(user.uid);
+              try {
+                NotificationService.startListeningToChildrenGrades(user.uid);
+              } catch (_) {}
             });
           } else {
-            NotificationService.stopListeningToChildrenGrades();
+            try {
+              NotificationService.stopListeningToChildrenGrades();
+            } catch (_) {}
           }
 
           return const HomeScreen();
