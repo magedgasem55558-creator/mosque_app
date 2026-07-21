@@ -1,19 +1,17 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // هنا التعديل الصحيح بدلاً من classpath
     id("com.google.gms.google-services")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
-    namespace = "com.yourname.mosque_app"
+    namespace = "com.u"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        // 1. تفعيل الخيار هنا (بصيغة Kotlin DSL)
+        // تفعيل الـ Desugaring لحزمة الإشعارات
         isCoreLibraryDesugaringEnabled = true
 
         sourceCompatibility = JavaVersion.VERSION_17
@@ -25,8 +23,8 @@ android {
     }
 
     defaultConfig {
-        // تأكد من أن هذا الـ ID يطابق الموجود في ملف google-services.json
-        applicationId = "com.yourname.mosque_app"
+        // المطابقة مع google-services.json
+        applicationId = "com.u"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -45,9 +43,9 @@ flutter {
 }
 
 dependencies {
-    // 2. إضافة مكتبة الـ Desugaring هنا
+    // مكتبة الـ Desugaring
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
-    // أضف هذا السطر إذا لم يكن موجوداً لضمان عمل الفايربيز بشكل صحيح
+    // منصة الفايربيز
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
 }
