@@ -1,68 +1,67 @@
-Name: mosque_app
+name: mosque_app
 description: "تطبيق المسجد الشامل - المصحف، القبلة، والخدمات التعليمية"
 publish_to: 'none'
 version: 1.0.0+1
 
-Environment:
-  Sdk: '>=3.10.0 <4.0.0'
+environment:
+  sdk: '>=3.10.0 <4.0.0'
 
-Dependencies:
-  Flutter:
-    Sdk: flutter
+dependencies:
+  flutter:
+    sdk: flutter
 
   # --- الصوتيات وتنزيل الملفات ---
-  Audioplayers: ^6.0.0
-  Just_audio: ^0.9.39
-  # تم تصحيح rc إلى beta هنا
-  Just_audio_background: ^0.0.1-beta.17
-  Dio: ^5.4.0
-  Path_provider: ^2.1.2
+  audioplayers: ^6.0.0
+  just_audio: ^0.9.39
+  just_audio_background: ^0.0.1-beta.17
+  dio: ^5.4.0
+  path_provider: ^2.1.2
 
   # --- قاعدة البيانات والشبكات ---
-  Supabase_flutter: ^2.0.0
-  Http: ^1.2.1
-  Cached_network_image: ^3.3.1
+  supabase_flutter: ^2.0.0
+  http: ^1.2.1
+  cached_network_image: ^3.3.1
 
   # --- خدمات Firebase الإشعارات ---
-  Firebase_core: ^3.1.1
-  Cloud_firestore: ^5.0.2
-  Firebase_auth: ^5.1.2
-  Firebase_messaging: ^15.0.3
-  Flutter_local_notifications: ^17.1.2
+  firebase_core: ^3.1.1
+  cloud_firestore: ^5.0.2
+  firebase_auth: ^5.1.2
+  firebase_messaging: ^15.0.3
+  flutter_local_notifications: ^17.1.2
 
   # --- الموقع، القبلة، وأوقات الصلاة ---
-  Geolocator: ^14.0.2
-  Flutter_compass: ^0.8.0
-  Flutter_qiblah: ^3.2.0
-  Permission_handler: ^11.3.1
-  Adhan: 2.0.0+1
-  Flutter_map: ^6.1.0
-  Latlong2: ^0.9.0
+  geolocator: ^14.0.2
+  flutter_compass: ^0.8.0
+  flutter_qiblah: ^3.2.0
+  permission_handler: ^11.3.1
+  adhan: 2.0.0+1
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.0
 
   # --- أدوات واجهة المستخدم وإدارة الحالة ---
-  Cupertino_icons: ^1.0.8
-  Fl_chart: ^0.66.0
-  Provider: ^6.1.1
+  cupertino_icons: ^1.0.8
+  fl_chart: ^0.66.0
+  provider: ^6.1.1
 
   # --- التاريخ والوقت والتخزين ---
-  Intl: ^0.20.2
-  Timeago: ^3.7.1
-  Timezone: ^0.9.4
-  Shared_preferences: ^2.2.2
-  Url_launcher: ^6.2.5
+  intl: ^0.20.2
+  timeago: ^3.7.1
+  timezone: ^0.9.4
+  shared_preferences: ^2.2.2
+  url_launcher: ^6.2.5
 
-Dev_dependencies:
-  Flutter_test:
-    Sdk: flutter
-  Flutter_lints: ^6.0.0
-  Flutter_launcher_icons: ^0.14.3
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
 
-Flutter:
-  Uses-material-design: true
-  Assets:
+flutter:
+  uses-material-design: true
+  assets:
     - assets/images/
 
-Flutter_launcher_icons:
-  Android: true
-  Ios: true
-  Image_path: "assets/images/logo.png"
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo.png"
