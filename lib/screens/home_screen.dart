@@ -9,9 +9,9 @@ import 'package:mosque_app/screens/quran_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // ✅ استيراد الصفحات المطلوبة
-import 'screens/yasser_dossari_page.dart';
-import 'screens/hisn_el_muslim_page.dart';
-import 'screens/hadith_search_page.dart';
+import 'yasser_dossari_page.dart';
+import 'hisn_el_muslim_page.dart';
+import 'hadith_search_page.dart';
 
 import '../services/firebase_service.dart';
 import '../models/mosque_models.dart';
