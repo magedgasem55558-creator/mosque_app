@@ -3,9 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:school_app/hadith_search_page.dart';
-import 'package:school_app/hisn_el_muslim_page.dart';
-import 'package:school_app/qiblah_page.dart';
 
 class Reciter {
   final String id;
@@ -228,38 +225,6 @@ class _YasserDossariQuranPageState extends State<YasserDossariQuranPage> {
         title: const Text('المصحف الشريف'),
         centerTitle: true,
         backgroundColor: Colors.teal,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.explore_outlined),
-            tooltip: 'اتجاه القبلة',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const QiblahPage()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.shield_outlined),
-            tooltip: 'حصن المسلم',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const HisnElMuslimPage()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.menu_book_rounded),
-            tooltip: 'صحة الحديث',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const HadithSearchPage()),
-              );
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [
