@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:adhan/adhan.dart';
 import 'package:geolocator/geolocator.dart';
+
 import '../services/firebase_service.dart';
 import '../models/mosque_models.dart';
 import 'login_screen.dart';
@@ -18,103 +18,72 @@ import 'hisn_el_muslim_page.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  static const Color darkGreen = Color(0xFF2E7D32);
+  static const Color blue = Color(0xFF42A5F5);
+  static const Color lightBg = Color(0xFFF5F7FA);
+  static const Color teal = Color(0xFF00897B);
+
   @override
   Widget build(BuildContext context) {
     final service = FirebaseService();
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      backgroundColor: lightBg,
       body: Container(
-        // الخلفية الرسمية الجديدة: أخضر ← أزرق ← رمادي فاتح
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF2E7D32), // أخضر غامق (أعلى)
-              Color(0xFF42A5F5), // أزرق متوسط
-              Color(0xFFF5F5F5), // رمادي فاتح جداً (أسفل)
+              darkGreen,
+              blue,
+              lightBg,
             ],
-            stops: [0.0, 0.5, 1.0],
+            stops: [0.0, 0.38, 0.72],
           ),
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 30),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("مرحباً بك في مسجدنا",
-                    style: TextStyle(color: Colors.white, fontSize: 16)),
-                const SizedBox(height: 15),
+                _buildHeader(context),
+
+                const SizedBox(height: 18),
+
                 const AutoPrayerCountdownGlass(),
-                const SizedBox(height: 12),
+
+                const SizedBox(height: 14),
+
                 const RemembranceCarousel(),
-                const SizedBox(height: 15),
+
+                const SizedBox(height: 18),
+
                 _buildInfoRow(service),
+
                 const SizedBox(height: 12),
+
                 _buildUpcomingLecture(),
-                const SizedBox(height: 30),
-                const Text("أقسام المسجد",
-                    style: TextStyle(color: Colors.black87, fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 15),
-                GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 15,
-                  crossAxisSpacing: 15,
-                  childAspectRatio: 1.1,
-                  children: [
-                    _buildGridItem(context, "المتصدرون", Icons.emoji_events, Colors.amber, () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const LeaderboardScreen()));
-                    }),
-                    StreamBuilder<User?>(
-                      stream: FirebaseAuth.instance.authStateChanges(),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          return _buildGridItem(context, "أبنائي", Icons.family_restroom, Colors.teal, () {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => const MyChildrenScreen()));
-                          });
-                        } else {
-                          return _buildGridItem(context, "دخول الآباء", Icons.lock_outline, Colors.blue, () {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-                          });
-                        }
-                      },
-                    ),
-                    _buildGridItem(context, "تبرع للمسجد", Icons.favorite, Colors.pink, () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const DonateScreen()));
-                    }),
-                    _buildGridItem(context, "القبلة", Icons.explore, Colors.red, () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const QiblaScreen()));
-                    }),
-                    _buildGridItem(context, "القرآن الكريم", Icons.menu_book, Colors.green, () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const YasserDossariQuranPage()));
-                    }),
-                    _buildGridItem(context, "الأذكار", Icons.volunteer_activism, Colors.teal, () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const HisnElMuslimPage()));
-                    }),
-                  ],
+
+                const SizedBox(height: 28),
+
+                _buildSectionTitle(
+                  'خدمات المسجد',
+                  'كل ما تحتاجه في مكان واحد',
+                  Icons.apps_rounded,
                 ),
-                StreamBuilder<User?>(
-                  stream: FirebaseAuth.instance.authStateChanges(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 20),
-                        child: Center(
-                          child: TextButton.icon(
-                            onPressed: () => FirebaseAuth.instance.signOut(),
-                            icon: const Icon(Icons.logout, color: Colors.black54),
-                            label: const Text("تسجيل الخروج", style: TextStyle(color: Colors.black54)),
-                          ),
-                        ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
+
+                const SizedBox(height: 14),
+
+                _buildServicesGrid(context),
+
+                const SizedBox(height: 25),
+
+                _buildLogoutButton(),
+
+                const SizedBox(height: 10),
               ],
             ),
           ),
@@ -123,31 +92,465 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // ───── الخطبة والفعالية ─────
+  // ============================================================
+  // Header
+  // ============================================================
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.97),
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.10),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [
+                  darkGreen,
+                  teal,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(17),
+              boxShadow: [
+                BoxShadow(
+                  color: darkGreen.withOpacity(0.25),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.mosque_rounded,
+              color: Colors.white,
+              size: 29,
+            ),
+          ),
+
+          const SizedBox(width: 14),
+
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'مرحباً بك 👋',
+                  style: TextStyle(
+                    color: Colors.black54,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'في مسجدنا',
+                  style: TextStyle(
+                    color: darkGreen,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Container(
+            padding: const EdgeInsets.all(11),
+            decoration: BoxDecoration(
+              color: blue.withOpacity(0.10),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.notifications_none_rounded,
+              color: darkGreen,
+              size: 25,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // Section title
+  // ============================================================
+
+  Widget _buildSectionTitle(
+    String title,
+    String subtitle,
+    IconData icon,
+  ) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(9),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(13),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 8,
+              ),
+            ],
+          ),
+          child: Icon(
+            icon,
+            color: darkGreen,
+            size: 23,
+          ),
+        ),
+
+        const SizedBox(width: 11),
+
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ============================================================
+  // Services grid
+  // ============================================================
+
+  Widget _buildServicesGrid(BuildContext context) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      mainAxisSpacing: 13,
+      crossAxisSpacing: 13,
+      childAspectRatio: 1.18,
+      children: [
+        _buildGridItem(
+          context,
+          'المتصدرون',
+          'أفضل الطلاب',
+          Icons.emoji_events_rounded,
+          const Color(0xFFFFB300),
+          () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const LeaderboardScreen(),
+              ),
+            );
+          },
+        ),
+
+        StreamBuilder<User?>(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return _buildGridItem(
+                context,
+                'أبنائي',
+                'متابعة الإنجاز',
+                Icons.family_restroom_rounded,
+                teal,
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const MyChildrenScreen(),
+                    ),
+                  );
+                },
+              );
+            }
+
+            return _buildGridItem(
+              context,
+              'دخول الآباء',
+              'متابعة الأبناء',
+              Icons.lock_outline_rounded,
+              blue,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const LoginScreen(),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+
+        _buildGridItem(
+          context,
+          'تبرع للمسجد',
+          'ساهم في الخير',
+          Icons.favorite_rounded,
+          const Color(0xFFE91E63),
+          () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const DonateScreen(),
+              ),
+            );
+          },
+        ),
+
+        _buildGridItem(
+          context,
+          'القبلة',
+          'حدد اتجاه القبلة',
+          Icons.explore_rounded,
+          const Color(0xFFEF5350),
+          () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const QiblaScreen(),
+              ),
+            );
+          },
+        ),
+
+        _buildGridItem(
+          context,
+          'القرآن الكريم',
+          'استمع وتدبر',
+          Icons.menu_book_rounded,
+          darkGreen,
+          () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const YasserDossariQuranPage(),
+              ),
+            );
+          },
+        ),
+
+        _buildGridItem(
+          context,
+          'الأذكار',
+          'حصن المسلم',
+          Icons.auto_awesome_rounded,
+          const Color(0xFF00897B),
+          () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const HisnElMuslimPage(),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // ============================================================
+  // Grid item
+  // ============================================================
+
+  Widget _buildGridItem(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(23),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(23),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.8),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.13),
+                blurRadius: 14,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -20,
+                top: -20,
+                child: Container(
+                  width: 75,
+                  height: 75,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.055),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.all(15),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            color.withOpacity(0.18),
+                            color.withOpacity(0.07),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(17),
+                      ),
+                      child: Icon(
+                        icon,
+                        color: color,
+                        size: 28,
+                      ),
+                    ),
+
+                    const Spacer(),
+
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+
+                    const SizedBox(height: 3),
+
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: Colors.black45,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Positioned(
+                left: 12,
+                bottom: 13,
+                child: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: color.withOpacity(0.45),
+                  size: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // Info row
+  // ============================================================
+
   Widget _buildInfoRow(FirebaseService service) {
     return StreamBuilder<NextKhutba>(
       stream: service.streamNextKhutba(),
       builder: (context, khutbaSnapshot) {
-        if (khutbaSnapshot.connectionState == ConnectionState.waiting) {
+        if (khutbaSnapshot.connectionState ==
+            ConnectionState.waiting) {
           return _buildGlassCard(
-            child: const ListTile(title: Text("جاري جلب الخطبة...", style: TextStyle(color: Colors.black54))),
+            child: const Padding(
+              padding: EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: teal,
+                  ),
+                  SizedBox(width: 14),
+                  Text(
+                    'جاري جلب بيانات الخطبة...',
+                    style: TextStyle(
+                      color: Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           );
         }
+
         final khutba = khutbaSnapshot.data;
 
         return StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance.collection('settings').doc('next_event').snapshots(),
+          stream: FirebaseFirestore.instance
+              .collection('settings')
+              .doc('next_event')
+              .snapshots(),
           builder: (context, eventSnapshot) {
-            if (eventSnapshot.connectionState == ConnectionState.waiting) {
+            if (eventSnapshot.connectionState ==
+                ConnectionState.waiting) {
               return _buildKhutbaCard(khutba);
             }
-            if (eventSnapshot.hasError || !eventSnapshot.hasData || !eventSnapshot.data!.exists) {
+
+            if (eventSnapshot.hasError ||
+                !eventSnapshot.hasData ||
+                !eventSnapshot.data!.exists) {
               return _buildKhutbaCard(khutba);
             }
-            final eventData = eventSnapshot.data!.data() as Map<String, dynamic>?;
-            if (eventData == null || (eventData['title'] as String? ?? '').isEmpty) {
+
+            final eventData =
+                eventSnapshot.data!.data()
+                    as Map<String, dynamic>?;
+
+            if (eventData == null ||
+                (eventData['title'] as String? ?? '').isEmpty) {
               return _buildKhutbaCard(khutba);
             }
+
             return Column(
               children: [
                 _buildKhutbaCard(khutba),
@@ -161,58 +564,392 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  // ============================================================
+  // Upcoming lecture
+  // ============================================================
+
   Widget _buildUpcomingLecture() {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('lectures').snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('lectures')
+          .snapshots(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        if (snapshot.connectionState ==
+                ConnectionState.waiting ||
+            !snapshot.hasData ||
+            snapshot.data!.docs.isEmpty) {
           return const SizedBox.shrink();
         }
+
         final now = DateTime.now();
-        List<Map<String, dynamic>> upcoming = [];
-        for (var doc in snapshot.data!.docs) {
-          final data = doc.data() as Map<String, dynamic>;
+        final List<Map<String, dynamic>> upcoming = [];
+
+        for (final doc in snapshot.data!.docs) {
+          final data =
+              doc.data() as Map<String, dynamic>;
+
           final timeStr = data['time'] as String?;
+
           if (timeStr != null) {
             final time = DateTime.tryParse(timeStr);
+
             if (time != null && time.isAfter(now)) {
-              data['id'] = doc.id;
-              upcoming.add(data);
+              final copy = Map<String, dynamic>.from(data);
+              copy['id'] = doc.id;
+              upcoming.add(copy);
             }
           }
         }
-        if (upcoming.isEmpty) return const SizedBox.shrink();
-        upcoming.sort((a, b) => DateTime.parse(a['time']).compareTo(DateTime.parse(b['time'])));
+
+        if (upcoming.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        upcoming.sort(
+          (a, b) => DateTime.parse(a['time'])
+              .compareTo(DateTime.parse(b['time'])),
+        );
+
         final lecture = upcoming.first;
 
         return _buildGlassCard(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.purple.withOpacity(0.1),
-                  shape: BoxShape.circle,
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                _buildSmallIcon(
+                  Icons.menu_book_rounded,
+                  const Color(0xFF7E57C2),
                 ),
-                child: const Icon(Icons.menu_book, color: Colors.purple, size: 28),
-              ),
-              title: const Text("محاضرة قادمة",
-                  style: TextStyle(color: Colors.purple, fontSize: 12, fontWeight: FontWeight.bold)),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+
+                const SizedBox(width: 13),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'محاضرة قادمة',
+                        style: TextStyle(
+                          color: Color(0xFF7E57C2),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      Text(
+                        lecture['title'] ?? 'محاضرة',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+
+                      if (lecture['speaker'] != null &&
+                          (lecture['speaker'] as String)
+                              .isNotEmpty)
+                        Text(
+                          'المحاضر: ${lecture['speaker']}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontSize: 11,
+                          ),
+                        ),
+
+                      const SizedBox(height: 3),
+
+                      Text(
+                        _formatLectureTime(
+                          lecture['time'],
+                        ),
+                        style: const TextStyle(
+                          color: Colors.black45,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Colors.black26,
+                  size: 14,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ============================================================
+  // Khutba card
+  // ============================================================
+
+  Widget _buildKhutbaCard(NextKhutba? khutba) {
+    return _buildGlassCard(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            _buildSmallIcon(
+              Icons.mic_external_on_rounded,
+              teal,
+            ),
+
+            const SizedBox(width: 13),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
                 children: [
-                  Text(lecture['title'] ?? 'محاضرة',
-                      style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.bold)),
-                  if (lecture['speaker'] != null && (lecture['speaker'] as String).isNotEmpty)
-                    Text("المحاضر: ${lecture['speaker']}",
-                        style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                  const Text(
+                    'خطبة الجمعة القادمة',
+                    style: TextStyle(
+                      color: teal,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
                   const SizedBox(height: 4),
-                  Text(_formatLectureTime(lecture['time']),
-                      style: const TextStyle(color: Colors.black54, fontSize: 12)),
+
+                  Text(
+                    khutba?.title ??
+                        'لم يتم تحديد العنوان',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+
+                  const SizedBox(height: 2),
+
+                  Text(
+                    'الخطيب: ${khutba?.imam ?? 'غير محدد'}',
+                    style: const TextStyle(
+                      color: Colors.black54,
+                      fontSize: 11,
+                    ),
+                  ),
                 ],
               ),
-              trailing: const Icon(Icons.arrow_forward_ios, color: Colors.black38, size: 14),
+            ),
+
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Colors.black26,
+              size: 14,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // Event card
+  // ============================================================
+
+  Widget _buildEventCard(
+    Map<String, dynamic> event,
+  ) {
+    final title = event['title'] ?? 'فعالية';
+    final location = event['location'] ?? '';
+
+    String? timeStr = event['time'] as String?;
+
+    if (timeStr == null || timeStr.isEmpty) {
+      timeStr = event['date'] as String?;
+    }
+
+    String dateStr = '';
+
+    if (timeStr != null && timeStr.isNotEmpty) {
+      dateStr = _formatLectureTime(timeStr);
+    } else {
+      final lastUpdated =
+          event['lastUpdated'] as Timestamp?;
+
+      if (lastUpdated != null) {
+        final dt = lastUpdated.toDate();
+
+        dateStr =
+            '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';
+      }
+    }
+
+    return _buildGlassCard(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            _buildSmallIcon(
+              Icons.event_rounded,
+              Colors.orange,
+            ),
+
+            const SizedBox(width: 13),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'فعالية قادمة',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+
+                  if (location.isNotEmpty)
+                    Text(
+                      'المكان: $location',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 11,
+                      ),
+                    ),
+
+                  if (dateStr.isNotEmpty)
+                    Text(
+                      dateStr,
+                      style: const TextStyle(
+                        color: Colors.black45,
+                        fontSize: 11,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Colors.black26,
+              size: 14,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // Small icon
+  // ============================================================
+
+  Widget _buildSmallIcon(
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      width: 51,
+      height: 51,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.18),
+            color.withOpacity(0.06),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Icon(
+        icon,
+        color: color,
+        size: 27,
+      ),
+    );
+  }
+
+  // ============================================================
+  // Glass card
+  // ============================================================
+
+  Widget _buildGlassCard({
+    required Widget child,
+  }) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.97),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: Colors.white,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.07),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  // ============================================================
+  // Logout
+  // ============================================================
+
+  Widget _buildLogoutButton() {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const SizedBox.shrink();
+        }
+
+        return Center(
+          child: TextButton.icon(
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+            },
+            icon: const Icon(
+              Icons.logout_rounded,
+              color: Colors.black45,
+              size: 19,
+            ),
+            label: const Text(
+              'تسجيل الخروج',
+              style: TextStyle(
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         );
@@ -222,135 +959,30 @@ class HomeScreen extends StatelessWidget {
 
   String _formatLectureTime(String? isoTime) {
     if (isoTime == null) return '';
+
     final dt = DateTime.tryParse(isoTime);
+
     if (dt == null) return isoTime;
-    return '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}  ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-  }
 
-  Widget _buildKhutbaCard(NextKhutba? khutba) {
-    return _buildGlassCard(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: ListTile(
-          leading: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: Colors.teal.withOpacity(0.1), shape: BoxShape.circle),
-            child: const Icon(Icons.mic_external_on, color: Colors.teal, size: 28),
-          ),
-          title: const Text("خطبة الجمعة القادمة",
-              style: TextStyle(color: Colors.teal, fontSize: 12, fontWeight: FontWeight.bold)),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(khutba?.title ?? "لم يتم تحديد العنوان",
-                  style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.bold)),
-              Text("الخطيب: ${khutba?.imam ?? 'غير محدد'}",
-                  style: const TextStyle(color: Colors.black54, fontSize: 12)),
-            ],
-          ),
-          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.black38, size: 14),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEventCard(Map<String, dynamic> event) {
-    final title = event['title'] ?? 'فعالية';
-    final location = event['location'] ?? '';
-    String? timeStr = event['time'] as String?;
-    if (timeStr == null || timeStr.isEmpty) {
-      timeStr = event['date'] as String?;
-    }
-    String dateStr = '';
-    if (timeStr != null && timeStr.isNotEmpty) {
-      dateStr = _formatLectureTime(timeStr);
-    } else {
-      final lastUpdated = event['lastUpdated'] as Timestamp?;
-      if (lastUpdated != null) {
-        final dt = lastUpdated.toDate();
-        dateStr = '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';
-      }
-    }
-    return _buildGlassCard(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: ListTile(
-          leading: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), shape: BoxShape.circle),
-            child: const Icon(Icons.event, color: Colors.orange, size: 28),
-          ),
-          title: const Text("فعالية قادمة",
-              style: TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold)),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.bold)),
-              if (location.isNotEmpty)
-                Text("المكان: $location", style: const TextStyle(color: Colors.black54, fontSize: 12)),
-              if (dateStr.isNotEmpty)
-                Text(dateStr, style: const TextStyle(color: Colors.black54, fontSize: 12)),
-            ],
-          ),
-          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.black38, size: 14),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGridItem(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(color: color.withOpacity(0.15), blurRadius: 8, offset: const Offset(0, 2)),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
-              child: Icon(icon, size: 32, color: color),
-            ),
-            const SizedBox(height: 12),
-            Text(title,
-                style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600, fontSize: 15)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGlassCard({required Widget child}) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 2)),
-        ],
-      ),
-      child: child,
-    );
+    return '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}  '
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 }
 
-// ───── ويدجت الأذكار المتغيرة (مُحسَّنة للخلفية الفاتحة) ─────
+// ================================================================
+// REMEMBRANCE CAROUSEL
+// ================================================================
+
 class RemembranceCarousel extends StatefulWidget {
   const RemembranceCarousel({super.key});
 
   @override
-  State<RemembranceCarousel> createState() => _RemembranceCarouselState();
+  State<RemembranceCarousel> createState() =>
+      _RemembranceCarouselState();
 }
 
-class _RemembranceCarouselState extends State<RemembranceCarousel> {
+class _RemembranceCarouselState
+    extends State<RemembranceCarousel> {
   int _currentIndex = 0;
   Timer? _timer;
 
@@ -375,9 +1007,19 @@ class _RemembranceCarouselState extends State<RemembranceCarousel> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      if (mounted) setState(() => _currentIndex = (_currentIndex + 1) % _remembrances.length);
-    });
+
+    _timer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) {
+        if (mounted) {
+          setState(() {
+            _currentIndex =
+                (_currentIndex + 1) %
+                    _remembrances.length;
+          });
+        }
+      },
+    );
   }
 
   @override
@@ -389,66 +1031,96 @@ class _RemembranceCarouselState extends State<RemembranceCarousel> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 15,
+        vertical: 14,
+      ),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
+        color: Colors.white.withOpacity(0.97),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.07),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.format_quote, color: Colors.green, size: 20),
-          ),
-          const SizedBox(width: 12),
+          _quoteIcon(),
+
+          const SizedBox(width: 10),
+
           Expanded(
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 800),
+              duration: const Duration(
+                milliseconds: 700,
+              ),
+              transitionBuilder:
+                  (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: child,
+                );
+              },
               child: Text(
                 _remembrances[_currentIndex],
-                key: ValueKey<int>(_currentIndex),
+                key: ValueKey(_currentIndex),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.black87,
-                  fontSize: 15,
-                  height: 1.5,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                  height: 1.55,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.format_quote, color: Colors.green, size: 20),
-          ),
+
+          const SizedBox(width: 10),
+
+          _quoteIcon(),
         ],
+      ),
+    );
+  }
+
+  Widget _quoteIcon() {
+    return Container(
+      padding: const EdgeInsets.all(7),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2E7D32)
+            .withOpacity(0.09),
+        borderRadius: BorderRadius.circular(11),
+      ),
+      child: const Icon(
+        Icons.format_quote_rounded,
+        color: Color(0xFF2E7D32),
+        size: 19,
       ),
     );
   }
 }
 
-// ─── عداد الصلاة (تم تعديل الألوان للخلفية الفاتحة) ───
-class AutoPrayerCountdownGlass extends StatefulWidget {
+// ================================================================
+// PRAYER COUNTDOWN
+// ================================================================
+
+class AutoPrayerCountdownGlass
+    extends StatefulWidget {
   const AutoPrayerCountdownGlass({super.key});
 
   @override
-  State<AutoPrayerCountdownGlass> createState() => _AutoPrayerCountdownGlassState();
+  State<AutoPrayerCountdownGlass> createState() =>
+      _AutoPrayerCountdownGlassState();
 }
 
-class _AutoPrayerCountdownGlassState extends State<AutoPrayerCountdownGlass> {
+class _AutoPrayerCountdownGlassState
+    extends State<AutoPrayerCountdownGlass> {
   String _nextPrayerName = "جاري الحساب...";
   Duration _timeLeft = Duration.zero;
+
   Timer? _timer;
   bool _loading = true;
 
@@ -460,46 +1132,142 @@ class _AutoPrayerCountdownGlassState extends State<AutoPrayerCountdownGlass> {
 
   Future<void> _initPrayerLogic() async {
     try {
-      LocationPermission permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
+      LocationPermission permission =
+          await Geolocator.requestPermission();
 
-      Position position = await Geolocator.getCurrentPosition();
-      final coordinates = Coordinates(position.latitude, position.longitude);
-      final params = CalculationMethod.umm_al_qura.getParameters();
-      params.madhab = Madhab.shafi;
-
-      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        final prayerTimes = PrayerTimes.today(coordinates, params);
-        final next = prayerTimes.nextPrayer();
+      if (permission == LocationPermission.denied ||
+          permission ==
+              LocationPermission.deniedForever) {
         if (mounted) {
           setState(() {
-            if (next != Prayer.none) {
-              _nextPrayerName = _translatePrayer(next);
-              _timeLeft = prayerTimes.timeForPrayer(next)!.difference(DateTime.now());
-            } else {
-              _nextPrayerName = "الفجر";
-              final tomorrow = DateTime.now().add(const Duration(days: 1));
-              final tomorrowDate = DateComponents.from(tomorrow);
-              final tomorrowTimes = PrayerTimes(coordinates, tomorrowDate, params);
-              _timeLeft = tomorrowTimes.fajr.difference(DateTime.now());
-            }
             _loading = false;
+            _nextPrayerName =
+                "تعذر تحديد الموقع";
           });
         }
-      });
+        return;
+      }
+
+      final position =
+          await Geolocator.getCurrentPosition(
+        desiredAccuracy:
+            LocationAccuracy.high,
+      );
+
+      final coordinates = Coordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      final params =
+          CalculationMethod.umm_al_qura
+              .getParameters();
+
+      params.madhab = Madhab.shafi;
+
+      _updatePrayer(coordinates, params);
+
+      _timer = Timer.periodic(
+        const Duration(seconds: 1),
+        (_) {
+          _updatePrayer(
+            coordinates,
+            params,
+          );
+        },
+      );
     } catch (e) {
-      if (mounted) setState(() => _nextPrayerName = "خطأ في تحديد الموقع");
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _nextPrayerName =
+              "تعذر تحديد الموقع";
+        });
+      }
     }
   }
 
-  String _translatePrayer(Prayer prayer) {
+  void _updatePrayer(
+    Coordinates coordinates,
+    CalculationParameters params,
+  ) {
+    final prayerTimes = PrayerTimes.today(
+      coordinates,
+      params,
+    );
+
+    final next = prayerTimes.nextPrayer();
+
+    if (!mounted) return;
+
+    if (next != Prayer.none) {
+      final prayerTime =
+          prayerTimes.timeForPrayer(next);
+
+      if (prayerTime == null) return;
+
+      final difference =
+          prayerTime.difference(
+        DateTime.now(),
+      );
+
+      setState(() {
+        _nextPrayerName =
+            _translatePrayer(next);
+
+        _timeLeft =
+            difference.isNegative
+                ? Duration.zero
+                : difference;
+
+        _loading = false;
+      });
+    } else {
+      final tomorrow =
+          DateTime.now()
+              .add(const Duration(days: 1));
+
+      final tomorrowDate =
+          DateComponents.from(tomorrow);
+
+      final tomorrowTimes =
+          PrayerTimes(
+        coordinates,
+        tomorrowDate,
+        params,
+      );
+
+      final difference =
+          tomorrowTimes.fajr
+              .difference(DateTime.now());
+
+      setState(() {
+        _nextPrayerName = "الفجر";
+        _timeLeft =
+            difference.isNegative
+                ? Duration.zero
+                : difference;
+        _loading = false;
+      });
+    }
+  }
+
+  String _translatePrayer(
+    Prayer prayer,
+  ) {
     switch (prayer) {
-      case Prayer.fajr: return "الفجر";
-      case Prayer.dhuhr: return "الظهر";
-      case Prayer.asr: return "العصر";
-      case Prayer.maghrib: return "المغرب";
-      case Prayer.isha: return "العشاء";
-      default: return "الصلاة";
+      case Prayer.fajr:
+        return "الفجر";
+      case Prayer.dhuhr:
+        return "الظهر";
+      case Prayer.asr:
+        return "العصر";
+      case Prayer.maghrib:
+        return "المغرب";
+      case Prayer.isha:
+        return "العشاء";
+      default:
+        return "الصلاة";
     }
   }
 
@@ -513,60 +1281,170 @@ class _AutoPrayerCountdownGlassState extends State<AutoPrayerCountdownGlass> {
   Widget build(BuildContext context) {
     if (_loading) {
       return Container(
-        height: 120,
+        height: 145,
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(25),
+          color: Colors.white.withOpacity(0.97),
+          borderRadius:
+              BorderRadius.circular(24),
         ),
-        child: const Center(child: CircularProgressIndicator(color: Colors.teal)),
+        child: const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF00897B),
+          ),
+        ),
       );
     }
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(
+        18,
+        17,
+        18,
+        18,
+      ),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [BoxShadow(color: Colors.teal.withOpacity(0.1), blurRadius: 10)],
+        color: Colors.white.withOpacity(0.98),
+        borderRadius:
+            BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF00897B)
+                .withOpacity(0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment:
+                MainAxisAlignment.center,
             children: [
-              const Icon(Icons.access_time, color: Colors.teal, size: 18),
+              Container(
+                padding:
+                    const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: const Color(
+                    0xFF00897B,
+                  ).withOpacity(0.10),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.access_time_rounded,
+                  color: Color(0xFF00897B),
+                  size: 19,
+                ),
+              ),
+
               const SizedBox(width: 8),
-              Text("المتبقي لصلاة $_nextPrayerName",
-                  style: const TextStyle(color: Colors.black54, fontSize: 14)),
+
+              Text(
+                'المتبقي لصلاة $_nextPrayerName',
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
+
           const SizedBox(height: 15),
+
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment:
+                MainAxisAlignment.center,
             children: [
-              _timePart(_timeLeft.inHours.toString().padLeft(2, '0'), "ساعة"),
+              _timePart(
+                _timeLeft.inHours
+                    .toString()
+                    .padLeft(2, '0'),
+                "ساعة",
+              ),
+
               _buildDivider(),
-              _timePart((_timeLeft.inMinutes % 60).toString().padLeft(2, '0'), "دقيقة"),
+
+              _timePart(
+                (_timeLeft.inMinutes % 60)
+                    .toString()
+                    .padLeft(2, '0'),
+                "دقيقة",
+              ),
+
               _buildDivider(),
-              _timePart((_timeLeft.inSeconds % 60).toString().padLeft(2, '0'), "ثانية"),
+
+              _timePart(
+                (_timeLeft.inSeconds % 60)
+                    .toString()
+                    .padLeft(2, '0'),
+                "ثانية",
+              ),
             ],
+          ),
+
+          const SizedBox(height: 12),
+
+          Container(
+            height: 4,
+            width: 90,
+            decoration: BoxDecoration(
+              gradient:
+                  const LinearGradient(
+                colors: [
+                  Color(0xFF2E7D32),
+                  Color(0xFF42A5F5),
+                ],
+              ),
+              borderRadius:
+                  BorderRadius.circular(10),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _timePart(String value, String label) {
+  Widget _timePart(
+    String value,
+    String label,
+  ) {
     return Column(
       children: [
-        Text(value, style: const TextStyle(color: Colors.black87, fontSize: 32, fontWeight: FontWeight.bold)),
-        Text(label, style: const TextStyle(color: Colors.teal, fontSize: 11)),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.black87,
+            fontSize: 31,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 1),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF00897B),
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildDivider() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10).copyWith(bottom: 15),
-        child: const Text(":", style: TextStyle(color: Colors.teal, fontSize: 24)),
-      );
+  Widget _buildDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+      ).copyWith(bottom: 15),
+      child: const Text(
+        ':',
+        style: TextStyle(
+          color: Color(0xFF00897B),
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
 }
