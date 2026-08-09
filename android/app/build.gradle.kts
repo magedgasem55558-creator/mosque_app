@@ -8,7 +8,8 @@ plugins {
 }
 
 android {
-    namespace = "com.yourname.mosque_app"
+    // تم التعديل إلى com.u لتطابق ملف google-services.json
+    namespace = "com.u"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -25,8 +26,8 @@ android {
     }
 
     defaultConfig {
-        // تأكد من أن هذا الـ ID يطابق الموجود في ملف google-services.json
-        applicationId = "com.yourname.mosque_app"
+        // تم التعديل إلى com.u لتطابق ملف google-services.json
+        applicationId = "com.u"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
