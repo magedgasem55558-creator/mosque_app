@@ -1,4 +1,4 @@
-package com.yourname.mosque_app
+package com.u
 
 import io.flutter.embedding.android.FlutterActivity
 
