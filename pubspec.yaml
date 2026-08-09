@@ -1,11 +1,3 @@
-name: mosque_app
-description: "A new Flutter project."
-publish_to: 'none'
-version: 1.0.0+1
-
-environment:
-  sdk: '>=3.10.0 <4.0.0'
-
 dependencies:
   flutter:
     sdk: flutter
@@ -24,9 +16,11 @@ dependencies:
   # إشعارات محلية
   flutter_local_notifications: ^17.1.2
 
-  # الموقع والقبلة
+  # الموقع والقبلة والبوصلة (تمت الإضافة)
   geolocator: ^14.0.2
   flutter_qiblah: ^3.2.0
+  flutter_compass: ^0.8.0
+  permission_handler: ^11.3.1
 
   # أوقات الصلاة (الأذان)
   adhan: 2.0.0+1
@@ -43,22 +37,5 @@ dependencies:
   dio: ^5.4.0
   path_provider: ^2.1.2
 
-  # خطوط أنيقة للتصميم الفخم (مضافة)
+  # خطوط أنيقة للتصميم الفخم
   google_fonts: ^6.2.1
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^3.0.0
-  flutter_launcher_icons: ^0.14.3
-
-flutter_launcher_icons:
-  android: "launcher_icon"
-  ios: true
-  image_path: "assets/images/logo.png"
-  min_sdk_android: 21
-
-flutter:
-  uses-material-design: true
-  assets:
-    - assets/images/
