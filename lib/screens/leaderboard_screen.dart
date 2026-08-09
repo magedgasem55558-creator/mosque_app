@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -8,64 +7,51 @@ class LeaderboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
       body: Container(
-        // نفس التدرج الرسمي: أخضر ← أزرق ← رمادي فاتح
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF2E7D32), // أخضر غامق (أعلى)
-              Color(0xFF42A5F5), // أزرق متوسط
-              Color(0xFFF5F5F5), // رمادي فاتح جداً (أسفل)
-            ],
-            stops: [0.0, 0.5, 1.0],
-          ),
+          color: Colors.white, // خلفية بيضاء كما في الصورة
         ),
         child: SafeArea(
           child: Column(
             children: [
-              // شريط عنوان شفاف (اختياري)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'لوحة المتصدرين',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+              const SizedBox(height: 20),
+              const Text(
+                'الطلاب المتصدرون لهذا اليوم',
+                style: TextStyle(
+                  color: Color(0xFF1a237e), // أزرق غامق
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
+              const SizedBox(height: 40),
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('students')
                       .orderBy('totalPoints', descending: true)
-                      .limit(3) // عرض أول ٣ فقط
+                      .limit(3)
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) {
-                      return const Center(child: CircularProgressIndicator(color: Colors.teal));
+                      return const Center(child: CircularProgressIndicator());
                     }
                     final students = snapshot.data!.docs;
                     if (students.isEmpty) {
-                      return const Center(
-                        child: Text('لا يوجد طلاب بعد', style: TextStyle(color: Colors.black54, fontSize: 16)),
-                      );
+                      return const Center(child: Text('لا يوجد بيانات'));
                     }
 
-                    return ListView.builder(
-                      padding: const EdgeInsets.all(20),
-                      itemCount: students.length,
-                      itemBuilder: (context, index) {
-                        final data = students[index].data() as Map<String, dynamic>;
-                        final rank = index + 1;
-                        final name = data['name'] ?? 'طالب';
-                        final points = data['totalPoints'] ?? 0;
-                        return _buildLeaderCard(rank, name, points);
-                      },
+                    // ترتيب المراكز (0: المركز الأول، 1: الثاني، 2: الثالث)
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end, // لمحاكاة المنصة
+                      children: [
+                        // المركز الثاني
+                        if (students.length > 1) _buildPodiumItem(students[1], 2, Colors.pinkAccent, 140),
+                        // المركز الأول (في المنتصف)
+                        _buildPodiumItem(students[0], 1, Colors.amber.shade700, 180),
+                        // المركز الثالث
+                        if (students.length > 2) _buildPodiumItem(students[2], 3, Colors.cyan, 120),
+                      ],
                     );
                   },
                 ),
@@ -77,81 +63,49 @@ class LeaderboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLeaderCard(int rank, String name, int points) {
-    // ألوان مميزة حسب المركز
-    Color medalColor;
-    IconData medalIcon;
-    switch (rank) {
-      case 1:
-        medalColor = Colors.amber;
-        medalIcon = Icons.emoji_events;
-        break;
-      case 2:
-        medalColor = Colors.grey.shade400;
-        medalIcon = Icons.emoji_events;
-        break;
-      case 3:
-        medalColor = Colors.brown.shade300;
-        medalIcon = Icons.emoji_events;
-        break;
-      default:
-        medalColor = Colors.teal;
-        medalIcon = Icons.star;
-    }
+  Widget _buildPodiumItem(QueryDocumentSnapshot doc, int rank, Color color, double height) {
+    final data = doc.data() as Map<String, dynamic>;
+    final name = data['name'] ?? 'طالب';
+    final points = data['totalPoints'] ?? 0;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: medalColor.withOpacity(0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        border: Border.all(color: medalColor.withOpacity(0.3), width: 1.5),
-      ),
-      child: Row(
+    return Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: medalColor.withOpacity(0.1),
-            child: Icon(medalIcon, color: medalColor, size: 30),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'المركز $rank',
-                  style: TextStyle(
-                    color: medalColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+          // الدائرة الملونة
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color,
+              border: Border.all(color: Colors.white, width: 3),
+              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '$rank',
+              style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
+          const SizedBox(height: 10),
+          // الاسم
+          Text(
+            name,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          // النقاط
           Text(
             '$points نقطة',
-            style: TextStyle(
-              color: Colors.teal.shade700,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+          const SizedBox(height: 20),
+          // قاعدة المنصة
+          Container(
+            height: height,
+            color: color.withOpacity(0.3),
+            width: double.infinity,
           ),
         ],
       ),
