@@ -48,6 +48,10 @@ jobs:
       - name: Install Flutter dependencies
         run: flutter pub get
 
+      # 👈 خطوة توليد الأيقونات تلقائياً
+      - name: Generate Launcher Icons
+        run: dart run flutter_launcher_icons
+
       - name: Build APK (Release)
         run: flutter build apk --release --no-tree-shake-icons --android-skip-build-dependency-validation
 
@@ -56,4 +60,4 @@ jobs:
         with:
           name: app-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 7 # 
+          retention-days: 7
