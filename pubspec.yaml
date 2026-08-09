@@ -1,41 +1,65 @@
+name: mosque_app
+description: "تطبيق مسجدنا الذكي - خدمات المسجد والقرآن الكريم والأذكار والقبلة"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.10.0 <4.0.0'
+
 dependencies:
   flutter:
     sdk: flutter
 
-  # الأساسيات
+  # الأساسيات والواجهة
   cupertino_icons: ^1.0.8
   intl: ^0.20.2
   timeago: ^3.7.1
+  google_fonts: ^6.2.1
 
-  # Firebase
+  # خدمات Firebase
   firebase_core: ^3.1.1
   cloud_firestore: ^5.0.2
   firebase_auth: ^5.1.2
   firebase_messaging: ^15.0.3
 
-  # إشعارات محلية
+  # الإشعارات والجدولة
   flutter_local_notifications: ^17.1.2
+  timezone: ^0.9.4
 
-  # الموقع والقبلة والبوصلة (تمت الإضافة)
-  geolocator: ^14.0.2
+  # الموقع والقبلة والبوصلة والصلاحيات
+  geolocator: ^13.0.1
   flutter_qiblah: ^3.2.0
   flutter_compass: ^0.8.0
   permission_handler: ^11.3.1
 
-  # أوقات الصلاة (الأذان)
+  # أوقات الصلاة
   adhan: 2.0.0+1
 
-  # تخزين وروابط
-  shared_preferences: ^2.2.2
+  # التخزين الداخلي والروابط
+  shared_preferences: ^2.2.3
   url_launcher: ^6.2.5
 
-  # التوقيتات والجدولة
-  timezone: ^0.9.4
-
-  # تشغيل الصوت وتنزيل الملفات (خاص بالمصحف)
+  # تشغيل الصوت المتقدم وتشغيل الخلفية وتنزيل الملفات
   audioplayers: ^5.2.1
+  just_audio: ^0.9.38
+  just_audio_background: ^0.0.1-beta.13
   dio: ^5.4.0
   path_provider: ^2.1.2
 
-  # خطوط أنيقة للتصميم الفخم
-  google_fonts: ^6.2.1
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/logo.png"
+  min_sdk_android: 21
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
