@@ -11,12 +11,12 @@ void main() async {
   // تهيئة Firebase الأساسية
   await Firebase.initializeApp();
 
-  // ⚡ تفعيل الكاش اللامحدود والتخزين المحلي لزيادة السرعة
+      // تفعيل الكاش اللامحدود والتخزين المحلي لزيادة السرعة
   FirebaseFirestore.instance.settings = const Settings(
-    localCacheSettings: PersistentLocalCacheSettings(
-      sizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-    ),
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
+
 
   runApp(const MosqueApp());
 }
