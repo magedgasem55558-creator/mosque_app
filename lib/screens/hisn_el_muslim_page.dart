@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui';
-// ===================== بيانات الأذكار الموسّعة =====================
+
+// ===================== بيانات الأذكار الموسّعة (15 فئة) =====================
 class AzkarData {
   static const List<Map<String, dynamic>> categories = [
     {
@@ -213,41 +213,49 @@ class HisnElMuslimPage extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.push(context,
             MaterialPageRoute(builder: (_) => const DigitalTasbihPage())),
-        backgroundColor: Colors.amberAccent.shade700,
-        icon: const Icon(Icons.touch_app),
-        label: const Text('المسبحة الإلكترونية'),
+        backgroundColor: Colors.teal,
+        icon: const Icon(Icons.touch_app, color: Colors.white),
+        label: const Text('المسبحة', style: TextStyle(color: Colors.white)),
       ),
-      body: Stack(
-        children: [
-          Container(color: const Color(0xFF1A002D)),
-          Container(color: Colors.black.withOpacity(0.6)),
-          SafeArea(
-            child: Column(
-              children: [
-                const SizedBox(height: 10),
-                _buildHeader(),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: GridView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
-                    itemCount: AzkarData.categories.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 14,
-                      mainAxisSpacing: 14,
-                      childAspectRatio: 1.05,
-                    ),
-                    itemBuilder: (context, index) {
-                      final cat = AzkarData.categories[index];
-                      final Color catColor = cat['color'] as Color;
-                      return _buildCategoryCard(context, cat, catColor);
-                    },
-                  ),
-                ),
-              ],
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF2E7D32), // أخضر غامق
+              Color(0xFF42A5F5), // أزرق
+              Color(0xFFF5F5F5), // رمادي فاتح
+            ],
+            stops: [0.0, 0.5, 1.0],
           ),
-        ],
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 10),
+              _buildHeader(),
+              const SizedBox(height: 10),
+              Expanded(
+                child: GridView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                  itemCount: AzkarData.categories.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 14,
+                    mainAxisSpacing: 14,
+                    childAspectRatio: 1.05,
+                  ),
+                  itemBuilder: (context, index) {
+                    final cat = AzkarData.categories[index];
+                    final Color catColor = cat['color'] as Color;
+                    return _buildCategoryCard(context, cat, catColor);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -255,27 +263,21 @@ class HisnElMuslimPage extends StatelessWidget {
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.15)),
-            ),
-            child: const Column(
-              children: [
-                Text('أَلا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ',
-                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                SizedBox(height: 6),
-                Text('اختر التصنيف لقراءة الأذكار واستخدام العداد التفاعلي',
-                    style: TextStyle(color: Colors.white70, fontSize: 13)),
-              ],
-            ),
-          ),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
+        ),
+        child: const Column(
+          children: [
+            Text('أَلا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ',
+                style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold)),
+            SizedBox(height: 6),
+            Text('اختر التصنيف لقراءة الأذكار واستخدام العداد التفاعلي',
+                style: TextStyle(color: Colors.black54, fontSize: 13)),
+          ],
         ),
       ),
     );
@@ -290,32 +292,27 @@ class HisnElMuslimPage extends StatelessWidget {
                 themeColor: color,
               ))),
       borderRadius: BorderRadius.circular(18),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: color.withOpacity(0.3)),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                    radius: 28,
-                    backgroundColor: color.withOpacity(0.2),
-                    child: Icon(cat['icon'], color: color, size: 28)),
-                const SizedBox(height: 10),
-                Text(cat['title'],
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text('${(cat['items'] as List).length} أذكار',
-                    style: TextStyle(color: Colors.white54, fontSize: 11)),
-              ],
-            ),
-          ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [BoxShadow(color: color.withOpacity(0.15), blurRadius: 8)],
+          border: Border.all(color: color.withOpacity(0.2), width: 1.5),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircleAvatar(
+                radius: 28,
+                backgroundColor: color.withOpacity(0.1),
+                child: Icon(cat['icon'], color: color, size: 28)),
+            const SizedBox(height: 10),
+            Text(cat['title'],
+                style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text('${(cat['items'] as List).length} أذكار',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
+          ],
         ),
       ),
     );
@@ -352,30 +349,38 @@ class _AzkarDetailPageState extends State<AzkarDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          Container(color: const Color(0xFF1A002D)),
-          Container(color: Colors.black.withOpacity(0.7)),
-          SafeArea(
-            child: Column(
-              children: [
-                _buildAppBar(),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
-                    itemCount: widget.items.length,
-                    itemBuilder: (context, index) {
-                      final item = widget.items[index];
-                      final current = _counters[index];
-                      final done = current == 0;
-                      return _buildZikrCard(item['text'], done, current, index);
-                    },
-                  ),
-                ),
-              ],
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF2E7D32),
+              Color(0xFF42A5F5),
+              Color(0xFFF5F5F5),
+            ],
+            stops: [0.0, 0.5, 1.0],
           ),
-        ],
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildAppBar(),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+                  itemCount: widget.items.length,
+                  itemBuilder: (context, index) {
+                    final item = widget.items[index];
+                    final current = _counters[index];
+                    final done = current == 0;
+                    return _buildZikrCard(item['text'], done, current, index);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -383,32 +388,26 @@ class _AzkarDetailPageState extends State<AzkarDetailPage> {
   Widget _buildAppBar() {
     return Padding(
       padding: const EdgeInsets.all(12),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.15)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
+        ),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black87),
+              onPressed: () => Navigator.pop(context),
             ),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                Expanded(
-                  child: Text(widget.title,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                ),
-                const SizedBox(width: 48),
-              ],
+            Expanded(
+              child: Text(widget.title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.black87, fontSize: 20, fontWeight: FontWeight.bold)),
             ),
-          ),
+            const SizedBox(width: 48),
+          ],
         ),
       ),
     );
@@ -417,67 +416,66 @@ class _AzkarDetailPageState extends State<AzkarDetailPage> {
   Widget _buildZikrCard(String text, bool done, int remaining, int index) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: done ? Colors.white.withOpacity(0.04) : Colors.white.withOpacity(0.06),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: done ? Colors.white10 : widget.themeColor.withOpacity(0.4)),
+        border: Border.all(color: done ? Colors.grey.shade300 : widget.themeColor.withOpacity(0.4), width: 1.5),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(text,
-                style: TextStyle(
-                  fontSize: 17,
-                  height: 1.8,
-                  color: done ? Colors.white38 : Colors.white,
-                  decoration: done ? TextDecoration.lineThrough : null,
-                )),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.copy, color: Colors.white38),
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: text));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('تم نسخ الذكر'), duration: Duration(seconds: 1)),
-                    );
-                  },
-                ),
-                InkWell(
-                  onTap: () => _decrement(index),
-                  borderRadius: BorderRadius.circular(30),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: done ? Colors.white12 : widget.themeColor.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: done ? Colors.white24 : widget.themeColor),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          done ? Icons.check_circle : Icons.touch_app,
-                          color: done ? Colors.white38 : widget.themeColor,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          done ? 'تم' : 'المتبقي: $remaining',
-                          style: TextStyle(color: done ? Colors.white38 : widget.themeColor, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(text,
+              style: TextStyle(
+                fontSize: 17,
+                height: 1.8,
+                color: done ? Colors.grey : Colors.black87,
+                decoration: done ? TextDecoration.lineThrough : null,
+              )),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.copy, color: Colors.grey),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: text));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('تم نسخ الذكر'), duration: Duration(seconds: 1)),
+                  );
+                },
+              ),
+              InkWell(
+                onTap: () => _decrement(index),
+                borderRadius: BorderRadius.circular(30),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: done ? Colors.grey.shade200 : widget.themeColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: done ? Colors.grey : widget.themeColor),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        done ? Icons.check_circle : Icons.touch_app,
+                        color: done ? Colors.grey : widget.themeColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        done ? 'تم' : 'المتبقي: $remaining',
+                        style: TextStyle(color: done ? Colors.grey : widget.themeColor, fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -525,81 +523,91 @@ class _DigitalTasbihPageState extends State<DigitalTasbihPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          Container(color: const Color(0xFF1A002D)),
-          Container(color: Colors.black.withOpacity(0.5)),
-          SafeArea(
-            child: Column(
-              children: [
-                const SizedBox(height: 10),
-                _buildAppBar(),
-                const Spacer(flex: 1),
-                // الدائرة الكبيرة للعداد
-                GestureDetector(
-                  onTap: _increment,
-                  child: Container(
-                    width: 220,
-                    height: 220,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        colors: [Colors.amberAccent, Colors.orangeAccent],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(color: Colors.amberAccent.withOpacity(0.4), blurRadius: 30, spreadRadius: 5),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF2E7D32),
+              Color(0xFF42A5F5),
+              Color(0xFFF5F5F5),
+            ],
+            stops: [0.0, 0.5, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 10),
+              _buildAppBar(),
+              const Spacer(flex: 1),
+              // الدائرة الكبيرة للعداد
+              GestureDetector(
+                onTap: _increment,
+                child: Container(
+                  width: 220,
+                  height: 220,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [Colors.teal.shade400, Colors.teal.shade600],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(color: Colors.teal.withOpacity(0.3), blurRadius: 25, spreadRadius: 5),
+                    ],
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('$_count',
+                            style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold, color: Colors.white)),
+                        Text(_currentPhrase,
+                            style: const TextStyle(fontSize: 16, color: Colors.white70, fontWeight: FontWeight.w500)),
                       ],
                     ),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('$_count',
-                              style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold, color: Colors.black87)),
-                          Text(_currentPhrase,
-                              style: const TextStyle(fontSize: 16, color: Colors.black54, fontWeight: FontWeight.w500)),
-                        ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text('المجموع الكلي: $_total', style: const TextStyle(color: Colors.black54, fontSize: 14)),
+              const SizedBox(height: 20),
+              // أزرار اختيار الذكر
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: _phrases.map((phrase) {
+                    final selected = phrase == _currentPhrase;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: ChoiceChip(
+                        label: Text(phrase,
+                            style: TextStyle(
+                                color: selected ? Colors.white : Colors.black87,
+                                fontWeight: FontWeight.bold)),
+                        selected: selected,
+                        selectedColor: Colors.teal,
+                        backgroundColor: Colors.grey.shade200,
+                        onSelected: (_) => _changePhrase(phrase),
                       ),
-                    ),
-                  ),
+                    );
+                  }).toList(),
                 ),
-                const SizedBox(height: 20),
-                Text('المجموع الكلي: $_total', style: const TextStyle(color: Colors.white54, fontSize: 14)),
-                const SizedBox(height: 20),
-                // أزرار اختيار الذكر
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    children: _phrases.map((phrase) {
-                      final selected = phrase == _currentPhrase;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                        child: ChoiceChip(
-                          label: Text(phrase, style: TextStyle(color: selected ? Colors.black : Colors.white)),
-                          selected: selected,
-                          selectedColor: Colors.amberAccent,
-                          backgroundColor: Colors.white12,
-                          onSelected: (_) => _changePhrase(phrase),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // زر إعادة التعيين
-                TextButton.icon(
-                  onPressed: _reset,
-                  icon: const Icon(Icons.refresh, color: Colors.white54),
-                  label: const Text('إعادة العد', style: TextStyle(color: Colors.white54)),
-                ),
-                const Spacer(flex: 2),
-              ],
-            ),
+              ),
+              const SizedBox(height: 20),
+              TextButton.icon(
+                onPressed: _reset,
+                icon: const Icon(Icons.refresh, color: Colors.teal),
+                label: const Text('إعادة العد', style: TextStyle(color: Colors.teal)),
+              ),
+              const Spacer(flex: 2),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -607,32 +615,26 @@ class _DigitalTasbihPageState extends State<DigitalTasbihPage> {
   Widget _buildAppBar() {
     return Padding(
       padding: const EdgeInsets.all(12),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.15)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
+        ),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black87),
+              onPressed: () => Navigator.pop(context),
             ),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                const Expanded(
-                  child: Text('المسبحة الإلكترونية',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                ),
-                const SizedBox(width: 48),
-              ],
+            const Expanded(
+              child: Text('المسبحة الإلكترونية',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.black87, fontSize: 20, fontWeight: FontWeight.bold)),
             ),
-          ),
+            const SizedBox(width: 48),
+          ],
         ),
       ),
     );
