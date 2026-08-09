@@ -42,23 +42,48 @@ Future<void> firebaseMessagingBackgroundHandler(
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ==========================================================================
-  // تشغيل الصوت في الخلفية
-  // ==========================================================================
+  // 1. تهيئة Firebase أولاً
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('خطأ تهيئة Firebase: $e');
+  }
 
+  // 2. تهيئة خدمة الإشعارات وطلب الصلاحيات فوراً عند الإقلاع
+  try {
+    await NotificationService.init();
+    await NotificationService.scheduleDhikr(); // لضمان جدولة الأذكار
+  } catch (e) {
+    debugPrint('خطأ في تهيئة الإشعارات بالدالة الرئيسية: $e');
+  }
+
+  // 3. تشغيل الصوت في الخلفية
   try {
     await JustAudioBackground.init(
-      androidNotificationChannelId:
-          'com.mosque.system.channel.audio',
-      androidNotificationChannelName:
-          'تشغيل القرآن الكريم',
+      androidNotificationChannelId: 'com.mosque.system.channel.audio',
+      androidNotificationChannelName: 'تشغيل القرآن الكريم',
       androidNotificationOngoing: true,
     );
   } catch (e) {
-    debugPrint(
-      'تحذير تشغيل الصوت بالخلفية: $e',
-    );
+    debugPrint('تحذير تشغيل الصوت بالخلفية: $e');
   }
+
+  // 4. Firestore Cache
+  try {
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    );
+  } catch (e) {
+    debugPrint('خطأ إعداد Firestore Cache: $e');
+  }
+
+  // 5. FCM Background Messages
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  runApp(const MosqueApp());
+}
+
 
   // ==========================================================================
   // Firebase
