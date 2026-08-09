@@ -13,6 +13,9 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // 1. تفعيل Desugaring
+        isCoreLibraryDesugaringEnabled = true
+
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -28,6 +31,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // 2. تفعيل MultiDex
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -44,4 +50,7 @@ flutter {
 dependencies {
     // أضف هذا السطر إذا لم يكن موجوداً لضمان عمل الفايربيز بشكل صحيح
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+
+    // 3. إضافة مكتبة Desugaring بحسب صيغة Kotlin DSL
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }
