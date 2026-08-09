@@ -1,7 +1,6 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_qiblah/flutter_qiblah.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class QiblaScreen extends StatefulWidget {
   const QiblaScreen({Key? key}) : super(key: key);
@@ -11,84 +10,47 @@ class QiblaScreen extends StatefulWidget {
 }
 
 class _QiblaScreenState extends State<QiblaScreen> {
-  // إحداثيات الكعبة المشرفة الدقيقة
-  static const double _kaabaLat = 21.422487;
-  static const double _kaabaLng = 39.826206;
-
-  double? _qiblahAngle;
   bool _hasPermission = false;
   bool _isLoading = true;
-  String _statusMessage = 'جاري تحديد الموقع وحساب اتجاه القبلة...';
+  String _statusMessage = 'جاري طلب صلاحيات الموقع...';
 
   @override
   void initState() {
     super.initState();
-    _initQiblah();
+    _checkLocationPermission();
   }
 
-  Future<void> _initQiblah() async {
-    // 1. طلب إذن الموقع
-    final status = await Permission.location.request();
+  Future<void> _checkLocationPermission() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
 
-    if (status.isGranted) {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        setState(() {
-          _isLoading = false;
-          _statusMessage = 'يرجى تفعيل خدمة الموقع (GPS) في الهاتف.';
-        });
-        return;
-      }
-
-      try {
-        // 2. جلب موقع المستخدم بدقة عالية
-        Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-        );
-
-        // 3. حساب زاوية القبلة بالنسبة للشمال الحقيقي
-        double qiblah = _calculateQiblahAngle(position.latitude, position.longitude);
-
-        setState(() {
-          _qiblahAngle = qiblah;
-          _hasPermission = true;
-          _isLoading = false;
-        });
-      } catch (e) {
-        setState(() {
-          _isLoading = false;
-          _statusMessage = 'حدث خطأ أثناء تحديد إحداثيات الموقع.';
-        });
-      }
-    } else {
+    if (permission == LocationPermission.deniedForever ||
+        permission == LocationPermission.denied) {
       setState(() {
         _isLoading = false;
+        _hasPermission = false;
         _statusMessage = 'يتطلب تحديد القبلة السماح لصلاحية الموقع.';
       });
+      return;
     }
+
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      setState(() {
+        _isLoading = false;
+        _hasPermission = false;
+        _statusMessage = 'يرجى تفعيل خدمة الموقع (GPS) في الهاتف.';
+      });
+      return;
+    }
+
+    setState(() {
+      _hasPermission = true;
+      _isLoading = false;
+    });
   }
-
-  // المعادلة الرياضية الدقيقة لحساب اتجاه القبلة من أي مكان على الأرض
-  double _calculateQiblahAngle(double userLat, double userLng) {
-    double userLatRad = _degToRad(userLat);
-    double userLngRad = _degToRad(userLng);
-    double kaabaLatRad = _degToRad(_kaabaLat);
-    double kaabaLngRad = _degToRad(_kaabaLng);
-
-    double deltaLng = kaabaLngRad - userLngRad;
-
-    double y = math.sin(deltaLng);
-    double x = math.cos(userLatRad) * math.tan(kaabaLatRad) -
-        math.sin(userLatRad) * math.cos(deltaLng);
-
-    double qiblahRad = math.atan2(y, x);
-    double qiblahDeg = _radToDeg(qiblahRad);
-
-    return (qiblahDeg + 360) % 360;
-  }
-
-  double _degToRad(double degree) => degree * (math.pi / 180.0);
-  double _radToDeg(double radian) => radian * (180.0 / math.pi);
 
   @override
   Widget build(BuildContext context) {
@@ -115,49 +77,50 @@ class _QiblaScreenState extends State<QiblaScreen> {
                         const SizedBox(height: 16),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-                          onPressed: _initQiblah,
-                          child: const Text('إعادة المحاولة', style: TextStyle(color: Colors.white)),
+                          onPressed: _checkLocationPermission,
+                          child: const Text('إعادة المحاولة',
+                              style: TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),
                   ),
                 )
-              : StreamBuilder<CompassEvent>(
-                  stream: FlutterCompass.events,
+              : StreamBuilder<QiblahDirection>(
+                  stream: FlutterQiblah.qiblahStream,
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
-                      return const Center(child: Text('خطأ في قراءة حساس البوصلة بالجهاز'));
+                      return const Center(
+                          child: Text('حدث خطأ أثناء قراءة الحساسات'));
                     }
 
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator(color: Colors.teal));
+                      return const Center(
+                          child: CircularProgressIndicator(color: Colors.teal));
                     }
 
-                    // اتجاه رأس الهاتف بالنسبة للشمال
-                    double? heading = snapshot.data?.heading;
-
-                    if (heading == null) {
-                      return const Center(child: Text('جهازك لا يحتوي على حساس البوصلة (Magnetometer)'));
+                    final qiblahDirection = snapshot.data;
+                    if (qiblahDirection == null) {
+                      return const Center(
+                          child: Text('جهازك لا يحتوي على حساس البوصلة'));
                     }
 
-                    // الفرق بين اتجاه الهاتف واتجاه القبلة
-                    double headingRad = _degToRad(heading);
-                    double qiblahRad = _degToRad(_qiblahAngle!);
-                    double directionToQiblah = qiblahRad - headingRad;
-
-                    // التحقق مما إذا كان الهاتف متجهاً للقبلة بدقة (هامش خطأ 3 درجات)
-                    double angleDifference = ((_radToDeg(directionToQiblah) + 180) % 360) - 180;
-                    bool isFacingQiblah = angleDifference.abs() < 3.0;
+                    // حساب الزاوية المطلوبة لتدوير الإبرة نحو القبلة
+                    double qiblahAngle = qiblahDirection.qiblah;
+                    bool isFacingQiblah = (qiblahDirection.offset.abs() < 3.0);
 
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          isFacingQiblah ? 'أنت تتجه نحو القبلة تماماً 🕋' : 'قم بتدوير الهاتف نحو السهم',
+                          isFacingQiblah
+                              ? 'أنت تتجه نحو القبلة تماماً 🕋'
+                              : 'قم بتدوير الهاتف نحو السهم',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: isFacingQiblah ? Colors.green.shade700 : Colors.teal,
+                            color: isFacingQiblah
+                                ? Colors.green.shade700
+                                : Colors.teal,
                           ),
                         ),
                         const SizedBox(height: 40),
@@ -165,7 +128,6 @@ class _QiblaScreenState extends State<QiblaScreen> {
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
-                              // خلفية البوصلة (الدائرة الخارجية)
                               Container(
                                 width: 280,
                                 height: 280,
@@ -173,21 +135,24 @@ class _QiblaScreenState extends State<QiblaScreen> {
                                   shape: BoxShape.circle,
                                   color: Colors.teal.withOpacity(0.05),
                                   border: Border.all(
-                                    color: isFacingQiblah ? Colors.green : Colors.teal,
+                                    color: isFacingQiblah
+                                        ? Colors.green
+                                        : Colors.teal,
                                     width: 4,
                                   ),
                                 ),
                               ),
-                              // إبرة البوصلة المتحركة الموجهة نحو القبلة
                               Transform.rotate(
-                                angle: directionToQiblah,
+                                angle: (qiblahAngle * (3.141592653589793 / 180)),
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
                                       Icons.navigation_rounded,
                                       size: 100,
-                                      color: isFacingQiblah ? Colors.green.shade700 : Colors.teal,
+                                      color: isFacingQiblah
+                                          ? Colors.green.shade700
+                                          : Colors.teal,
                                     ),
                                     const SizedBox(height: 10),
                                     const Icon(
@@ -203,8 +168,9 @@ class _QiblaScreenState extends State<QiblaScreen> {
                         ),
                         const SizedBox(height: 40),
                         Text(
-                          'زاوية القبلة: ${_qiblahAngle!.toStringAsFixed(1)}°',
-                          style: TextStyle(color: Colors.grey.shade700, fontSize: 15),
+                          'زاوية القبلة: ${qiblahDirection.offset.toStringAsFixed(1)}°',
+                          style: TextStyle(
+                              color: Colors.grey.shade700, fontSize: 15),
                         ),
                       ],
                     );
