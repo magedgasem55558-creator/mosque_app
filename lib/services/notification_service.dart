@@ -31,13 +31,10 @@ class NotificationService {
 
   // ═════════════════════ تهيئة الإشعارات ═════════════════════
   static Future<void> init() async {
-    // 1. تهيئة التوقيت وتحديد الموقع الافتراضي لتجنب أخطاء Zone/Location
     tz.initializeTimeZones();
     try {
-      tz.setLocalLocation(tz.getLocation('Asia/Riyadh')); // تحديد المنطقة الزمنية
-    } catch (_) {
-      // في حال عدم توفر الرياض يختار الموقع الأول افتراضياً
-    }
+      tz.setLocalLocation(tz.getLocation('Asia/Riyadh'));
+    } catch (_) {}
 
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
@@ -50,16 +47,21 @@ class NotificationService {
       const InitializationSettings(android: androidSettings, iOS: iosSettings),
     );
 
-    const dhikrChannel = AndroidNotificationChannel(
-      'dhikr_channel', 'أذكار',
-      description: 'إشعارات الأذكار',
-      importance: Importance.high,
-      playSound: false,
-    );
-
     final androidPlugin = _plugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    await androidPlugin?.createNotificationChannel(dhikrChannel);
+    
+    if (androidPlugin != null) {
+      // طلب إذن الإشعارات لأندرويد 13+
+      await androidPlugin.requestNotificationsPermission();
+      
+      const dhikrChannel = AndroidNotificationChannel(
+        'dhikr_channel', 'أذكار',
+        description: 'إشعارات الأذكار',
+        importance: Importance.max,
+        playSound: true,
+      );
+      await androidPlugin.createNotificationChannel(dhikrChannel);
+    }
 
     await _initFCM();
   }
@@ -93,7 +95,7 @@ class NotificationService {
         android: AndroidNotificationDetails(
           'mosque_channel', 'إشعارات المسجد',
           channelDescription: 'إشعارات تطبيق المسجد',
-          importance: Importance.high, priority: Priority.high,
+          importance: Importance.max, priority: Priority.high,
           icon: '@mipmap/ic_launcher',
         ),
         iOS: DarwinNotificationDetails(),
@@ -145,8 +147,9 @@ class NotificationService {
             android: AndroidNotificationDetails(
               'dhikr_channel', 'أذكار',
               channelDescription: 'أذكار نصف ساعة',
-              importance: Importance.high,
-              playSound: false,
+              importance: Importance.max,
+              priority: Priority.high,
+              playSound: true,
             ),
             iOS: DarwinNotificationDetails(),
           ),
@@ -158,6 +161,22 @@ class NotificationService {
     } catch (e) {
       debugPrint('فشل جدولة الأذكار: $e');
     }
+  }
+
+  // ═════════════════════ دالة اختبورية لإشعارات فورية ═════════════════════
+  static Future<void> showTestNotification() async {
+    await _plugin.show(
+      999,
+      'إشعار اختباري',
+      'تم إرسال الإشعار بنجاح!',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'dhikr_channel', 'أذكار',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+      ),
+    );
   }
 
   // ═════════════════════ الاستماع لرصد درجات الأبناء ═════════════════════
@@ -178,7 +197,6 @@ class NotificationService {
           final childName = newData['name'] ?? 'الابن';
           final newPoints = (newData['totalPoints'] ?? 0) as num;
           
-          // يمكنك مقارنتها بحقل متوفر أو التنبيه عند التحديث
           _showGradeNotification(childName, newPoints.toDouble());
         }
       }
@@ -193,7 +211,7 @@ class NotificationService {
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       'grades_channel', 'رصد الدرجات',
       description: 'إشعارات رصد الدرجات',
-      importance: Importance.high,
+      importance: Importance.max,
       playSound: true,
     );
     final androidPlugin = _plugin
@@ -208,7 +226,7 @@ class NotificationService {
         android: AndroidNotificationDetails(
           'grades_channel', 'رصد الدرجات',
           channelDescription: 'إشعارات رصد الدرجات',
-          importance: Importance.high,
+          importance: Importance.max,
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',
         ),
