@@ -140,8 +140,6 @@ class _QiblaScreenState extends State<QiblaScreen> {
                   final rawQiblaAngle = qiblahData.qiblah;
                   // اتجاه الهاتف الحالي
                   final deviceHeading = qiblahData.direction;
-                  // دقة المستشعر (قد تكون null)
-                  final accuracy = qiblahData.accuracy;
 
                   // حساب الزاوية المطلوبة لتدوير السهم
                   double rawRotation = (rawQiblaAngle - deviceHeading) % 360;
@@ -175,32 +173,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        // حالة الدقة
-                        if (accuracy != null)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                accuracy >= 5
-                                    ? Icons.wifi_off
-                                    : Icons.wifi_find,
-                                color: accuracy >= 5 ? Colors.orange : Colors.green,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                accuracy >= 5
-                                    ? 'دقة منخفضة – حرك الهاتف بشكل ∞'
-                                    : 'دقة عالية',
-                                style: TextStyle(
-                                  color: accuracy >= 5
-                                      ? Colors.orangeAccent
-                                      : Colors.greenAccent,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
+                        // إزالة حالة الدقة نهائياً
                         const SizedBox(height: 20),
 
                         // البوصلة المزخرفة
