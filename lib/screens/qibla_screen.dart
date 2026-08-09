@@ -13,9 +13,6 @@ class QiblaScreen extends StatefulWidget {
 
 class _QiblaScreenState extends State<QiblaScreen> {
   bool hasPermission = false;
-  // قائمة لتخزين آخر 5 زوايا لتصفية التذبذب
-  final List<double> _angleHistory = [];
-  static const int _historyLength = 5;
 
   @override
   void initState() {
@@ -26,7 +23,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
   Future<void> _checkPermission() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      Geolocator.openLocationSettings();
+      await Geolocator.openLocationSettings();
       return;
     }
 
@@ -37,7 +34,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
     }
 
     if (permission == LocationPermission.deniedForever) {
-      Geolocator.openAppSettings();
+      await Geolocator.openAppSettings();
       return;
     }
 
@@ -45,23 +42,6 @@ class _QiblaScreenState extends State<QiblaScreen> {
         permission == LocationPermission.whileInUse) {
       if (mounted) setState(() => hasPermission = true);
     }
-  }
-
-  /// تطبيق مرشح متوسط متحرك على الزوايا
-  double _smoothAngle(double newAngle) {
-    _angleHistory.add(newAngle);
-    if (_angleHistory.length > _historyLength) {
-      _angleHistory.removeAt(0);
-    }
-    // حساب المتوسط مع مراعاة الطبيعة الدائرية للزوايا (لتفادي القفزات بين 359 و 0)
-    double sumSin = 0.0, sumCos = 0.0;
-    for (var angle in _angleHistory) {
-      final rad = angle * pi / 180;
-      sumSin += sin(rad);
-      sumCos += cos(rad);
-    }
-    final avgRad = atan2(sumSin, sumCos);
-    return (avgRad * 180 / pi) % 360;
   }
 
   @override
@@ -135,28 +115,27 @@ class _QiblaScreenState extends State<QiblaScreen> {
                     );
                   }
 
-                  final qiblahData = snapshot.data!;
-                  // زاوية القبلة الخام من الشمال
-                  final rawQiblaAngle = qiblahData.qiblah;
-                  // اتجاه الهاتف الحالي
+                  final qiblahData = snapshot.data;
+                  if (qiblahData == null) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFFE6C87C),
+                      ),
+                    );
+                  }
+
+                  // qiblah تعطي مباشرة زاوية دوران السهم المطلوبة بالدرجات
+                  final qiblaAngle = qiblahData.qiblah; 
                   final deviceHeading = qiblahData.direction;
 
-                  // حساب الزاوية المطلوبة لتدوير السهم
-                  double rawRotation = (rawQiblaAngle - deviceHeading) % 360;
-                  if (rawRotation < 0) rawRotation += 360;
-
-                  // تطبيق التصفية للحصول على زاوية ناعمة
-                  final smoothRotation = _smoothAngle(rawRotation);
-
-                  // زاوية القبلة الفعلية (نعرضها بدقة)
-                  final displayQibla = rawQiblaAngle;
+                  // تحويل الدرجات إلى دوران كامل (Turns) لاستخدام AnimatedRotation بشكل سلس
+                  final turns = (qiblaAngle % 360) / 360;
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // العنوان
                         Text(
                           'اتجاه القبلة',
                           style: GoogleFonts.cairo(
@@ -172,9 +151,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        // إزالة حالة الدقة نهائياً
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 28),
 
                         // البوصلة المزخرفة
                         SizedBox(
@@ -183,7 +160,6 @@ class _QiblaScreenState extends State<QiblaScreen> {
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
-                              // الخلفية الدائرية المتدرجة
                               Container(
                                 width: 280,
                                 height: 280,
@@ -206,7 +182,6 @@ class _QiblaScreenState extends State<QiblaScreen> {
                                   ],
                                 ),
                               ),
-                              // دوائر متحدة المركز
                               ...List.generate(3, (index) {
                                 final radius = 60 + index * 50;
                                 return Container(
@@ -222,7 +197,6 @@ class _QiblaScreenState extends State<QiblaScreen> {
                                   ),
                                 );
                               }),
-                              // علامات الاتجاهات
                               const Positioned(
                                 top: 10,
                                 child: Text(
@@ -264,13 +238,15 @@ class _QiblaScreenState extends State<QiblaScreen> {
                                   ),
                                 ),
                               ),
-                              // السهم الدوار مع تأثير التوهج
-                              Transform.rotate(
-                                angle: smoothRotation * pi / 180,
+
+                              // استخدام AnimatedRotation لمنح حركة انسيابية وسلسة دون أخطاء الذاكرة
+                              AnimatedRotation(
+                                turns: turns,
+                                duration: const Duration(milliseconds: 250),
+                                curve: Curves.easeOutCubic,
                                 child: Stack(
                                   alignment: Alignment.center,
                                   children: [
-                                    // وهج خلف السهم
                                     Container(
                                       width: 100,
                                       height: 100,
@@ -294,7 +270,6 @@ class _QiblaScreenState extends State<QiblaScreen> {
                                   ],
                                 ),
                               ),
-                              // نقطة المركز
                               Container(
                                 width: 12,
                                 height: 12,
@@ -346,7 +321,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
                           child: Column(
                             children: [
                               Text(
-                                '${displayQibla.toStringAsFixed(1)}°',
+                                '${qiblaAngle.toInt()}°',
                                 style: GoogleFonts.cairo(
                                   fontSize: 36,
                                   fontWeight: FontWeight.bold,
@@ -355,7 +330,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'درجة القبلة (من الشمال)',
+                                'انحراف السهم عن القبلة',
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.6),
                                   fontSize: 14,
@@ -368,12 +343,12 @@ class _QiblaScreenState extends State<QiblaScreen> {
                                   _buildInfoChip(
                                     icon: Icons.compass_calibration,
                                     label: 'اتجاه الهاتف',
-                                    value: '${deviceHeading.toStringAsFixed(1)}°',
+                                    value: '${deviceHeading.toInt()}°',
                                   ),
                                   _buildInfoChip(
                                     icon: Icons.location_pin,
-                                    label: 'زاوية الانحراف',
-                                    value: '${smoothRotation.toStringAsFixed(1)}°',
+                                    label: 'زاوية القبلة',
+                                    value: '${qiblahData.offset.toInt()}°',
                                   ),
                                 ],
                               ),
@@ -383,7 +358,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
 
                         const SizedBox(height: 20),
                         Text(
-                          'أدر هاتفك حتى يتجه السهم نحو القبلة',
+                          'أدر هاتفك حتى يشير السهم إلى الأعلى تماماً',
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.5),
                             fontSize: 13,
