@@ -80,12 +80,13 @@ class HomeScreen extends StatelessWidget {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const QiblaScreen()));
                       }),
                       // ← البطاقة الجديدة للمصحف الشريف
-                      _buildGridItem(context, "المصحف الشريف", Icons.menu_book, Colors.greenAccent, () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const YasserDossariQuranPage()));
-                      }),
-                      _buildGridItem(context, "الاذكار", Icons.menu_book, Colors.greenAccent, () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const HisnElMuslimPage()));
-                      }),
+                      _buildGridItem(context, "القرآن الكريم", Icons.menu_book, Colors.greenAccent, () {
+  Navigator.push(context, MaterialPageRoute(builder: (_) => const YasserDossariQuranPage()));
+}),
+_buildGridItem(context, "الاذكار", Icons.volunteer_activism, Colors.tealAccent, () {
+  Navigator.push(context, MaterialPageRoute(builder: (_) => const HisnElMuslimPage()));
+}),
+
                     ],
                   ),
                   StreamBuilder<User?>(
