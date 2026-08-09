@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -41,7 +40,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // دالة تحويل أخطاء Firebase إلى رسائل عربية واضحة
   String _getAuthErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
@@ -67,7 +65,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    // التحقق المحلي قبل الاتصال بـ Firebase
     if (email.isEmpty && password.isEmpty) {
       _showErrorSnackBar("يرجى إدخال البريد الإلكتروني وكلمة المرور");
       return;
@@ -88,20 +85,14 @@ class _LoginScreenState extends State<LoginScreen> {
         email: email,
         password: password,
       );
-
       await _handleRememberMe();
-
       if (mounted) Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       debugPrint("Login Auth Error Code: ${e.code}");
-      if (mounted) {
-        _showErrorSnackBar(_getAuthErrorMessage(e));
-      }
+      if (mounted) _showErrorSnackBar(_getAuthErrorMessage(e));
     } catch (e) {
       debugPrint("Login General Error: $e");
-      if (mounted) {
-        _showErrorSnackBar("حدث خطأ أثناء الاتصال بالخادم");
-      }
+      if (mounted) _showErrorSnackBar("حدث خطأ أثناء الاتصال بالخادم");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -111,10 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(color: Colors.white, fontSize: 14),
-        ),
+        content: Text(message, style: const TextStyle(color: Colors.white, fontSize: 14)),
         backgroundColor: Colors.redAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -126,37 +114,53 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(
-                  'https://images.unsplash.com/photo-1590076215667-873d47343e06?q=80&w=2070',
-                ),
-                fit: BoxFit.cover,
-              ),
-            ),
+      extendBodyBehindAppBar: true,
+      body: Container(
+        // الخلفية الرسمية
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF2E7D32), // أخضر غامق
+              Color(0xFF42A5F5), // أزرق
+              Color(0xFFF5F5F5), // رمادي فاتح
+            ],
+            stops: [0.0, 0.5, 1.0],
           ),
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(color: Colors.black.withOpacity(0.6)),
-          ),
-          Center(
+        ),
+        child: SafeArea(
+          child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(30.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    "دخول أولياء الأمور",
-                    style: TextStyle(
-                      fontSize: 24,
+                  // شريط عنوان أبيض أنيق
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                    decoration: BoxDecoration(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                        ),
+                      ],
+                    ),
+                    child: const Text(
+                      "دخول أولياء الأمور",
+                      style: TextStyle(
+                        fontSize: 22,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 30),
+
+                  // حقل البريد الإلكتروني
                   _buildTextField(
                     _emailController,
                     "البريد الإلكتروني",
@@ -164,43 +168,65 @@ class _LoginScreenState extends State<LoginScreen> {
                     keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 15),
+
+                  // حقل كلمة المرور
                   _buildTextField(
                     _passwordController,
                     "كلمة المرور",
                     Icons.lock,
                     obscure: true,
                   ),
-                  Theme(
-                    data: ThemeData(unselectedWidgetColor: Colors.white70),
-                    child: CheckboxListTile(
-                      title: const Text(
-                        "تذكرني",
-                        style: TextStyle(color: Colors.white70),
+                  const SizedBox(height: 10),
+
+                  // خيار "تذكرني"
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: Checkbox(
+                          value: _rememberMe,
+                          onChanged: (bool? value) {
+                            setState(() => _rememberMe = value ?? false);
+                          },
+                          activeColor: Colors.teal,
+                          checkColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                        ),
                       ),
-                      value: _rememberMe,
-                      activeColor: Colors.tealAccent,
-                      checkColor: Colors.black,
-                      contentPadding: EdgeInsets.zero,
-                      controlAffinity: ListTileControlAffinity.leading,
-                      onChanged: (bool? value) {
-                        setState(() => _rememberMe = value ?? false);
-                      },
-                    ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        "تذكرني",
+                        style: TextStyle(color: Colors.black54, fontSize: 14),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
+
+                  const SizedBox(height: 25),
+
+                  // زر الدخول
                   _isLoading
-                      ? const CircularProgressIndicator(color: Colors.tealAccent)
-                      : ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.tealAccent[700],
-                            minimumSize: const Size(double.infinity, 50),
-                          ),
-                          onPressed: _login,
-                          child: const Text(
-                            "دخول",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
+                      ? const CircularProgressIndicator(color: Colors.teal)
+                      : SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.teal.shade600,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              elevation: 2,
+                            ),
+                            onPressed: _login,
+                            child: const Text(
+                              "دخول",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -208,7 +234,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -224,16 +250,25 @@ class _LoginScreenState extends State<LoginScreen> {
       controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.white),
+      style: const TextStyle(color: Colors.black87, fontSize: 16),
       decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: Colors.white70),
+        prefixIcon: Icon(icon, color: Colors.teal.shade600),
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.white70),
+        labelStyle: TextStyle(color: Colors.grey.shade600),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.1),
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.teal.shade600, width: 2),
         ),
       ),
     );
