@@ -77,8 +77,8 @@ class HomeScreen extends StatelessWidget {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const DonateScreen()));
                       }),
                       _buildGridItem(context, "القبلة", Icons.explore, Colors.redAccent, () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const QiblaScreen()));
-                      }),
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => QiblaScreen()));
+   }),
                       // ← البطاقة الجديدة للمصحف الشريف
                       _buildGridItem(context, "القرآن الكريم", Icons.menu_book, Colors.greenAccent, () {
   Navigator.push(context, MaterialPageRoute(builder: (_) => const YasserDossariQuranPage()));
