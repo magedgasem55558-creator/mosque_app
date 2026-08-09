@@ -1,42 +1,167 @@
 import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
+  NotificationService._();
+
   static final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
 
+  static StreamSubscription<RemoteMessage>? _fcmMessageSubscription;
+  static StreamSubscription<RemoteMessage>? _fcmTokenSubscription;
+  static StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
+      _childrenSub;
+
+  static bool _initialized = false;
+
+  // ================================================================
+  // قنوات الإشعارات
+  // ================================================================
+
+  static const String dhikrChannelId = 'dhikr_channel';
+  static const String generalChannelId = 'mosque_channel';
+  static const String gradesChannelId = 'grades_channel';
+
+  // ================================================================
+  // الأذكار
+  // ================================================================
+
   static const List<String> dhikrList = [
-    "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، سُبْحَانَ اللَّهِ الْعَظِيمِ",
-    "لاَ إِلَهَ إِلاَّ أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظَّالِمِينَ",
-    "سُبْحَانَ اللَّهِ، وَالْحَمْدُ لِلَّهِ، وَلاَ إِلَهَ إِلاَّ اللَّهُ، وَاللَّهُ أَكْبَرُ",
-    "أَسْتَغْفِرُ اللَّهَ الَّذِي لاَ إِلَهَ إِلاَّ هُوَ الْحَيُّ الْقَيُّومُ وَأَتُوبُ إِلَيْهِ",
-    "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ",
-    "لاَ حَوْلَ وَلاَ قُوَّةَ إِلاَّ بِاللَّهِ",
-    "رَبِّ اغْفِرْ لِي وَتُبْ عَلَيَّ إِنَّكَ أَنْتَ التَّوَّابُ الرَّحِيمُ",
-    "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ عَدَدَ خَلْقِهِ وَرِضَا نَفْسِهِ وَزِنَةَ عَرْشِهِ وَمِدَادَ كَلِمَاتِهِ",
-    "اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا، وَرِزْقًا طَيِّبًا، وَعَمَلاً مُتَقَبَّلاً",
-    "اللَّهُمَّ أَجِرْنِي مِنَ النَّارِ",
-    "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ (مائة مرة)",
-    "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
-    "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنْ شَرِّ مَا عَمِلْتُ، وَمِنْ شَرِّ مَا لَمْ أَعْمَلْ",
-    "رَضِيتُ بِاللَّهِ رَبًّا، وَبِالْإِسْلَامِ دِينًا، وَبِمُحَمَّدٍ نَبِيًّا وَرَسُولاً",
-    "يَا حَيُّ يَا قَيُّومُ، بِرَحْمَتِكَ أَسْتَغِيثُ",
+    'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، سُبْحَانَ اللَّهِ الْعَظِيمِ',
+
+    'لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، '
+        'لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ',
+
+    'أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ',
+
+    'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ',
+
+    'سُبْحَانَ اللَّهِ، وَالْحَمْدُ لِلَّهِ، '
+        'وَلَا إِلَهَ إِلَّا اللَّهُ، وَاللَّهُ أَكْبَرُ',
+
+    'اللَّهُمَّ صَلِّ وَسَلِّمْ وَبَارِكْ عَلَى نَبِيِّنَا مُحَمَّدٍ',
+
+    'رَبِّ اغْفِرْ لِي وَتُبْ عَلَيَّ، إِنَّكَ أَنْتَ التَّوَّابُ الرَّحِيمُ',
+
+    'رَضِيتُ بِاللَّهِ رَبًّا، وَبِالْإِسْلَامِ دِينًا، '
+        'وَبِمُحَمَّدٍ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ نَبِيًّا',
+
+    'اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ',
+
+    'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ، '
+        'وَأَعُوذُ بِكَ مِنَ الْعَجْزِ وَالْكَسَلِ',
+
+    'حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ، '
+        'عَلَيْهِ تَوَكَّلْتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ',
+
+    'اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ',
+
+    'يَا حَيُّ يَا قَيُّومُ، بِرَحْمَتِكَ أَسْتَغِيثُ',
+
+    'اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا، '
+        'وَرِزْقًا طَيِّبًا، وَعَمَلًا مُتَقَبَّلًا',
+
+    'اللَّهُمَّ أَجِرْنِي مِنَ النَّارِ',
+
+    'اللَّهُمَّ إِنِّي أَسْأَلُكَ الْجَنَّةَ وَأَعُوذُ بِكَ مِنَ النَّارِ',
+
+    'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ عَدَدَ خَلْقِهِ، '
+        'وَرِضَا نَفْسِهِ، وَزِنَةَ عَرْشِهِ، وَمِدَادَ كَلِمَاتِهِ',
+
+    'اللَّهُمَّ اغْفِرْ لِي ذَنْبِي كُلَّهُ، '
+        'دِقَّهُ وَجِلَّهُ، أَوَّلَهُ وَآخِرَهُ',
+
+    'اللَّهُمَّ اهْدِنِي وَسَدِّدْنِي',
+
+    'اللَّهُمَّ بَارِكْ لِي فِي وَقْتِي وَعَمَلِي وَرِزْقِي',
+
+    'رَبِّ زِدْنِي عِلْمًا',
+
+    'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً، '
+        'وَفِي الْآخِرَةِ حَسَنَةً، وَقِنَا عَذَابَ النَّارِ',
+
+    'رَبَّنَا لَا تُزِغْ قُلُوبَنَا بَعْدَ إِذْ هَدَيْتَنَا، '
+        'وَهَبْ لَنَا مِنْ لَدُنْكَ رَحْمَةً',
+
+    'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنْ شَرِّ مَا عَمِلْتُ، '
+        'وَمِنْ شَرِّ مَا لَمْ أَعْمَلْ',
+
+    'اللَّهُمَّ ارْحَمْنِي وَاغْفِرْ لِي وَاهْدِنِي وَعَافِنِي وَارْزُقْنِي',
+
+    'اللَّهُمَّ اكْفِنِي بِحَلَالِكَ عَنْ حَرَامِكَ، '
+        'وَأَغْنِنِي بِفَضْلِكَ عَمَّنْ سِوَاكَ',
+
+    'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
+
+    'اللَّهُ أَكْبَرُ، اللَّهُ أَكْبَرُ، اللَّهُ أَكْبَرُ',
+
+    'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ',
+
+    'سُبْحَانَ اللَّهِ الْعَظِيمِ',
+
+    'أَسْتَغْفِرُ اللَّهَ الَّذِي لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ وَأَتُوبُ إِلَيْهِ',
+
+    'اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ',
+
+    'لَا إِلَهَ إِلَّا أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظَّالِمِينَ',
+
+    'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْكُفْرِ وَالْفَقْرِ وَعَذَابِ الْقَبْرِ',
+
+    'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنْ زَوَالِ نِعْمَتِكَ، '
+        'وَتَحَوُّلِ عَافِيَتِكَ، وَفُجَاءَةِ نِقْمَتِكَ، وَجَمِيعِ سَخَطِكَ',
+
+    'اللَّهُمَّ أَصْلِحْ لِي شَأْنِي كُلَّهُ، وَلَا تَكِلْنِي إِلَى نَفْسِي طَرْفَةَ عَيْنٍ',
+
+    'اللَّهُمَّ رَبَّ النَّاسِ أَذْهِبِ الْبَأْسَ، '
+        'اشْفِ أَنْتَ الشَّافِي، لَا شِفَاءَ إِلَّا شِفَاؤُكَ',
+
+    'اللَّهُمَّ اجْعَلْنِي مِنَ التَّوَّابِينَ، وَاجْعَلْنِي مِنَ الْمُتَطَهِّرِينَ',
+
+    'اللَّهُمَّ حَسِّنْ خُلُقِي كَمَا حَسَّنْتَ خَلْقِي',
+
+    'اللَّهُمَّ اخْتِمْ لَنَا بِخَيْرٍ',
+
+    'اللَّهُمَّ بَلِّغْنَا رِضْوَانَكَ وَجَنَّتَكَ',
+
+    'اللَّهُمَّ اجْعَلِ الْقُرْآنَ رَبِيعَ قَلْبِي وَنُورَ صَدْرِي',
+
+    'اللَّهُمَّ اجْعَلْنَا مِنْ أَهْلِ الْقُرْآنِ',
+
+    'اللَّهُمَّ ارْزُقْنَا حُسْنَ الْخَاتِمَةِ',
+
+    'اللَّهُمَّ اغْفِرْ لَنَا وَلِوَالِدِينَا وَلِجَمِيعِ الْمُسْلِمِينَ',
+
+    'اللَّهُمَّ اجْعَلْ أَيَّامَنَا طَاعَةً وَعِبَادَةً وَقُرْبًا مِنْكَ',
   ];
 
-  // ═════════════════════ تهيئة الإشعارات ═════════════════════
-  static Future<void> init() async {
-    tz.initializeTimeZones();
-    try {
-      tz.setLocalLocation(tz.getLocation('Asia/Riyadh'));
-    } catch (_) {}
+  // ================================================================
+  // التهيئة الرئيسية
+  // ================================================================
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+  static Future<void> init() async {
+    if (_initialized) return;
+
+    tz.initializeTimeZones();
+
+    // اليمن توقيته UTC+3، ونستخدم صنعاء كمرجع.
+    try {
+      tz.setLocalLocation(tz.getLocation('Asia/Aden'));
+    } catch (_) {
+      try {
+        tz.setLocalLocation(tz.getLocation('Asia/Riyadh'));
+      } catch (_) {}
+    }
+
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -44,93 +169,226 @@ class NotificationService {
     );
 
     await _plugin.initialize(
-      const InitializationSettings(android: androidSettings, iOS: iosSettings),
+      const InitializationSettings(
+        android: androidSettings,
+        iOS: iosSettings,
+      ),
     );
 
     final androidPlugin = _plugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
 
     if (androidPlugin != null) {
-      // طلب إذن الإشعارات لأندرويد 13+
       await androidPlugin.requestNotificationsPermission();
-      // طلب إذن المنبهات الدقيقة لضمان جدولة الإشعارات المحلية بدقة
-      await androidPlugin.requestExactAlarmsPermission();
 
-      const dhikrChannel = AndroidNotificationChannel(
-        'dhikr_channel',
-        'أذكار',
-        description: 'إشعارات الأذكار الدوريّة',
-        importance: Importance.max,
-        playSound: true,
-      );
-      await androidPlugin.createNotificationChannel(dhikrChannel);
+      // قد لا تكون متاحة في بعض إصدارات Android.
+      try {
+        await androidPlugin.requestExactAlarmsPermission();
+      } catch (e) {
+        debugPrint('Exact alarm permission: $e');
+      }
+
+      await _createNotificationChannels(androidPlugin);
     }
+
+    _initialized = true;
 
     await _initFCM();
   }
 
-  // ═════════════════════ FCM ═════════════════════
+  // ================================================================
+  // إنشاء قنوات الإشعارات
+  // ================================================================
+
+  static Future<void> _createNotificationChannels(
+    AndroidFlutterLocalNotificationsPlugin androidPlugin,
+  ) async {
+    const dhikrChannel = AndroidNotificationChannel(
+      dhikrChannelId,
+      'الأذكار والتذكير',
+      description: 'تذكيرات الأذكار الدورية',
+      importance: Importance.max,
+      playSound: true,
+    );
+
+    const generalChannel = AndroidNotificationChannel(
+      generalChannelId,
+      'إشعارات المسجد',
+      description: 'الإشعارات العامة لتطبيق مسجدنا الذكي',
+      importance: Importance.max,
+      playSound: true,
+    );
+
+    const gradesChannel = AndroidNotificationChannel(
+      gradesChannelId,
+      'درجات الأبناء',
+      description: 'إشعارات تحديث درجات ونقاط الأبناء',
+      importance: Importance.max,
+      playSound: true,
+    );
+
+    await androidPlugin.createNotificationChannel(dhikrChannel);
+    await androidPlugin.createNotificationChannel(generalChannel);
+    await androidPlugin.createNotificationChannel(gradesChannel);
+  }
+
+  // ================================================================
+  // Firebase Cloud Messaging
+  // ================================================================
+
   static Future<void> _initFCM() async {
     try {
-      final settings = await FirebaseMessaging.instance.requestPermission(
-        alert: true, badge: true, sound: true,
+      final messaging = FirebaseMessaging.instance;
+
+      final settings = await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
       );
-      if (settings.authorizationStatus != AuthorizationStatus.authorized) return;
 
-      final token = await FirebaseMessaging.instance.getToken();
+      debugPrint(
+        'FCM Permission: ${settings.authorizationStatus}',
+      );
+
+      if (settings.authorizationStatus ==
+          AuthorizationStatus.denied) {
+        return;
+      }
+
+      final token = await messaging.getToken();
+
       debugPrint('FCM Token: $token');
-      _saveTokenToFirestore(token);
 
-      FirebaseMessaging.onMessage.listen(_showFCMNotification);
+      await _saveTokenToFirestore(token);
+
+      await _fcmMessageSubscription?.cancel();
+
+      _fcmMessageSubscription =
+          FirebaseMessaging.onMessage.listen(
+        (RemoteMessage message) async {
+          await showLocalNotificationFromMessage(message);
+        },
+      );
+
+      await _fcmTokenSubscription?.cancel();
+
+      _fcmTokenSubscription =
+          messaging.onTokenRefresh.listen((newToken) async {
+        debugPrint('FCM Token refreshed: $newToken');
+
+        await _saveTokenToFirestore(newToken);
+      });
     } catch (e) {
       debugPrint('فشل إعداد FCM: $e');
     }
   }
 
-  static void _showFCMNotification(RemoteMessage message) {
-    final notification = message.notification;
-    if (notification == null) return;
-    _plugin.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'mosque_channel',
-          'إشعارات المسجد',
-          channelDescription: 'إشعارات تطبيق المسجد العامة',
-          importance: Importance.max,
-          priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
-        ),
-        iOS: DarwinNotificationDetails(),
-      ),
-      payload: message.data.toString(),
-    );
-  }
+  // ================================================================
+  // حفظ FCM Token
+  // ================================================================
 
-  static void showLocalNotificationFromMessage(RemoteMessage message) {
-    _showFCMNotification(message);
-  }
+  static Future<void> _saveTokenToFirestore(
+    String? token,
+  ) async {
+    if (token == null || token.isEmpty) return;
 
-  static Future<void> _saveTokenToFirestore(String? token) async {
-    if (token == null) return;
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      await FirebaseFirestore.instance.collection('parents').doc(user.uid).set({
-        'fcmToken': token,
-        'lastUpdated': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) return;
+
+      await FirebaseFirestore.instance
+          .collection('parents')
+          .doc(user.uid)
+          .set(
+        {
+          'fcmToken': token,
+          'lastUpdated': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } catch (e) {
+      debugPrint('فشل حفظ FCM Token: $e');
     }
   }
 
-  // ═════════════════════ جدولة الأذكار كل نصف ساعة ═════════════════════
+  // ================================================================
+  // إشعار FCM عندما يكون التطبيق مفتوحًا
+  // ================================================================
+
+  static Future<void> showLocalNotificationFromMessage(
+    RemoteMessage message,
+  ) async {
+    try {
+      final notification = message.notification;
+
+      final title =
+          notification?.title ??
+          message.data['title']?.toString() ??
+          'مسجدنا الذكي';
+
+      final body =
+          notification?.body ??
+          message.data['body']?.toString() ??
+          'لديك إشعار جديد';
+
+      await _plugin.show(
+        DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        title,
+        body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            generalChannelId,
+            'إشعارات المسجد',
+            channelDescription:
+                'إشعارات تطبيق المسجد العامة',
+            importance: Importance.max,
+            priority: Priority.high,
+            playSound: true,
+            icon: '@mipmap/ic_launcher',
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        payload: message.data.toString(),
+      );
+    } catch (e) {
+      debugPrint(
+        'فشل عرض إشعار FCM: $e',
+      );
+    }
+  }
+
+  // ================================================================
+  // جدولة الأذكار
+  // ================================================================
+
   static Future<void> scheduleDhikr() async {
     try {
+      if (!_initialized) {
+        await init();
+      }
+
+      // إلغاء الجدول السابق حتى لا تتكرر الإشعارات.
+      for (int totalMinutes = 8 * 60;
+          totalMinutes <= 22 * 60;
+          totalMinutes += 30) {
+        await _plugin.cancel(totalMinutes);
+      }
+
       final now = tz.TZDateTime.now(tz.local);
 
-      // الجدولة من الساعة 8 صباحاً وحتى 10 مساءً كل 30 دقيقة
-      for (int totalMinutes = 8 * 60; totalMinutes <= 22 * 60; totalMinutes += 30) {
+      int dhikrIndex = 0;
+
+      // من 8 صباحاً حتى 10 مساءً كل 30 دقيقة.
+      for (int totalMinutes = 8 * 60;
+          totalMinutes <= 22 * 60;
+          totalMinutes += 30) {
         final hour = totalMinutes ~/ 60;
         final minute = totalMinutes % 60;
 
@@ -143,113 +401,136 @@ class NotificationService {
           minute,
         );
 
-        if (scheduledDate.isBefore(now)) {
-          scheduledDate = scheduledDate.add(const Duration(days: 1));
+        if (!scheduledDate.isAfter(now)) {
+          scheduledDate = scheduledDate.add(
+            const Duration(days: 1),
+          );
         }
 
-        final index = (totalMinutes ~/ 30) % dhikrList.length;
+        final dhikr =
+            dhikrList[dhikrIndex % dhikrList.length];
 
-        // إلغاء المعرف الخاص بهذا الوقت فقط لمنع التكرار قبل إعادة الجدولة
-        await _plugin.cancel(totalMinutes);
+        dhikrIndex++;
 
         await _plugin.zonedSchedule(
           totalMinutes,
-          'ذكر الله',
-          dhikrList[index],
+          'ذكر الله 🌿',
+          dhikr,
           scheduledDate,
           const NotificationDetails(
             android: AndroidNotificationDetails(
-              'dhikr_channel',
-              'أذكار',
-              channelDescription: 'أذكار نصف ساعة',
+              dhikrChannelId,
+              'الأذكار والتذكير',
+              channelDescription:
+                  'تذكيرات الأذكار الدورية',
               importance: Importance.max,
               priority: Priority.high,
               playSound: true,
+              icon: '@mipmap/ic_launcher',
             ),
-            iOS: DarwinNotificationDetails(),
+            iOS: DarwinNotificationDetails(
+              presentAlert: true,
+              presentBadge: true,
+              presentSound: true,
+            ),
           ),
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-          matchDateTimeComponents: DateTimeComponents.time,
+          androidScheduleMode:
+              AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation
+                  .absoluteTime,
+          matchDateTimeComponents:
+              DateTimeComponents.time,
         );
       }
+
+      debugPrint('تمت جدولة الأذكار بنجاح');
     } catch (e) {
-      debugPrint('فشل جدولة الأذكار: $e');
+      debugPrint(
+        'فشل جدولة الأذكار: $e',
+      );
     }
   }
 
-  // ═════════════════════ دالة اختبورية لإشعارات فورية ═════════════════════
+  // ================================================================
+  // إلغاء جميع أوقات الأذكار
+  // ================================================================
+
+  static Future<void> cancelDhikr() async {
+    for (int totalMinutes = 8 * 60;
+        totalMinutes <= 22 * 60;
+        totalMinutes += 30) {
+      await _plugin.cancel(totalMinutes);
+    }
+  }
+
+  // ================================================================
+  // إشعار اختباري
+  // ================================================================
+
   static Future<void> showTestNotification() async {
     await _plugin.show(
-      999,
-      'إشعار اختباري',
-      'تم إرسال الإشعار بنجاح!',
+      999999,
+      'مسجدنا الذكي 🌙',
+      'تم تفعيل الإشعارات بنجاح',
       const NotificationDetails(
         android: AndroidNotificationDetails(
-          'dhikr_channel',
-          'أذكار',
+          generalChannelId,
+          'إشعارات المسجد',
+          channelDescription:
+              'إشعارات تطبيق المسجد العامة',
           importance: Importance.max,
           priority: Priority.high,
-        ),
-      ),
-    );
-  }
-
-  // ═════════════════════ الاستماع لرصد درجات الأبناء ═════════════════════
-  static StreamSubscription? _childrenSub;
-
-  static void startListeningToChildrenGrades(String parentId) {
-    _childrenSub?.cancel();
-    _childrenSub = FirebaseFirestore.instance
-        .collection('children')
-        .where('parentId', isEqualTo: parentId)
-        .snapshots()
-        .listen((snapshot) {
-      for (final change in snapshot.docChanges) {
-        if (change.type == DocumentChangeType.modified) {
-          final newData = change.doc.data();
-          if (newData == null) continue;
-
-          final childName = newData['name'] ?? 'الابن';
-          final newPoints = (newData['totalPoints'] ?? 0) as num;
-
-          _showGradeNotification(childName, newPoints.toDouble());
-        }
-      }
-    });
-  }
-
-  static void stopListeningToChildrenGrades() {
-    _childrenSub?.cancel();
-  }
-
-  static void _showGradeNotification(String childName, double totalPoints) {
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'grades_channel',
-      'رصد الدرجات',
-      description: 'إشعارات رصد الدرجات',
-      importance: Importance.max,
-      playSound: true,
-    );
-    final androidPlugin = _plugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    androidPlugin?.createNotificationChannel(channel);
-
-    _plugin.show(
-      childName.hashCode + DateTime.now().millisecond,
-      'تحديث في الدرجات',
-      'مجموع نقاط $childName الحالي هو $totalPoints نقطة',
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'grades_channel',
-          'رصد الدرجات',
-          channelDescription: 'إشعارات رصد الدرجات',
-          importance: Importance.max,
-          priority: Priority.high,
+          playSound: true,
           icon: '@mipmap/ic_launcher',
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
       ),
     );
   }
-}
+
+  // ================================================================
+  // مراقبة درجات الأبناء
+  // ================================================================
+
+  static void startListeningToChildrenGrades(
+    String parentId,
+  ) {
+    _childrenSub?.cancel();
+
+    _childrenSub = FirebaseFirestore.instance
+        .collection('children')
+        .where(
+          'parentId',
+          isEqualTo: parentId,
+        )
+        .snapshots()
+        .listen(
+      (snapshot) {
+        for (final change in snapshot.docChanges) {
+          if (change.type !=
+              DocumentChangeType.modified) {
+            continue;
+          }
+
+          final data = change.doc.data();
+
+          if (data == null) continue;
+
+          final childName =
+              data['name']?.toString() ?? 'الابن';
+
+          final totalPointsValue =
+              data['totalPoints'];
+
+          final totalPoints =
+              totalPointsValue is num
+                  ? totalPointsValue.toDouble()
+                  : double.tryParse(
+                        totalPointsValue
+                                ?.toString() ??
+                           
