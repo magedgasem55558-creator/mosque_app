@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // 👈 استيراد مكتبة Firestore
 
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
@@ -9,6 +10,13 @@ void main() async {
 
   // تهيئة Firebase الأساسية
   await Firebase.initializeApp();
+
+  // ⚡ تفعيل الكاش اللامحدود والتخزين المحلي لزيادة السرعة
+  FirebaseFirestore.instance.settings = const Settings(
+    localCacheSettings: PersistentLocalCacheSettings(
+      sizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    ),
+  );
 
   runApp(const MosqueApp());
 }
