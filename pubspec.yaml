@@ -1,0 +1,60 @@
+name: mosque_app
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.10.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # الأساسيات
+  cupertino_icons: ^1.0.8
+  intl: ^0.20.2
+  timeago: ^3.7.1
+
+  # Firebase
+  firebase_core: ^3.1.1
+  cloud_firestore: ^5.0.2
+  firebase_auth: ^5.1.2
+  firebase_messaging: ^15.0.3
+
+  # إشعارات محلية
+  flutter_local_notifications: ^17.1.2
+
+  # الموقع والقبلة
+  geolocator: ^14.0.2
+  flutter_qiblah: ^3.2.0
+
+  # أوقات الصلاة (الأذان)
+  adhan: 2.0.0+1
+
+  # تخزين وروابط
+  shared_preferences: ^2.2.2
+  url_launcher: ^6.2.5
+
+  # التوقيتات والجدولة
+  timezone: ^0.9.4
+
+  # تشغيل الصوت وتنزيل الملفات (خاص بالمصحف)
+  audioplayers: ^5.2.1
+  dio: ^5.4.0              # نسخة واحدة فقط
+  path_provider: ^2.1.2    # نسخة واحدة فقط
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo.png"
