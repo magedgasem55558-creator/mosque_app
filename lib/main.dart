@@ -2,29 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:timezone/data/latest_all.dart' as tz; // 👈 استيراد تهيئة التوقيت
+import 'package:timezone/data/latest_all.dart' as tz;
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/notification_service.dart';
 
+// 1. معالج الخلفية لإشعارات FCM (يجب أن يكون دائماً Top-Level Function)
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  NotificationService.showLocalNotificationFromMessage(message);
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. تهيئة المناطق الزمنية الضرورية لجدولة الإشعارات
+  // تهيئة المنطقة الزمنية
   tz.initializeTimeZones();
 
-  // 2. تهيئة Firebase تلقائياً اعتماداً على ملف google-services.json لنظام الأندرويد
+  // تهيئة Firebase والمعالج في الخلفية
   try {
     await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   } catch (e) {
     debugPrint('خطأ في تهيئة Firebase: $e');
-  }
-
-  // طلب إذن الإشعارات
-  try {
-    await FirebaseMessaging.instance.requestPermission();
-  } catch (e) {
-    debugPrint('لم يتم منح إذن الإشعارات: $e');
   }
 
   runApp(const MosqueApp());
@@ -38,21 +39,36 @@ class MosqueApp extends StatefulWidget {
 }
 
 class _MosqueAppState extends State<MosqueApp> {
+  String? _activeUserId;
+
   @override
   void initState() {
     super.initState();
-    // نبدأ الإشعارات والأذكار بعد أن يصبح التطبيق جاهزاً
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initNotifications();
-    });
+    _setupNotifications();
   }
 
-  Future<void> _initNotifications() async {
+  Future<void> _setupNotifications() async {
     try {
+      await FirebaseMessaging.instance.requestPermission();
       await NotificationService.init();
       await NotificationService.scheduleDhikr();
     } catch (e) {
-      debugPrint('تحذير: فشلت بعض إعدادات الإشعارات: $e');
+      debugPrint('تحذير: فشلت تهيئة الإشعارات: $e');
+    }
+  }
+
+  // إدارة الاستماع لدرجات الأبناء لمنع إعادة التسجيل عند كل Build
+  void _syncChildrenGradesListener(User? user) {
+    if (user != null) {
+      if (_activeUserId != user.uid) {
+        _activeUserId = user.uid;
+        NotificationService.startListeningToChildrenGrades(user.uid);
+      }
+    } else {
+      if (_activeUserId != null) {
+        _activeUserId = null;
+        NotificationService.stopListeningToChildrenGrades();
+      }
     }
   }
 
@@ -75,24 +91,31 @@ class _MosqueAppState extends State<MosqueApp> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
-              body: Center(child: CircularProgressIndicator(color: Colors.tealAccent)),
+              body: Center(
+                child: CircularProgressIndicator(color: Colors.tealAccent),
+              ),
             );
           }
 
-          // تفعيل أو إيقاف إشعارات الأبناء
-          if (snapshot.hasData) {
-            final user = snapshot.data!;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              NotificationService.startListeningToChildrenGrades(user.uid);
-            });
-          } else {
-            NotificationService.stopListeningToChildrenGrades();
-          }
+          final user = snapshot.data;
 
-          return const HomeScreen();
+          // تحديث حالة المستمع بأمان بعد اكتمال رسم الشاشة
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _syncChildrenGradesListener(user);
+          });
+
+          // التوجيه الصحيح بناءً على حالة تسجيل الدخول
+          if (user != null) {
+            return const HomeScreen();
+          } else {
+            return const LoginScreen();
+          }
         },
       ),
-      routes: {'/login': (context) => const LoginScreen()},
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
     );
   }
 }
