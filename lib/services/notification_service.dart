@@ -1,11 +1,11 @@
-import 'dart:async'; // <-- ضروري لـ StreamSubscription
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tz;
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _plugin =
@@ -31,12 +31,21 @@ class NotificationService {
 
   // ═════════════════════ تهيئة الإشعارات ═════════════════════
   static Future<void> init() async {
+    // 1. تهيئة التوقيت وتحديد الموقع الافتراضي لتجنب أخطاء Zone/Location
+    tz.initializeTimeZones();
+    try {
+      tz.setLocalLocation(tz.getLocation('Asia/Riyadh')); // تحديد المنطقة الزمنية
+    } catch (_) {
+      // في حال عدم توفر الرياض يختار الموقع الأول افتراضياً
+    }
+
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
+    
     await _plugin.initialize(
       const InitializationSettings(android: androidSettings, iOS: iosSettings),
     );
@@ -47,6 +56,7 @@ class NotificationService {
       importance: Importance.high,
       playSound: false,
     );
+
     final androidPlugin = _plugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     await androidPlugin?.createNotificationChannel(dhikrChannel);
@@ -92,7 +102,6 @@ class NotificationService {
     );
   }
 
-  // ✅ الدالة العامة التي يناديها FirebaseMessagingHandler
   static void showLocalNotificationFromMessage(RemoteMessage message) {
     _showFCMNotification(message);
   }
@@ -110,35 +119,44 @@ class NotificationService {
 
   // ═════════════════════ جدولة الأذكار كل نصف ساعة ═════════════════════
   static Future<void> scheduleDhikr() async {
-    await _plugin.cancelAll();
-    tz.initializeTimeZones();
-    final now = DateTime.now();
+    try {
+      await _plugin.cancelAll();
+      final now = tz.TZDateTime.now(tz.local);
 
-    for (int totalMinutes = 8 * 60; totalMinutes <= 22 * 60; totalMinutes += 30) {
-      final hour = totalMinutes ~/ 60;
-      final minute = totalMinutes % 60;
-      final scheduledDate = tz.TZDateTime.local(now.year, now.month, now.day, hour, minute);
-      if (scheduledDate.isBefore(now)) continue;
+      for (int totalMinutes = 8 * 60; totalMinutes <= 22 * 60; totalMinutes += 30) {
+        final hour = totalMinutes ~/ 60;
+        final minute = totalMinutes % 60;
+        
+        var scheduledDate = tz.TZDateTime(
+          tz.local, now.year, now.month, now.day, hour, minute,
+        );
+        
+        if (scheduledDate.isBefore(now)) {
+          scheduledDate = scheduledDate.add(const Duration(days: 1));
+        }
 
-      final index = (totalMinutes ~/ 30) % dhikrList.length;
-      await _plugin.zonedSchedule(
-        totalMinutes,
-        'ذكر الله',
-        dhikrList[index],
-        scheduledDate,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'dhikr_channel', 'أذكار',
-            channelDescription: 'أذكار نصف ساعة',
-            importance: Importance.high,
-            playSound: false,
+        final index = (totalMinutes ~/ 30) % dhikrList.length;
+        await _plugin.zonedSchedule(
+          totalMinutes,
+          'ذكر الله',
+          dhikrList[index],
+          scheduledDate,
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'dhikr_channel', 'أذكار',
+              channelDescription: 'أذكار نصف ساعة',
+              importance: Importance.high,
+              playSound: false,
+            ),
+            iOS: DarwinNotificationDetails(),
           ),
-          iOS: DarwinNotificationDetails(),
-        ),
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time,
-      );
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.time,
+        );
+      }
+    } catch (e) {
+      debugPrint('فشل جدولة الأذكار: $e');
     }
   }
 
@@ -154,13 +172,14 @@ class NotificationService {
         .listen((snapshot) {
       for (final change in snapshot.docChanges) {
         if (change.type == DocumentChangeType.modified) {
-          final newData = change.doc.data()!; // ✅ نضمن أنها ليست null
-          final oldPoints = (newData['totalPoints'] ?? 0) as num;
-          final newPoints = (newData['totalPoints'] ?? 0) as num;
+          final newData = change.doc.data();
+          if (newData == null) continue;
+
           final childName = newData['name'] ?? 'الابن';
-          if (newPoints > oldPoints) {
-            _showGradeNotification(childName, (newPoints - oldPoints).toDouble());
-          }
+          final newPoints = (newData['totalPoints'] ?? 0) as num;
+          
+          // يمكنك مقارنتها بحقل متوفر أو التنبيه عند التحديث
+          _showGradeNotification(childName, newPoints.toDouble());
         }
       }
     });
@@ -170,7 +189,7 @@ class NotificationService {
     _childrenSub?.cancel();
   }
 
-  static void _showGradeNotification(String childName, double addedPoints) {
+  static void _showGradeNotification(String childName, double totalPoints) {
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       'grades_channel', 'رصد الدرجات',
       description: 'إشعارات رصد الدرجات',
@@ -183,8 +202,8 @@ class NotificationService {
 
     _plugin.show(
       childName.hashCode + DateTime.now().millisecond,
-      'تم إضافة درجة',
-      'تم إضافة $addedPoints نقطة لـ $childName',
+      'تحديث في الدرجات',
+      'مجموع نقاط $childName الحالي هو $totalPoints نقطة',
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'grades_channel', 'رصد الدرجات',
