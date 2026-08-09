@@ -120,40 +120,299 @@ class _YasserDossariQuranPageState extends State<YasserDossariQuranPage> {
 
   // ---------- دالة عرض الحوار الإرشادي عند أول زيارة ----------
   Future<void> _showFirstTimeTip() async {
-    final prefs = await SharedPreferences.getInstance();
-    final hasSeenTip = prefs.getBool('quran_first_tip_shown') ?? false;
-    if (!hasSeenTip && mounted) {
-      await Future.delayed(const Duration(milliseconds: 600));
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Row(
-              children: [
-                const Icon(Icons.download_for_offline, color: Colors.teal),
-                const SizedBox(width: 10),
-                const Text("ميزة رائعة!", style: TextStyle(color: Colors.black87)),
-              ],
-            ),
-            content: const Text(
-              "يمكنك تنزيل أي سورة بصوت القارئ المفضل لديك، والاستماع إليها لاحقاً بدون الحاجة إلى الإنترنت.",
-              style: TextStyle(fontSize: 15, color: Colors.black54, height: 1.5),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  prefs.setBool('quran_first_tip_shown', true);
-                },
-                child: const Text("فهمت", style: TextStyle(color: Colors.teal)),
+  final prefs = await SharedPreferences.getInstance();
+
+  final hasSeenTip =
+      prefs.getBool('quran_first_tip_shown') ?? false;
+
+  if (!hasSeenTip && mounted) {
+    await Future.delayed(
+      const Duration(milliseconds: 600),
+    );
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          elevation: 10,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(
+            24,
+            24,
+            24,
+            8,
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(
+            24,
+            8,
+            24,
+            10,
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(
+            16,
+            0,
+            16,
+            16,
+          ),
+
+          // ======================================================
+          // العنوان
+          // ======================================================
+
+          title: Column(
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: Colors.teal.withOpacity(0.10),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.download_for_offline_rounded,
+                  color: Colors.teal,
+                  size: 34,
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              const Text(
+                'استمع للقرآن بدون إنترنت',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              Text(
+                'ميزة رائعة للاستماع في أي وقت',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.teal.shade700,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
+
+          // ======================================================
+          // المحتوى
+          // ======================================================
+
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+
+              Text(
+                'يمكنك تنزيل أي سورة بصوت القارئ '
+                'المفضل لديك، ثم الاستماع إليها لاحقًا '
+                'في أي وقت حتى بدون اتصال بالإنترنت.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey.shade700,
+                  height: 1.6,
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              // ==================================================
+              // الخطوة الأولى
+              // ==================================================
+
+              _buildTipItem(
+                icon: Icons.download_rounded,
+                title: 'حمّل السورة',
+                subtitle:
+                    'اختر السورة والقارئ ثم اضغط على زر التحميل.',
+              ),
+
+              const SizedBox(height: 10),
+
+              // ==================================================
+              // الخطوة الثانية
+              // ==================================================
+
+              _buildTipItem(
+                icon: Icons.wifi_off_rounded,
+                title: 'استمع بدون إنترنت',
+                subtitle:
+                    'بعد اكتمال التحميل يمكنك الاستماع إليها في أي وقت.',
+              ),
+
+              const SizedBox(height: 10),
+
+              // ==================================================
+              // ملاحظة
+              // ==================================================
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.teal.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.teal.withOpacity(0.12),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      color: Colors.teal.shade600,
+                      size: 19,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'يمكنك العثور على السور التي تم تنزيلها '
+                        'من قسم التنزيلات.',
+                        style: TextStyle(
+                          color: Colors.teal.shade800,
+                          fontSize: 12.5,
+                          height: 1.4,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // ======================================================
+          // الزر
+          // ======================================================
+
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: () async {
+                  await prefs.setBool(
+                    'quran_first_tip_shown',
+                    true,
+                  );
+
+                  if (ctx.mounted) {
+                    Navigator.pop(ctx);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  'فهمت، ابدأ الآن',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
         );
-      }
-    }
+      },
+    );
   }
+}
+
+// ================================================================
+// عنصر من عناصر شرح الميزة
+// ================================================================
+
+Widget _buildTipItem({
+  required IconData icon,
+  required String title,
+  required String subtitle,
+}) {
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.grey.shade50,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(
+        color: Colors.grey.shade200,
+      ),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: Colors.teal.withOpacity(0.10),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            icon,
+            color: Colors.teal,
+            size: 22,
+          ),
+        ),
+
+        const SizedBox(width: 11),
+
+        Expanded(
+          child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 3),
+
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 12,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
   String _getFileKey(Reciter reciter, int surahIndex) {
     return '${reciter.id}_${surahIndex + 1}';
