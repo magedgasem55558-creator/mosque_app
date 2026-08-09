@@ -1547,7 +1547,7 @@ class _YasserDossariQuranPageState
                     CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'المصحف الشريف',
+                    'القرآن الكريم',
                     style: TextStyle(
                       color:
                           QuranTheme.darkGreen,
