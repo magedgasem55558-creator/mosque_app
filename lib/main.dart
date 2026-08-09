@@ -2,29 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:timezone/data/latest_all.dart' as tz; // 👈 استيراد تهيئة التوقيت
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
-import 'services/notification_service.dart'; // سنستخدمها بعد تحميل التطبيق
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ تهيئة Firebase بنفس الطريقة القديمة الناجحة
-  await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: "AIzaSyC06KKxkehT1uPBT9k-r-d6MmB4RUuVy9Y",
-      authDomain: "mosque-system.firebaseapp.com",
-      projectId: "mosque-system",
-      storageBucket: "mosque-system.firebasestorage.app",
-      messagingSenderId: "905816133159",
-      appId: "1:905816133159:web:3b95d858815f91780e0802",
-    ),
-  );
+  // 1. تهيئة المناطق الزمنية الضرورية لجدولة الإشعارات
+  tz.initializeTimeZones();
 
-  // طلب إذن الإشعارات (خفيف ولا يؤثر)
-  FirebaseMessaging.instance.requestPermission();
+  // 2. تهيئة Firebase تلقائياً اعتماداً على ملف google-services.json لنظام الأندرويد
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('خطأ في تهيئة Firebase: $e');
+  }
 
-  // ❌ لا نستدعي NotificationService هنا
+  // طلب إذن الإشعارات
+  try {
+    await FirebaseMessaging.instance.requestPermission();
+  } catch (e) {
+    debugPrint('لم يتم منح إذن الإشعارات: $e');
+  }
+
   runApp(const MosqueApp());
 }
 
@@ -39,7 +41,7 @@ class _MosqueAppState extends State<MosqueApp> {
   @override
   void initState() {
     super.initState();
-    // 🔔 نبدأ الإشعارات والأذكار بعد أن يصبح التطبيق جاهزاً
+    // نبدأ الإشعارات والأذكار بعد أن يصبح التطبيق جاهزاً
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initNotifications();
     });
