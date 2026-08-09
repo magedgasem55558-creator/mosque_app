@@ -4,14 +4,14 @@ import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-class QiblahPage extends StatefulWidget {
-  const QiblahPage({Key? key}) : super(key: key);
+class QiblaScreen extends StatefulWidget {
+  const QiblaScreen({Key? key}) : super(key: key);
 
   @override
-  State<QiblahPage> createState() => _QiblahPageState();
+  State<QiblaScreen> createState() => _QiblaScreenState();
 }
 
-class _QiblahPageState extends State<QiblahPage> {
+class _QiblaScreenState extends State<QiblaScreen> {
   // إحداثيات الكعبة المشرفة الدقيقة
   static const double _kaabaLat = 21.422487;
   static const double _kaabaLng = 39.826206;
