@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
+import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // تهيئة Firebase الأساسية
+  await Firebase.initializeApp();
 
   runApp(const MosqueApp());
 }
@@ -14,18 +21,28 @@ class MosqueApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'مسجدنا الذكي',
-      home: Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(
-          child: Text(
-            'التطبيق يعمل على Android',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-            ),
-          ),
+      builder: (context, child) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
+      theme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        colorSchemeSeed: Colors.tealAccent,
+        fontFamily: 'Cairo',
+        appBarTheme: const AppBarTheme(
+          centerTitle: true,
+          elevation: 0,
         ),
       ),
+      // جعل الصفحة الرئيسية هي HomeScreen بشكل مباشر
+      home: const HomeScreen(),
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
     );
   }
 }
