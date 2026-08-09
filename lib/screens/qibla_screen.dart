@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // 👈 استيراد مكتبة التحكم بالاهتزاز
 import 'package:flutter_qiblah/flutter_qiblah.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -14,12 +15,15 @@ class _QiblaScreenState extends State<QiblaScreen> {
   bool _hasPermission = false;
   bool _isLoading = true;
   String _statusMessage = 'جاري طلب صلاحيات الموقع...';
+  
+  // متغيرة لتفادي تكرار الاهتزاز باستمرار أثناء الثبات على القبلة
+  bool _hasVibrated = false;
 
-  // الألوان الرسمية للواجهة
-  static const Color darkBg = Color(0xFF0F172A); // Midnight Slate
+  // ألوان الواجهة الرسمية
+  static const Color darkBg = Color(0xFF0F172A);
   static const Color cardBg = Color(0xFF1E293B);
-  static const Color goldAccent = Color(0xFFD4AF37); // Royal Gold
-  static const Color greenAccent = Color(0xFF10B981); // Emerald Green
+  static const Color goldAccent = Color(0xFFD4AF37);
+  static const Color greenAccent = Color(0xFF10B981);
 
   @override
   void initState() {
@@ -57,6 +61,18 @@ class _QiblaScreenState extends State<QiblaScreen> {
       _hasPermission = true;
       _isLoading = false;
     });
+  }
+
+  // دالة التعامل مع الاهتزاز
+  void _triggerHapticFeedback(bool isFacingQiblah) {
+    if (isFacingQiblah) {
+      if (!_hasVibrated) {
+        HapticFeedback.mediumImpact(); // اهتزاز متوسط عند المحاذاة
+        _hasVibrated = true;
+      }
+    } else {
+      _hasVibrated = false; // إعادة الضبط عند الابتعاد عن القبلة
+    }
   }
 
   @override
@@ -106,7 +122,12 @@ class _QiblaScreenState extends State<QiblaScreen> {
 
                     // هامش قبول الاتجاه الصائب (5 درجات)
                     bool isFacingQiblah = diff.abs() < 5.0;
-                    Color activeColor = isFacingQiblah ? greenAccent : goldAccent;
+
+                    // 3. تشغيل الاهتزاز عند محاذاة القبلة
+                    _triggerHapticFeedback(isFacingQiblah);
+
+                    Color activeColor =
+                        isFacingQiblah ? greenAccent : goldAccent;
 
                     return SafeArea(
                       child: Column(
@@ -292,7 +313,8 @@ class _QiblaScreenState extends State<QiblaScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.location_off_rounded, size: 64, color: Colors.redAccent),
+            const Icon(Icons.location_off_rounded,
+                size: 64, color: Colors.redAccent),
             const SizedBox(height: 16),
             Text(
               _statusMessage,
@@ -304,7 +326,8 @@ class _QiblaScreenState extends State<QiblaScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: goldAccent,
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
