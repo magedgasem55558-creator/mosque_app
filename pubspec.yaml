@@ -26,7 +26,7 @@ dependencies:
   flutter_local_notifications: ^17.1.2
   timezone: ^0.9.4
 
-  # الموقع والقبلة والبوصلة والصلاحيات (تم تحديث geolocator إلى 14.0.2)
+  # الموقع والقبلة والبوصلة والصلاحيات
   geolocator: ^14.0.2
   flutter_qiblah: ^3.2.0
   flutter_compass: ^0.8.0
@@ -46,3 +46,20 @@ dependencies:
   dio: ^5.4.0
   path_provider: ^2.1.2
 
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/logo.png"
+  min_sdk_android: 21
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
