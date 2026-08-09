@@ -10,7 +10,6 @@ class DonateScreen extends StatelessWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Container(
-        // نفس التدرج الرسمي
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -45,74 +44,81 @@ class DonateScreen extends StatelessWidget {
                 hadith = data['hadith'] ?? hadith;
               }
 
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 20),
-                    // أيقونة التبرع
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(color: Colors.pink.withOpacity(0.2), blurRadius: 15),
-                        ],
+              // ⚡ هنا التعديل الجوهري لجعل الشاشة ممتلئة ⚡
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight, // يجعل الارتفاع لا يقل عن طول الشاشة
                       ),
-                      child: const Icon(Icons.favorite, color: Colors.pinkAccent, size: 60),
-                    ),
-                    const SizedBox(height: 30),
-                    // الحديث
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
-                        ],
-                      ),
-                      child: Text(
-                        hadith,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.black87,
-                          fontSize: 18,
-                          height: 1.6,
-                          fontWeight: FontWeight.w500,
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center, // يوزع العناصر في المنتصف
+                          children: [
+                            const SizedBox(height: 20),
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                boxShadow: [BoxShadow(color: Colors.pink.withOpacity(0.2), blurRadius: 15)],
+                              ),
+                              child: const Icon(Icons.favorite, color: Colors.pinkAccent, size: 60),
+                            ),
+                            const SizedBox(height: 30),
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                              ),
+                              child: Text(
+                                hadith,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 18,
+                                  height: 1.6,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+                            _buildDonationMethod(context, "عبر $bankName", accountNumber, Icons.account_balance),
+                            const SizedBox(height: 14),
+                            _buildDonationMethod(context, "عبر الموحدة للحوالات", transferName, Icons.send),
+                            
+                            // ⚡ إضافة Spacer هنا لا يعمل داخل ScrollView، لذا نستخدم SizedBox للتباعد ⚡
+                            const SizedBox(height: 30),
+                            
+                            Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.phone, color: Colors.teal, size: 20),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "تواصل مع لجنة المسجد: $phone",
+                                    style: const TextStyle(color: Colors.black87, fontSize: 16),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 30),
-                    // وسائل التبرع
-                    _buildDonationMethod(context, "عبر $bankName", accountNumber, Icons.account_balance),
-                    const SizedBox(height: 14),
-                    _buildDonationMethod(context, "عبر الموحدة للحوالات", transferName, Icons.send),
-                    const SizedBox(height: 30),
-                    // رقم التواصل
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.phone, color: Colors.teal, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            "تواصل مع لجنة المسجد: $phone",
-                            style: const TextStyle(color: Colors.black87, fontSize: 16),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),
@@ -121,24 +127,20 @@ class DonateScreen extends StatelessWidget {
     );
   }
 
+  // الدالة كما هي لم تتغير
   Widget _buildDonationMethod(BuildContext context, String title, String detail, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.teal.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
+            decoration: BoxDecoration(color: Colors.teal.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
             child: Icon(icon, color: Colors.teal, size: 26),
           ),
           const SizedBox(width: 16),
@@ -146,19 +148,9 @@ class DonateScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(color: Colors.black54, fontSize: 13),
-                ),
+                Text(title, style: const TextStyle(color: Colors.black54, fontSize: 13)),
                 const SizedBox(height: 4),
-                Text(
-                  detail,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text(detail, style: const TextStyle(color: Colors.black87, fontSize: 17, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
@@ -166,9 +158,7 @@ class DonateScreen extends StatelessWidget {
             icon: const Icon(Icons.copy, color: Colors.teal),
             onPressed: () {
               Clipboard.setData(ClipboardData(text: detail));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('تم نسخ النص')),
-              );
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم نسخ النص')));
             },
           ),
         ],
