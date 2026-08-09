@@ -1,285 +1,200 @@
-import 'dart:math';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter_qiblah/flutter_qiblah.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-class QiblaScreen extends StatefulWidget {
-  const QiblaScreen({super.key});
+class QiblahPage extends StatefulWidget {
+  const QiblahPage({Key? key}) : super(key: key);
 
   @override
-  State<QiblaScreen> createState() => _QiblaScreenState();
+  State<QiblahPage> createState() => _QiblahPageState();
 }
 
-class _QiblaScreenState extends State<QiblaScreen> {
-  bool hasPermission = false;
+class _QiblahPageState extends State<QiblahPage> {
+  // إحداثيات الكعبة المشرفة الدقيقة
+  static const double _kaabaLat = 21.422487;
+  static const double _kaabaLng = 39.826206;
+
+  double? _qiblahAngle;
+  bool _hasPermission = false;
+  bool _isLoading = true;
+  String _statusMessage = 'جاري تحديد الموقع وحساب اتجاه القبلة...';
 
   @override
   void initState() {
     super.initState();
-    _checkPermission();
+    _initQiblah();
   }
 
-  Future<void> _checkPermission() async {
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      await Geolocator.openLocationSettings();
-      return;
-    }
+  Future<void> _initQiblah() async {
+    // 1. طلب إذن الموقع
+    final status = await Permission.location.request();
 
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
-    }
+    if (status.isGranted) {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          _isLoading = false;
+          _statusMessage = 'يرجى تفعيل خدمة الموقع (GPS) في الهاتف.';
+        });
+        return;
+      }
 
-    if (permission == LocationPermission.deniedForever) {
-      await Geolocator.openAppSettings();
-      return;
-    }
+      try {
+        // 2. جلب موقع المستخدم بدقة عالية
+        Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
 
-    if (permission == LocationPermission.always ||
-        permission == LocationPermission.whileInUse) {
-      if (mounted) setState(() => hasPermission = true);
+        // 3. حساب زاوية القبلة بالنسبة للشمال الحقيقي
+        double qiblah = _calculateQiblahAngle(position.latitude, position.longitude);
+
+        setState(() {
+          _qiblahAngle = qiblah;
+          _hasPermission = true;
+          _isLoading = false;
+        });
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+          _statusMessage = 'حدث خطأ أثناء تحديد إحداثيات الموقع.';
+        });
+      }
+    } else {
+      setState(() {
+        _isLoading = false;
+        _statusMessage = 'يتطلب تحديد القبلة السماح لصلاحية الموقع.';
+      });
     }
   }
+
+  // المعادلة الرياضية الدقيقة لحساب اتجاه القبلة من أي مكان على الأرض
+  double _calculateQiblahAngle(double userLat, double userLng) {
+    double userLatRad = _degToRad(userLat);
+    double userLngRad = _degToRad(userLng);
+    double kaabaLatRad = _degToRad(_kaabaLat);
+    double kaabaLngRad = _degToRad(_kaabaLng);
+
+    double deltaLng = kaabaLngRad - userLngRad;
+
+    double y = math.sin(deltaLng);
+    double x = math.cos(userLatRad) * math.tan(kaabaLatRad) -
+        math.sin(userLatRad) * math.cos(deltaLng);
+
+    double qiblahRad = math.atan2(y, x);
+    double qiblahDeg = _radToDeg(qiblahRad);
+
+    return (qiblahDeg + 360) % 360;
+  }
+
+  double _degToRad(double degree) => degree * (math.pi / 180.0);
+  double _radToDeg(double radian) => radian * (180.0 / math.pi);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment.topCenter,
-            radius: 1.2,
-            colors: [
-              Color(0xFF0A0E27),
-              Color(0xFF1A1F3D),
-              Color(0xFF05070F),
-            ],
-            stops: [0.0, 0.6, 1.0],
-          ),
-        ),
-        child: !hasPermission
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.location_off, size: 80, color: Colors.grey[600]),
-                    const SizedBox(height: 16),
-                    Text(
-                      'تفعيل صلاحية الموقع',
-                      style: GoogleFonts.cairo(
-                        color: Colors.white70,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.location_searching, color: Colors.white),
-                      label: const Text('منح الصلاحية'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.tealAccent[700],
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 40,
-                          vertical: 14,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      onPressed: _checkPermission,
-                    ),
-                  ],
-                ),
-              )
-            : StreamBuilder<QiblahDirection>(
-                stream: FlutterQiblah.qiblahStream,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFFE6C87C),
-                      ),
-                    );
-                  }
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text(
-                        'حدث خطأ: ${snapshot.error}',
-                        style: const TextStyle(color: Colors.redAccent),
-                      ),
-                    );
-                  }
-
-                  final qiblahData = snapshot.data;
-                  if (qiblahData == null) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFFE6C87C),
-                      ),
-                    );
-                  }
-
-                  // qiblah تعطي مباشرة زاوية دوران السهم المطلوبة بالدرجات
-                  final qiblaAngle = qiblahData.qiblah; 
-                  final deviceHeading = qiblahData.direction;
-
-                  // تحويل الدرجات إلى دوران كامل (Turns) لاستخدام AnimatedRotation بشكل سلس
-                  final turns = (qiblaAngle % 360) / 360;
-
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      appBar: AppBar(
+        title: const Text('اتجاه القبلة'),
+        backgroundColor: Colors.teal,
+        centerTitle: true,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.teal))
+          : !_hasPermission
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'اتجاه القبلة',
-                          style: GoogleFonts.cairo(
-                            fontSize: 28,
+                          _statusMessage,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 16, color: Colors.red),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+                          onPressed: _initQiblah,
+                          child: const Text('إعادة المحاولة', style: TextStyle(color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : StreamBuilder<CompassEvent>(
+                  stream: FlutterCompass.events,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return const Center(child: Text('خطأ في قراءة حساس البوصلة بالجهاز'));
+                    }
+
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator(color: Colors.teal));
+                    }
+
+                    // اتجاه رأس الهاتف بالنسبة للشمال
+                    double? heading = snapshot.data?.heading;
+
+                    if (heading == null) {
+                      return const Center(child: Text('جهازك لا يحتوي على حساس البوصلة (Magnetometer)'));
+                    }
+
+                    // الفرق بين اتجاه الهاتف واتجاه القبلة
+                    double headingRad = _degToRad(heading);
+                    double qiblahRad = _degToRad(_qiblahAngle!);
+                    double directionToQiblah = qiblahRad - headingRad;
+
+                    // التحقق مما إذا كان الهاتف متجهاً للقبلة بدقة (هامش خطأ 3 درجات)
+                    double angleDifference = ((_radToDeg(directionToQiblah) + 180) % 360) - 180;
+                    bool isFacingQiblah = angleDifference.abs() < 3.0;
+
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          isFacingQiblah ? 'أنت تتجه نحو القبلة تماماً 🕋' : 'قم بتدوير الهاتف نحو السهم',
+                          style: TextStyle(
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFFE6C87C),
-                            shadows: const [
-                              Shadow(
-                                blurRadius: 15,
-                                color: Color(0xFFE6C87C),
-                                offset: Offset(0, 0),
-                              ),
-                            ],
+                            color: isFacingQiblah ? Colors.green.shade700 : Colors.teal,
                           ),
                         ),
-                        const SizedBox(height: 28),
-
-                        // البوصلة المزخرفة
-                        SizedBox(
-                          width: 280,
-                          height: 280,
+                        const SizedBox(height: 40),
+                        Center(
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
+                              // خلفية البوصلة (الدائرة الخارجية)
                               Container(
                                 width: 280,
                                 height: 280,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  gradient: const RadialGradient(
-                                    colors: [
-                                      Color(0xFF2A2F4A),
-                                      Color(0xFF12152A),
-                                    ],
-                                    radius: 0.8,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0xFFE6C87C)
-                                          .withOpacity(0.2),
-                                      blurRadius: 40,
-                                      spreadRadius: 10,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              ...List.generate(3, (index) {
-                                final radius = 60 + index * 50;
-                                return Container(
-                                  width: radius * 2,
-                                  height: radius * 2,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: const Color(0xFFE6C87C)
-                                          .withOpacity(0.15),
-                                      width: 1,
-                                    ),
-                                  ),
-                                );
-                              }),
-                              const Positioned(
-                                top: 10,
-                                child: Text(
-                                  'شمال',
-                                  style: TextStyle(
-                                    color: Color(0xFFE6C87C),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                  color: Colors.teal.withOpacity(0.05),
+                                  border: Border.all(
+                                    color: isFacingQiblah ? Colors.green : Colors.teal,
+                                    width: 4,
                                   ),
                                 ),
                               ),
-                              Positioned(
-                                bottom: 10,
-                                child: Text(
-                                  'جنوب',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.5),
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                left: 10,
-                                child: Text(
-                                  'غرب',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.5),
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                right: 10,
-                                child: Text(
-                                  'شرق',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.5),
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-
-                              // استخدام AnimatedRotation لمنح حركة انسيابية وسلسة دون أخطاء الذاكرة
-                              AnimatedRotation(
-                                turns: turns,
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeOutCubic,
-                                child: Stack(
-                                  alignment: Alignment.center,
+                              // إبرة البوصلة المتحركة الموجهة نحو القبلة
+                              Transform.rotate(
+                                angle: directionToQiblah,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Container(
-                                      width: 100,
-                                      height: 100,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color(0xFFE6C87C)
-                                                .withOpacity(0.35),
-                                            blurRadius: 40,
-                                            spreadRadius: 15,
-                                          ),
-                                        ],
-                                      ),
+                                    Icon(
+                                      Icons.navigation_rounded,
+                                      size: 100,
+                                      color: isFacingQiblah ? Colors.green.shade700 : Colors.teal,
                                     ),
+                                    const SizedBox(height: 10),
                                     const Icon(
-                                      Icons.navigation,
-                                      size: 80,
-                                      color: Color(0xFFE6C87C),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                width: 12,
-                                height: 12,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFE6C87C),
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Color(0xFFE6C87C),
-                                      blurRadius: 12,
+                                      Icons.mosque_rounded,
+                                      size: 32,
+                                      color: Colors.amber,
                                     ),
                                   ],
                                 ),
@@ -287,122 +202,15 @@ class _QiblaScreenState extends State<QiblaScreen> {
                             ],
                           ),
                         ),
-
-                        const SizedBox(height: 32),
-
-                        // بطاقة المعلومات
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 16,
-                            horizontal: 24,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFF1E2340),
-                                Color(0xFF0F1228),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: const Color(0xFFE6C87C).withOpacity(0.3),
-                              width: 1,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFE6C87C).withOpacity(0.05),
-                                blurRadius: 15,
-                                spreadRadius: 5,
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                '${qiblaAngle.toInt()}°',
-                                style: GoogleFonts.cairo(
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFFE6C87C),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'انحراف السهم عن القبلة',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.6),
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  _buildInfoChip(
-                                    icon: Icons.compass_calibration,
-                                    label: 'اتجاه الهاتف',
-                                    value: '${deviceHeading.toInt()}°',
-                                  ),
-                                  _buildInfoChip(
-                                    icon: Icons.location_pin,
-                                    label: 'زاوية القبلة',
-                                    value: '${qiblahData.offset.toInt()}°',
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 40),
                         Text(
-                          'أدر هاتفك حتى يشير السهم إلى الأعلى تماماً',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
-                            fontSize: 13,
-                          ),
+                          'زاوية القبلة: ${_qiblahAngle!.toStringAsFixed(1)}°',
+                          style: TextStyle(color: Colors.grey.shade700, fontSize: 15),
                         ),
                       ],
-                    ),
-                  );
-                },
-              ),
-      ),
-    );
-  }
-
-  Widget _buildInfoChip({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, color: const Color(0xFFE6C87C), size: 18),
-        const SizedBox(width: 6),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.5),
-                fontSize: 11,
-              ),
-            ),
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ],
+                    );
+                  },
+                ),
     );
   }
 }
