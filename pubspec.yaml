@@ -40,8 +40,8 @@ dependencies:
 
   # تشغيل الصوت وتنزيل الملفات (خاص بالمصحف)
   audioplayers: ^5.2.1
-  dio: ^5.4.0              # نسخة واحدة فقط
-  path_provider: ^2.1.2    # نسخة واحدة فقط
+  dio: ^5.4.0
+  path_provider: ^2.1.2
 
 dev_dependencies:
   flutter_test:
@@ -49,12 +49,13 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   flutter_launcher_icons: ^0.14.3
 
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/logo.png"
+  min_sdk_android: 21
+
 flutter:
   uses-material-design: true
   assets:
     - assets/images/
-
-flutter_launcher_icons:
-  android: true
-  ios: true
-  image_path: "assets/images/logo.png"
