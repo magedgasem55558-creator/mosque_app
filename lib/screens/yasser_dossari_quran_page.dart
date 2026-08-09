@@ -1,9 +1,9 @@
 import 'dart:io';
-import 'dart:ui'; // ← تمت إضافتها هنا
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Reciter {
   final String id;
@@ -85,6 +85,7 @@ class _YasserDossariQuranPageState extends State<YasserDossariQuranPage> {
     super.initState();
     _selectedReciter = _reciters[0];
     _checkDownloadedFiles();
+    _showFirstTimeTip();  // ← عرض الحوار الإرشادي عند أول فتح
 
     _audioPlayer.onPlayerStateChanged.listen((state) {
       if (mounted) {
@@ -115,6 +116,43 @@ class _YasserDossariQuranPageState extends State<YasserDossariQuranPage> {
   void dispose() {
     _audioPlayer.dispose();
     super.dispose();
+  }
+
+  // ---------- دالة عرض الحوار الإرشادي عند أول زيارة ----------
+  Future<void> _showFirstTimeTip() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenTip = prefs.getBool('quran_first_tip_shown') ?? false;
+    if (!hasSeenTip && mounted) {
+      await Future.delayed(const Duration(milliseconds: 600));
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Row(
+              children: [
+                const Icon(Icons.download_for_offline, color: Colors.teal),
+                const SizedBox(width: 10),
+                const Text("ميزة رائعة!", style: TextStyle(color: Colors.black87)),
+              ],
+            ),
+            content: const Text(
+              "يمكنك تنزيل أي سورة بصوت القارئ المفضل لديك، والاستماع إليها لاحقاً بدون الحاجة إلى الإنترنت.",
+              style: TextStyle(fontSize: 15, color: Colors.black54, height: 1.5),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  prefs.setBool('quran_first_tip_shown', true);
+                },
+                child: const Text("فهمت", style: TextStyle(color: Colors.teal)),
+              ),
+            ],
+          ),
+        );
+      }
+    }
   }
 
   String _getFileKey(Reciter reciter, int surahIndex) {
@@ -169,7 +207,7 @@ class _YasserDossariQuranPageState extends State<YasserDossariQuranPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('تم تحميل سورة ${_surahNames[index]} بصوت ${_selectedReciter.name} بنجاح!'),
-            backgroundColor: Colors.greenAccent.shade700,
+            backgroundColor: Colors.green,
           ),
         );
       }
@@ -225,84 +263,70 @@ class _YasserDossariQuranPageState extends State<YasserDossariQuranPage> {
     return "$minutes:$seconds";
   }
 
+  // ===================== واجهة المستخدم (التصميم الرسمي) =====================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          Container(color: const Color(0xFF1A002D)),
-          Container(color: Colors.black.withOpacity(0.5)),
-          SafeArea(
-            child: Column(
-              children: [
-                _buildGlassAppBar(),
-                _buildReciterSelector(),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: _surahNames.length,
-                    itemBuilder: (context, index) {
-                      return _buildSurahTile(index);
-                    },
-                  ),
-                ),
-                if (_currentSurahIndex != null) _buildAudioPlayerPanel(),
-              ],
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF2E7D32),
+              Color(0xFF42A5F5),
+              Color(0xFFF5F5F5),
+            ],
+            stops: [0.0, 0.5, 1.0],
           ),
-        ],
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildAppBar(),
+              _buildReciterSelector(),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: _surahNames.length,
+                  itemBuilder: (context, index) => _buildSurahTile(index),
+                ),
+              ),
+              if (_currentSurahIndex != null) _buildAudioPlayerPanel(),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildGlassAppBar() {
+  Widget _buildAppBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.15)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.menu_book, color: Colors.teal, size: 28),
+            SizedBox(width: 10),
+            Text(
+              'المصحف الشريف',
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.amberAccent.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.menu_book, color: Colors.amberAccent, size: 24),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'المصحف الشريف',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.amberAccent.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.menu_book, color: Colors.amberAccent, size: 24),
-                ),
-              ],
-            ),
-          ),
+            SizedBox(width: 10),
+            Icon(Icons.menu_book, color: Colors.teal, size: 28),
+          ],
         ),
       ),
     );
@@ -311,69 +335,56 @@ class _YasserDossariQuranPageState extends State<YasserDossariQuranPage> {
   Widget _buildReciterSelector() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.12)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.person, color: Colors.teal, size: 22),
+            const SizedBox(width: 10),
+            const Text(
+              'اختر القارئ: ',
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.amberAccent.withOpacity(0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.person, color: Colors.amberAccent, size: 20),
+            Expanded(
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<Reciter>(
+                  value: _selectedReciter,
+                  dropdownColor: Colors.white,
+                  icon: const Icon(Icons.keyboard_arrow_down, color: Colors.teal),
+                  isExpanded: true,
+                  style: const TextStyle(color: Colors.black87, fontSize: 14),
+                  items: _reciters.map((Reciter reciter) {
+                    return DropdownMenuItem<Reciter>(
+                      value: reciter,
+                      child: Text(
+                        reciter.name,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (Reciter? newReciter) async {
+                    if (newReciter != null && newReciter != _selectedReciter) {
+                      await _audioPlayer.stop();
+                      setState(() {
+                        _selectedReciter = newReciter;
+                        _currentSurahIndex = null;
+                        _isPlaying = false;
+                      });
+                    }
+                  },
                 ),
-                const SizedBox(width: 12),
-                const Text(
-                  'اختر القارئ: ',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                Expanded(
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<Reciter>(
-                      value: _selectedReciter,
-                      dropdownColor: const Color(0xFF2E1040),
-                      icon: const Icon(Icons.keyboard_arrow_down, color: Colors.amberAccent),
-                      isExpanded: true,
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                      items: _reciters.map((Reciter reciter) {
-                        return DropdownMenuItem<Reciter>(
-                          value: reciter,
-                          child: Text(
-                            reciter.name,
-                            style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (Reciter? newReciter) async {
-                        if (newReciter != null && newReciter != _selectedReciter) {
-                          await _audioPlayer.stop();
-                          setState(() {
-                            _selectedReciter = newReciter;
-                            _currentSurahIndex = null;
-                            _isPlaying = false;
-                          });
-                        }
-                      },
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -387,108 +398,87 @@ class _YasserDossariQuranPageState extends State<YasserDossariQuranPage> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Material(
-            color: (isCurrent
-                    ? Colors.amberAccent.withOpacity(0.08)
-                    : Colors.white.withOpacity(0.04)),
-            borderRadius: BorderRadius.circular(18),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(18),
-              onTap: () => _playSurah(index),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: isCurrent
-                            ? Colors.amberAccent.withOpacity(0.25)
-                            : Colors.amberAccent.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${index + 1}',
-                          style: TextStyle(
-                            color: isCurrent ? Colors.amberAccent : Colors.white70,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isCurrent ? Colors.teal.withOpacity(0.05) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isCurrent ? Colors.teal.withOpacity(0.3) : Colors.grey.shade300,
+          ),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 4)],
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _playSurah(index),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                // رقم السورة
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: isCurrent ? Colors.teal : Colors.grey.shade200,
+                  child: Text(
+                    '${index + 1}',
+                    style: TextStyle(
+                      color: isCurrent ? Colors.white : Colors.black87,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'سورة ${_surahNames[index]}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            isDownloaded
-                                ? 'مُحملة (بدون إنترنت)'
-                                : 'القارئ: ${_selectedReciter.name}',
-                            style: TextStyle(
-                              color: isDownloaded ? Colors.greenAccent : Colors.white54,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (isDownloading)
-                      SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: CircularProgressIndicator(
-                          value: _downloadProgress[fileKey],
-                          strokeWidth: 2.5,
-                          color: Colors.amberAccent,
-                          backgroundColor: Colors.white12,
-                        ),
-                      )
-                    else if (!isDownloaded)
-                      IconButton(
-                        icon: Icon(Icons.download_for_offline_outlined, color: Colors.amberAccent.withOpacity(0.8)),
-                        onPressed: () => _downloadSurah(index),
-                      )
-                    else
-                      const Icon(Icons.check_circle, color: Colors.greenAccent, size: 24),
-                    const SizedBox(width: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: (isCurrent && _isPlaying)
-                            ? Colors.amberAccent
-                            : Colors.amberAccent.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        icon: Icon(
-                          (isCurrent && _isPlaying)
-                              ? Icons.pause_rounded
-                              : Icons.play_arrow_rounded,
-                          color: (isCurrent && _isPlaying) ? Colors.black : Colors.amberAccent,
-                          size: 28,
-                        ),
-                        onPressed: () => _playSurah(index),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                // اسم السورة
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'سورة ${_surahNames[index]}',
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        isDownloaded
+                            ? 'محملة (بدون إنترنت)'
+                            : 'القارئ: ${_selectedReciter.name}',
+                        style: TextStyle(
+                          color: isDownloaded ? Colors.green : Colors.grey.shade600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // أزرار التحكم
+                if (isDownloading)
+                  const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.teal),
+                  )
+                else if (!isDownloaded)
+                  IconButton(
+                    icon: const Icon(Icons.download_for_offline, color: Colors.teal),
+                    onPressed: () => _downloadSurah(index),
+                  )
+                else
+                  const Icon(Icons.check_circle, color: Colors.green, size: 24),
+                const SizedBox(width: 4),
+                IconButton(
+                  icon: Icon(
+                    (isCurrent && _isPlaying)
+                        ? Icons.pause_circle_filled
+                        : Icons.play_circle_fill,
+                    color: Colors.teal,
+                    size: 36,
+                  ),
+                  onPressed: () => _playSurah(index),
+                ),
+              ],
             ),
           ),
         ),
@@ -500,130 +490,113 @@ class _YasserDossariQuranPageState extends State<YasserDossariQuranPage> {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.amberAccent.withOpacity(0.3), width: 1.2),
-        color: const Color(0xFF1A002D).withOpacity(0.9),
         boxShadow: [
-          BoxShadow(
-            color: Colors.amberAccent.withOpacity(0.08),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
+          BoxShadow(color: Colors.teal.withOpacity(0.1), blurRadius: 15),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'سورة ${_surahNames[_currentSurahIndex!]}',
+              style: const TextStyle(
+                color: Colors.black87,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              _selectedReciter.name,
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+            const SizedBox(height: 10),
+            SliderTheme(
+              data: SliderThemeData(
+                trackHeight: 3,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                thumbColor: Colors.teal,
+                activeTrackColor: Colors.teal,
+                inactiveTrackColor: Colors.grey.shade300,
+                overlayShape: SliderComponentShape.noOverlay,
+              ),
+              child: Slider(
+                min: 0.0,
+                max: _duration.inSeconds.toDouble() > 0
+                    ? _duration.inSeconds.toDouble()
+                    : 1.0,
+                value: _position.inSeconds
+                    .toDouble()
+                    .clamp(0.0,
+                        _duration.inSeconds.toDouble() > 0 ? _duration.inSeconds.toDouble() : 1.0),
+                onChanged: (value) {
+                  _audioPlayer.seek(Duration(seconds: value.toInt()));
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(_formatTime(_position), style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                  Text(_formatTime(_duration), style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  'سورة ${_surahNames[_currentSurahIndex!]}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  _selectedReciter.name,
-                  style: const TextStyle(color: Colors.white54, fontSize: 13),
-                ),
-                const SizedBox(height: 10),
-                SliderTheme(
-                  data: SliderThemeData(
-                    trackHeight: 3,
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                    thumbColor: Colors.amberAccent,
-                    activeTrackColor: Colors.amberAccent,
-                    inactiveTrackColor: Colors.white24,
-                    overlayShape: SliderComponentShape.noOverlay,
-                  ),
-                  child: Slider(
-                    min: 0.0,
-                    max: _duration.inSeconds.toDouble() > 0
-                        ? _duration.inSeconds.toDouble()
-                        : 1.0,
-                    value: _position.inSeconds
-                        .toDouble()
-                        .clamp(0.0,
-                            _duration.inSeconds.toDouble() > 0 ? _duration.inSeconds.toDouble() : 1.0),
-                    onChanged: (value) {
-                      _audioPlayer.seek(Duration(seconds: value.toInt()));
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(_formatTime(_position),
-                          style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                      Text(_formatTime(_duration),
-                          style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.08),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.replay_10, color: Colors.amberAccent, size: 24),
-                      ),
-                      onPressed: () => _seek(-10),
+                IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      shape: BoxShape.circle,
                     ),
-                    const SizedBox(width: 20),
-                    GestureDetector(
-                      onTap: () => _playSurah(_currentSurahIndex!),
-                      child: Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.amberAccent,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.amberAccent.withOpacity(0.4),
-                              blurRadius: 12,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          _isPlaying ? Icons.pause : Icons.play_arrow,
-                          color: Colors.black,
-                          size: 32,
-                        ),
-                      ),
+                    child: const Icon(Icons.replay_10, color: Colors.teal, size: 24),
+                  ),
+                  onPressed: () => _seek(-10),
+                ),
+                const SizedBox(width: 20),
+                GestureDetector(
+                  onTap: () => _playSurah(_currentSurahIndex!),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.teal,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(color: Colors.teal.withOpacity(0.3), blurRadius: 10),
+                      ],
                     ),
-                    const SizedBox(width: 20),
-                    IconButton(
-                      icon: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.08),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.forward_10, color: Colors.amberAccent, size: 24),
-                      ),
-                      onPressed: () => _seek(10),
+                    child: Icon(
+                      _isPlaying ? Icons.pause : Icons.play_arrow,
+                      color: Colors.white,
+                      size: 32,
                     ),
-                  ],
+                  ),
+                ),
+                const SizedBox(width: 20),
+                IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.forward_10, color: Colors.teal, size: 24),
+                  ),
+                  onPressed: () => _seek(10),
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );
