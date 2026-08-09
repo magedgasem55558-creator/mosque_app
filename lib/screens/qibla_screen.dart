@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // 👈 استيراد مكتبة التحكم بالاهتزاز
+import 'package:flutter/services.dart';
 import 'package:flutter_qiblah/flutter_qiblah.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -15,15 +15,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
   bool _hasPermission = false;
   bool _isLoading = true;
   String _statusMessage = 'جاري طلب صلاحيات الموقع...';
-  
-  // متغيرة لتفادي تكرار الاهتزاز باستمرار أثناء الثبات على القبلة
   bool _hasVibrated = false;
-
-  // ألوان الواجهة الرسمية
-  static const Color darkBg = Color(0xFF0F172A);
-  static const Color cardBg = Color(0xFF1E293B);
-  static const Color goldAccent = Color(0xFFD4AF37);
-  static const Color greenAccent = Color(0xFF10B981);
 
   @override
   void initState() {
@@ -63,237 +55,267 @@ class _QiblaScreenState extends State<QiblaScreen> {
     });
   }
 
-  // دالة التعامل مع الاهتزاز
   void _triggerHapticFeedback(bool isFacingQiblah) {
     if (isFacingQiblah) {
       if (!_hasVibrated) {
-        HapticFeedback.mediumImpact(); // اهتزاز متوسط عند المحاذاة
+        HapticFeedback.mediumImpact();
         _hasVibrated = true;
       }
     } else {
-      _hasVibrated = false; // إعادة الضبط عند الابتعاد عن القبلة
+      _hasVibrated = false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: darkBg,
-      appBar: AppBar(
-        title: const Text(
-          'اتجاه القبلة',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.8,
+      extendBodyBehindAppBar: true,
+      body: Container(
+        // الخلفية الموحدة
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF2E7D32),
+              Color(0xFF42A5F5),
+              Color(0xFFF5F5F5),
+            ],
+            stops: [0.0, 0.5, 1.0],
           ),
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: goldAccent))
-          : !_hasPermission
-              ? _buildPermissionView()
-              : StreamBuilder<QiblahDirection>(
-                  stream: FlutterQiblah.qiblahStream,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasError) {
-                      return _buildStatusText('حدث خطأ أثناء قراءة الحساسات');
-                    }
-
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                          child: CircularProgressIndicator(color: goldAccent));
-                    }
-
-                    final qiblahDirection = snapshot.data;
-                    if (qiblahDirection == null) {
-                      return _buildStatusText('جهازك لا يدعم حساس البوصلة');
-                    }
-
-                    // 1. حساب زاوية القبلة
-                    double qiblahAngle = qiblahDirection.qiblah;
-
-                    // 2. حساب الانحراف الفعلي عن الاتجاه الصحيح
-                    double diff = (qiblahAngle % 360);
-                    if (diff > 180) diff -= 360;
-
-                    // هامش قبول الاتجاه الصائب (5 درجات)
-                    bool isFacingQiblah = diff.abs() < 5.0;
-
-                    // 3. تشغيل الاهتزاز عند محاذاة القبلة
-                    _triggerHapticFeedback(isFacingQiblah);
-
-                    Color activeColor =
-                        isFacingQiblah ? greenAccent : goldAccent;
-
-                    return SafeArea(
-                      child: Column(
-                        children: [
-                          const Spacer(),
-                          // بطاقة التنبيه الرسمية
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 14),
-                            decoration: BoxDecoration(
-                              color: cardBg,
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color: activeColor.withOpacity(0.4),
-                                width: 1.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: activeColor.withOpacity(0.15),
-                                  blurRadius: 20,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  isFacingQiblah
-                                      ? Icons.check_circle_rounded
-                                      : Icons.explore_rounded,
-                                  color: activeColor,
-                                  size: 22,
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  isFacingQiblah
-                                      ? 'أنت تتجه نحو القبلة تماماً'
-                                      : 'قم بتدوير الهاتف باتجاه المؤشر',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.95),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Spacer(),
-                          // البوصلة الفخمة
-                          Center(
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                // الإطار الخارجي المتوهج
-                                Container(
-                                  width: 300,
-                                  height: 300,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: cardBg,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: activeColor.withOpacity(0.1),
-                                        blurRadius: 30,
-                                        spreadRadius: 10,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                // حلقة التدريج الدائرية
-                                Container(
-                                  width: 270,
-                                  height: 270,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.1),
-                                      width: 2,
-                                    ),
-                                  ),
-                                ),
-                                // حركة مؤشر البوصلة والسهم
-                                Transform.rotate(
-                                  angle: (qiblahAngle * (math.pi / 180)),
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      // سهم الاتجاه العلوي
-                                      SizedBox(
-                                        width: 260,
-                                        height: 260,
-                                        child: Column(
-                                          children: [
-                                            Icon(
-                                              Icons.navigation_rounded,
-                                              size: 48,
-                                              color: activeColor,
-                                            ),
-                                            const Spacer(),
-                                          ],
-                                        ),
-                                      ),
-                                      // خط البوصلة الشفاف
-                                      Container(
-                                        width: 2,
-                                        height: 200,
-                                        color: activeColor.withOpacity(0.2),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                // رمز الكعبة المشرفة في المركز
-                                Container(
-                                  width: 50,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF000000),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: goldAccent,
-                                      width: 2,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: goldAccent.withOpacity(0.3),
-                                        blurRadius: 12,
-                                      ),
-                                    ],
-                                  ),
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.mosque_rounded,
-                                      color: goldAccent,
-                                      size: 26,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Spacer(),
-                          // قراءة درجة الانحراف
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: cardBg.withOpacity(0.5),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              'درجة الانحراف: ${diff.abs().toStringAsFixed(1)}°',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.6),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 30),
-                        ],
+        child: SafeArea(
+          child: Column(
+            children: [
+              // شريط عنوان أبيض مع سهم الرجوع
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                        onPressed: () => Navigator.pop(context),
                       ),
-                    );
-                  },
+                      const Expanded(
+                        child: Text(
+                          'اتجاه القبلة',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 48),
+                    ],
+                  ),
                 ),
+              ),
+              // المحتوى
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator(color: Colors.teal))
+                    : !_hasPermission
+                        ? _buildPermissionView()
+                        : _buildQiblahCompass(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQiblahCompass() {
+    return StreamBuilder<QiblahDirection>(
+      stream: FlutterQiblah.qiblahStream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return _buildStatusText('حدث خطأ أثناء قراءة الحساسات');
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: Colors.teal));
+        }
+
+        final qiblahDirection = snapshot.data;
+        if (qiblahDirection == null) {
+          return _buildStatusText('جهازك لا يدعم حساس البوصلة');
+        }
+
+        double qiblahAngle = qiblahDirection.qiblah;
+        double diff = (qiblahAngle % 360);
+        if (diff > 180) diff -= 360;
+
+        bool isFacingQiblah = diff.abs() < 5.0;
+        _triggerHapticFeedback(isFacingQiblah);
+
+        Color activeColor = isFacingQiblah ? Colors.green : Colors.teal;
+
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // بطاقة تنبيه
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(
+                    color: activeColor.withOpacity(0.5),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: activeColor.withOpacity(0.1),
+                      blurRadius: 12,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isFacingQiblah
+                          ? Icons.check_circle_rounded
+                          : Icons.explore_rounded,
+                      color: activeColor,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Text(
+                        isFacingQiblah
+                            ? 'أنت تتجه نحو القبلة تماماً'
+                            : 'قم بتدوير الهاتف باتجاه المؤشر',
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              // البوصلة
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 300,
+                    height: 300,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: activeColor.withOpacity(0.08),
+                          blurRadius: 25,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 270,
+                    height: 270,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.grey.shade300,
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                  Transform.rotate(
+                    angle: (qiblahAngle * (math.pi / 180)),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 260,
+                          height: 260,
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.navigation_rounded,
+                                size: 48,
+                                color: activeColor,
+                              ),
+                              const Spacer(),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          width: 2,
+                          height: 200,
+                          color: activeColor.withOpacity(0.25),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // رمز الكعبة
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.teal, width: 2),
+                      boxShadow: [
+                        BoxShadow(color: Colors.teal.withOpacity(0.3), blurRadius: 10),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.mosque_rounded,
+                        color: Colors.teal,
+                        size: 26,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              // درجة الانحراف
+              Container(
+                margin: const EdgeInsets.only(bottom: 30),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6),
+                  ],
+                ),
+                child: Text(
+                  'درجة الانحراف: ${diff.abs().toStringAsFixed(1)}°',
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -301,7 +323,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
     return Center(
       child: Text(
         text,
-        style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 16),
+        style: TextStyle(color: Colors.grey.shade700, fontSize: 16),
       ),
     );
   }
@@ -313,21 +335,19 @@ class _QiblaScreenState extends State<QiblaScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.location_off_rounded,
-                size: 64, color: Colors.redAccent),
+            const Icon(Icons.location_off_rounded, size: 64, color: Colors.redAccent),
             const SizedBox(height: 16),
             Text(
               _statusMessage,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, color: Colors.white70),
+              style: const TextStyle(fontSize: 16, color: Colors.black54),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: goldAccent,
-                foregroundColor: Colors.black,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                backgroundColor: Colors.teal,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
