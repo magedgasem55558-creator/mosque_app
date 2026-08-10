@@ -1,29 +1,88 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- أذونات الموقع والقبلة -->
+
+    <!-- ================================================================ -->
+    <!-- الموقع والقبلة -->
+    <!-- ================================================================ -->
+
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-feature android:name="android.hardware.sensor.compass" android:required="true" />
-    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="true" />
 
-    <!-- أذونات الشبكة والإشعارات -->
+    <uses-feature
+        android:name="android.hardware.sensor.compass"
+        android:required="true" />
+
+    <uses-feature
+        android:name="android.hardware.sensor.accelerometer"
+        android:required="true" />
+
+
+    <!-- ================================================================ -->
+    <!-- الإنترنت والإشعارات -->
+    <!-- ================================================================ -->
+
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Android 13+ -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- أذونات تشغيل الصوت في الخلفية والتحكم به -->
+    <!-- الاهتزاز -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+
+    <!-- ================================================================ -->
+    <!-- الصوت في الخلفية -->
+    <!-- ================================================================ -->
+
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <!-- أذونات الجدولة والعمل بالخلفية -->
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
-    <uses-permission android:name="android.permission.VIBRATE"/>
+
+    <!-- ================================================================ -->
+    <!-- جدولة الإشعارات -->
+    <!-- ================================================================ -->
+
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+    <uses-permission
+        android:name="android.permission.USE_EXACT_ALARM" />
+
+
+    <!-- ================================================================ -->
+    <!-- التطبيق -->
+    <!-- ================================================================ -->
 
     <application
-        android:label="مسجد الخلفاء الراشدين"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:label="مسجد الخلفاء الراشدين"
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="false">
+
+
+        <!-- ============================================================ -->
+        <!-- قناة FCM الافتراضية -->
+        <!-- ============================================================ -->
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="mosque_channel" />
+
+        <!-- لون إشعارات FCM -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher" />
+
+
+        <!-- ============================================================ -->
+        <!-- Main Activity -->
+        <!-- ============================================================ -->
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -32,36 +91,54 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
+
             <meta-data
-              android:name="io.flutter.embedding.android.NormalTheme"
-              android:resource="@style/NormalTheme"
-              />
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme" />
+
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
 
-        <!-- خدمات واستقبال تشغيل الصوت في الخلفية (just_audio_background) -->
-        <service 
+
+        <!-- ============================================================ -->
+        <!-- Just Audio Background -->
+        <!-- ============================================================ -->
+
+        <service
             android:name="com.ryanheise.audioservice.AudioService"
             android:foregroundServiceType="mediaPlayback"
             android:exported="true">
+
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
+
         </service>
 
-        <receiver 
+
+        <receiver
             android:name="com.ryanheise.audioservice.MediaButtonReceiver"
             android:exported="true">
+
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
+
         </receiver>
+
+
+        <!-- ============================================================ -->
+        <!-- Flutter -->
+        <!-- ============================================================ -->
 
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
     </application>
+
 </manifest>
