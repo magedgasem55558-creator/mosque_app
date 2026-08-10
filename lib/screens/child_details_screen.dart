@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class ChildDetailsScreen extends StatelessWidget {
+class ChildDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> child;
 
   const ChildDetailsScreen({
@@ -10,6 +10,13 @@ class ChildDetailsScreen extends StatelessWidget {
     required this.child,
   });
 
+  @override
+  State<ChildDetailsScreen> createState() =>
+      _ChildDetailsScreenState();
+}
+
+class _ChildDetailsScreenState
+    extends State<ChildDetailsScreen> {
   // ============================================================
   // الألوان الرسمية للتطبيق
   // ============================================================
@@ -18,12 +25,30 @@ class ChildDetailsScreen extends StatelessWidget {
   static const Color primaryBlue = Color(0xFF42A5F5);
   static const Color background = Color(0xFFF5F7FA);
 
+  final TextEditingController _parentNoteController =
+      TextEditingController();
+
+  bool _sendingParentNote = false;
+
+  @override
+  void dispose() {
+    _parentNoteController.dispose();
+    super.dispose();
+  }
+
+  // ============================================================
+  // Build
+  // ============================================================
+
   @override
   Widget build(BuildContext context) {
-    final String studentId = child['id']?.toString() ?? '';
+    final String studentId =
+        widget.child['id']?.toString() ?? '';
+
     final String studentName =
-        child['name']?.toString().trim().isNotEmpty == true
-            ? child['name'].toString()
+        widget.child['name']?.toString().trim().isNotEmpty ==
+                true
+            ? widget.child['name'].toString()
             : 'الطالب';
 
     return DefaultTabController(
@@ -128,7 +153,8 @@ class ChildDetailsScreen extends StatelessWidget {
 
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 const Text(
                   'متابعة الطالب',
@@ -199,7 +225,6 @@ class ChildDetailsScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // صورة / أيقونة الطالب
           Container(
             width: 62,
             height: 62,
@@ -255,38 +280,34 @@ class ChildDetailsScreen extends StatelessWidget {
 
                 const SizedBox(height: 7),
 
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 5,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: primaryGreen.withOpacity(0.09),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.auto_stories_rounded,
+                        color: primaryGreen,
+                        size: 15,
                       ),
-                      decoration: BoxDecoration(
-                        color: primaryGreen.withOpacity(0.09),
-                        borderRadius: BorderRadius.circular(20),
+                      SizedBox(width: 5),
+                      Text(
+                        'حلقة القرآن',
+                        style: TextStyle(
+                          color: primaryGreen,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.auto_stories_rounded,
-                            color: primaryGreen,
-                            size: 15,
-                          ),
-                          SizedBox(width: 5),
-                          Text(
-                            'حلقة القرآن',
-                            style: TextStyle(
-                              color: primaryGreen,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -414,9 +435,9 @@ class ChildDetailsScreen extends StatelessWidget {
             snapshot.data!.docs.isEmpty) {
           return _buildEmptyState(
             icon: Icons.event_available_rounded,
-            title: 'لا يوجد إنجاز اليوم',
+            title: 'لا يوجد سجل اليوم',
             subtitle:
-                'لم يتم تسجيل أي إنجاز للطالب بتاريخ\n$today',
+                'لم يتم تسجيل أي حالة للطالب بتاريخ\n$today',
           );
         }
 
@@ -463,7 +484,7 @@ class ChildDetailsScreen extends StatelessWidget {
             icon: Icons.history_rounded,
             title: 'لا توجد سجلات سابقة',
             subtitle:
-                'ستظهر هنا جميع إنجازات الطالب المسجلة.',
+                'ستظهر هنا جميع حالات وإنجازات الطالب.',
           );
         }
 
@@ -473,14 +494,16 @@ class ChildDetailsScreen extends StatelessWidget {
         docs.sort(
           (a, b) {
             final String dateA =
-                (a.data() as Map<String, dynamic>)['date']
-                        ?.toString() ??
-                    '';
+                (a.data()
+                        as Map<String, dynamic>)['date']
+                    ?.toString() ??
+                '';
 
             final String dateB =
-                (b.data() as Map<String, dynamic>)['date']
-                        ?.toString() ??
-                    '';
+                (b.data()
+                        as Map<String, dynamic>)['date']
+                    ?.toString() ??
+                '';
 
             return dateB.compareTo(dateA);
           },
@@ -509,7 +532,8 @@ class ChildDetailsScreen extends StatelessWidget {
       itemCount: docs.length,
       itemBuilder: (context, index) {
         final data =
-            docs[index].data() as Map<String, dynamic>;
+            docs[index].data()
+                as Map<String, dynamic>;
 
         return _buildRecordCard(
           context,
@@ -530,14 +554,17 @@ class ChildDetailsScreen extends StatelessWidget {
     final String status =
         data['status']?.toString() ?? 'حاضر';
 
-    final bool isAbsent =
-        status == 'غائب';
-
-    final bool isVacation =
-        status == 'إجازة';
+    // الحالات الجديدة
+    final bool isAbsent = status == 'غائب';
+    final bool isVacation = status == 'إجازة';
+    final bool isExcused = status == 'مستأذن';
+    final bool isReview = status == 'مراجعة';
 
     final bool isSpecialStatus =
-        isAbsent || isVacation;
+        isAbsent ||
+        isVacation ||
+        isExcused ||
+        isReview;
 
     final String surah =
         data['surah']?.toString() ??
@@ -549,19 +576,35 @@ class ChildDetailsScreen extends StatelessWidget {
     final String grade =
         data['grade']?.toString() ?? '';
 
-    final Color statusColor =
-        isAbsent
-            ? Colors.red
-            : isVacation
-                ? Colors.orange
-                : primaryGreen;
+    // ------------------------------------------------------------
+    // تحديد اللون حسب الحالة
+    // ------------------------------------------------------------
+
+    Color statusColor;
+
+    IconData statusIcon;
+
+    if (isAbsent) {
+      statusColor = Colors.red;
+      statusIcon = Icons.person_off_rounded;
+    } else if (isVacation) {
+      statusColor = Colors.orange;
+      statusIcon = Icons.beach_access_rounded;
+    } else if (isExcused) {
+      statusColor = Colors.deepPurple;
+      statusIcon = Icons.event_available_rounded;
+    } else if (isReview) {
+      statusColor = Colors.blue;
+      statusIcon = Icons.fact_check_rounded;
+    } else {
+      statusColor = primaryGreen;
+      statusIcon = Icons.menu_book_rounded;
+    }
 
     final Color statusBackground =
-        isAbsent
-            ? Colors.red.shade50
-            : isVacation
-                ? Colors.orange.shade50
-                : Colors.white;
+        isSpecialStatus
+            ? statusColor.withOpacity(0.035)
+            : Colors.white;
 
     return Container(
       margin: const EdgeInsets.only(
@@ -638,11 +681,7 @@ class ChildDetailsScreen extends StatelessWidget {
                               BorderRadius.circular(15),
                         ),
                         child: Icon(
-                          isAbsent
-                              ? Icons.person_off_rounded
-                              : isVacation
-                                  ? Icons.beach_access_rounded
-                                  : Icons.menu_book_rounded,
+                          statusIcon,
                           color: Colors.white,
                           size: 26,
                         ),
@@ -660,7 +699,8 @@ class ChildDetailsScreen extends StatelessWidget {
                                   ? 'حالة الطالب'
                                   : 'إنجاز القرآن الكريم',
                               style: TextStyle(
-                                color: Colors.grey.shade600,
+                                color:
+                                    Colors.grey.shade600,
                                 fontSize: 12,
                                 fontWeight:
                                     FontWeight.w500,
@@ -677,10 +717,9 @@ class ChildDetailsScreen extends StatelessWidget {
                               overflow:
                                   TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: statusColor ==
-                                        primaryGreen
-                                    ? Colors.black87
-                                    : statusColor,
+                                color: isSpecialStatus
+                                    ? statusColor
+                                    : Colors.black87,
                                 fontSize: 18,
                                 fontWeight:
                                     FontWeight.bold,
@@ -693,6 +732,20 @@ class ChildDetailsScreen extends StatelessWidget {
                       _buildDateBadge(date),
                     ],
                   ),
+
+                  // ------------------------------------------------
+                  // Special Status Description
+                  // ------------------------------------------------
+
+                  if (isSpecialStatus) ...[
+                    const SizedBox(height: 18),
+
+                    _buildStatusDescription(
+                      status: status,
+                      color: statusColor,
+                      icon: statusIcon,
+                    ),
+                  ],
 
                   // ------------------------------------------------
                   // Ayahs
@@ -826,7 +879,7 @@ class ChildDetailsScreen extends StatelessWidget {
                   ],
 
                   // ------------------------------------------------
-                  // Notes
+                  // Teacher Notes
                   // ------------------------------------------------
 
                   if (_hasText(
@@ -843,62 +896,68 @@ class ChildDetailsScreen extends StatelessWidget {
                   ],
 
                   // ------------------------------------------------
-                  // WhatsApp
+                  // WhatsApp / Chat
                   // ------------------------------------------------
 
-                  if (!isSpecialStatus) ...[
-                    const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                    Container(
-                      height: 1,
-                      color: Colors.grey.shade200,
-                    ),
+                  Container(
+                    height: 1,
+                    color: Colors.grey.shade200,
+                  ),
 
-                    const SizedBox(height: 13),
+                  const SizedBox(height: 13),
 
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          _openWhatsApp(
-                            context,
-                            data['teacherPhone']
-                                    ?.toString() ??
-                                '967770000000',
-                            surah,
-                          );
-                        },
-                        icon: const Icon(
-                          Icons.chat_rounded,
-                          size: 20,
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        _openWhatsApp(
+                          context,
+                          data['teacherPhone']
+                                  ?.toString() ??
+                              '967770000000',
+                          surah,
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.chat_rounded,
+                        size: 20,
+                      ),
+                      label: const Text(
+                        'الدردشة مع المدرس',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
                         ),
-                        label: const Text(
-                          'التواصل مع المدرس',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      ),
+                      style:
+                          ElevatedButton.styleFrom(
+                        backgroundColor:
+                            primaryGreen,
+                        foregroundColor:
+                            Colors.white,
+                        elevation: 0,
+                        padding:
+                            const EdgeInsets.symmetric(
+                          vertical: 13,
                         ),
-                        style:
-                            ElevatedButton.styleFrom(
-                          backgroundColor:
-                              primaryGreen,
-                          foregroundColor:
-                              Colors.white,
-                          elevation: 0,
-                          padding:
-                              const EdgeInsets.symmetric(
-                            vertical: 13,
-                          ),
-                          shape:
-                              RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(14),
-                          ),
+                        shape:
+                            RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(14),
                         ),
                       ),
                     ),
-                  ],
+                  ),
+
+                  // ------------------------------------------------
+                  // Parent Notes / Questions
+                  // ------------------------------------------------
+
+                  const SizedBox(height: 16),
+
+                  _buildParentNotesSection(),
                 ],
               ),
             ),
@@ -906,6 +965,682 @@ class ChildDetailsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // ============================================================
+  // Status Description
+  // ============================================================
+
+  Widget _buildStatusDescription({
+    required String status,
+    required Color color,
+    required IconData icon,
+  }) {
+    String description;
+
+    switch (status) {
+      case 'غائب':
+        description =
+            'لم يحضر الطالب إلى الحلقة في هذا اليوم.';
+        break;
+
+      case 'إجازة':
+        description =
+            'الطالب في إجازة ولا يوجد إنجاز مسجل لهذا اليوم.';
+        break;
+
+      case 'مستأذن':
+        description =
+            'الطالب مستأذن لهذا اليوم بعذر مسجل.';
+        break;
+
+      case 'مراجعة':
+        description =
+            'تم تخصيص هذا اليوم لمراجعة المحفوظ السابق.';
+        break;
+
+      default:
+        description =
+            'تم تسجيل حالة خاصة للطالب.';
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.07),
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(
+          color: color.withOpacity(0.16),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 22,
+            ),
+          ),
+
+          const SizedBox(width: 11),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(
+                  status,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 5),
+
+                Text(
+                  description,
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // Parent Notes Section
+  // ============================================================
+
+  Widget _buildParentNotesSection() {
+    final String studentId =
+        widget.child['id']?.toString() ?? '';
+
+    if (studentId.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.blueGrey.withOpacity(0.035),
+        borderRadius: BorderRadius.circular(19),
+        border: Border.all(
+          color: Colors.blueGrey.withOpacity(0.12),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          // ------------------------------------------------------
+          // Title
+          // ------------------------------------------------------
+
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: primaryBlue.withOpacity(0.11),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: const Icon(
+                  Icons.family_restroom_rounded,
+                  color: primaryBlue,
+                  size: 23,
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'ملاحظات ولي الأمر',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'اكتب ملاحظة أو استفسار للمدرس',
+                      style: TextStyle(
+                        color: Colors.black45,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 13),
+
+          // ------------------------------------------------------
+          // Text Field
+          // ------------------------------------------------------
+
+          TextField(
+            controller: _parentNoteController,
+            maxLines: 4,
+            minLines: 3,
+            textDirection: TextDirection.rtl,
+            textAlign: TextAlign.right,
+            decoration: InputDecoration(
+              hintText:
+                  'مثال: أود الاستفسار عن مستوى ابني...\n'
+                  'أو كتابة ملاحظة للمدرس',
+              hintStyle: TextStyle(
+                color: Colors.grey.shade400,
+                fontSize: 13,
+                height: 1.5,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding:
+                  const EdgeInsets.all(14),
+              border: OutlineInputBorder(
+                borderRadius:
+                    BorderRadius.circular(15),
+                borderSide: BorderSide(
+                  color:
+                      Colors.grey.shade200,
+                ),
+              ),
+              enabledBorder:
+                  OutlineInputBorder(
+                borderRadius:
+                    BorderRadius.circular(15),
+                borderSide: BorderSide(
+                  color:
+                      Colors.grey.shade200,
+                ),
+              ),
+              focusedBorder:
+                  OutlineInputBorder(
+                borderRadius:
+                    BorderRadius.circular(15),
+                borderSide:
+                    const BorderSide(
+                  color: primaryBlue,
+                  width: 1.5,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 11),
+
+          // ------------------------------------------------------
+          // Send Button
+          // ------------------------------------------------------
+
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _sendingParentNote
+                  ? null
+                  : _sendParentNote,
+              icon: _sendingParentNote
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child:
+                          CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.send_rounded,
+                      size: 19,
+                    ),
+              label: Text(
+                _sendingParentNote
+                    ? 'جاري الإرسال...'
+                    : 'إرسال للمدرس',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style:
+                  ElevatedButton.styleFrom(
+                backgroundColor:
+                    primaryBlue,
+                foregroundColor:
+                    Colors.white,
+                disabledBackgroundColor:
+                    primaryBlue.withOpacity(0.5),
+                elevation: 0,
+                padding:
+                    const EdgeInsets.symmetric(
+                  vertical: 13,
+                ),
+                shape:
+                    RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+
+          // ------------------------------------------------------
+          // Previous Parent Notes
+          // ------------------------------------------------------
+
+          const SizedBox(height: 18),
+
+          _buildPreviousParentNotes(
+            studentId,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // Previous Parent Notes
+  // ============================================================
+
+  Widget _buildPreviousParentNotes(
+    String studentId,
+  ) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('parent_notes')
+          .where(
+            'studentId',
+            isEqualTo: studentId,
+          )
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState ==
+            ConnectionState.waiting) {
+          return const SizedBox(
+            height: 40,
+            child: Center(
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child:
+                    CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: primaryBlue,
+                ),
+              ),
+            ),
+          );
+        }
+
+        if (snapshot.hasError ||
+            !snapshot.hasData ||
+            snapshot.data!.docs.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final docs =
+            [...snapshot.data!.docs];
+
+        docs.sort((a, b) {
+          final dataA =
+              a.data()
+                  as Map<String, dynamic>;
+
+          final dataB =
+              b.data()
+                  as Map<String, dynamic>;
+
+          final Timestamp? timeA =
+              dataA['createdAt']
+                  as Timestamp?;
+
+          final Timestamp? timeB =
+              dataB['createdAt']
+                  as Timestamp?;
+
+          if (timeA == null &&
+              timeB == null) {
+            return 0;
+          }
+
+          if (timeA == null) {
+            return 1;
+          }
+
+          if (timeB == null) {
+            return -1;
+          }
+
+          return timeB.compareTo(timeA);
+        });
+
+        return Column(
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 1,
+              color: Colors.grey.shade200,
+            ),
+
+            const SizedBox(height: 14),
+
+            Row(
+              children: [
+                const Icon(
+                  Icons.history_rounded,
+                  color: primaryBlue,
+                  size: 19,
+                ),
+                const SizedBox(width: 7),
+                Text(
+                  'ملاحظاتك السابقة',
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            ...docs.take(5).map(
+              (doc) {
+                final data =
+                    doc.data()
+                        as Map<String, dynamic>;
+
+                return _buildParentNoteItem(
+                  data,
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ============================================================
+  // Parent Note Item
+  // ============================================================
+
+  Widget _buildParentNoteItem(
+    Map<String, dynamic> data,
+  ) {
+    final String message =
+        data['message']?.toString() ?? '';
+
+    final String status =
+        data['status']?.toString() ?? 'جديدة';
+
+    final Timestamp? createdAt =
+        data['createdAt'] as Timestamp?;
+
+    String dateText = '';
+
+    if (createdAt != null) {
+      final date =
+          createdAt.toDate();
+
+      dateText =
+          '${date.year}/${date.month.toString().padLeft(2, '0')}/'
+          '${date.day.toString().padLeft(2, '0')} '
+          '${date.hour.toString().padLeft(2, '0')}:'
+          '${date.minute.toString().padLeft(2, '0')}';
+    }
+
+    final bool isAnswered =
+        status == 'تم الرد';
+
+    return Container(
+      width: double.infinity,
+      margin:
+          const EdgeInsets.only(bottom: 9),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.person_rounded,
+                color: primaryBlue,
+                size: 17,
+              ),
+
+              const SizedBox(width: 5),
+
+              const Expanded(
+                child: Text(
+                  'ولي الأمر',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+
+              if (isAnswered)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        primaryGreen.withOpacity(0.08),
+                    borderRadius:
+                        BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'تم الرد',
+                    style: TextStyle(
+                      color: primaryGreen,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        Colors.orange.withOpacity(0.08),
+                    borderRadius:
+                        BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'بانتظار الرد',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+
+          const SizedBox(height: 7),
+
+          Text(
+            message,
+            textDirection: TextDirection.rtl,
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              color: Colors.black87,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+
+          if (dateText.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              dateText,
+              style: TextStyle(
+                color: Colors.grey.shade400,
+                fontSize: 9,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // Send Parent Note
+  // ============================================================
+
+  Future<void> _sendParentNote() async {
+    final String message =
+        _parentNoteController.text.trim();
+
+    final String studentId =
+        widget.child['id']?.toString() ?? '';
+
+    final String studentName =
+        widget.child['name']?.toString() ??
+            'الطالب';
+
+    if (message.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            'اكتب الملاحظة أو الاستفسار أولاً.',
+          ),
+          behavior:
+              SnackBarBehavior.floating,
+        ),
+      );
+
+      return;
+    }
+
+    if (studentId.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _sendingParentNote = true;
+    });
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('parent_notes')
+          .add({
+        'studentId': studentId,
+        'studentName': studentName,
+
+        // إذا كان عندك parentId داخل child
+        'parentId':
+            widget.child['parentId']?.toString() ?? '',
+
+        'parentName':
+            widget.child['parentName']?.toString() ??
+                'ولي الأمر',
+
+        'teacherId':
+            widget.child['teacherId']?.toString() ?? '',
+
+        'teacherName':
+            widget.child['teacherName']?.toString() ?? '',
+
+        'message': message,
+
+        // حالة الرسالة
+        'status': 'جديدة',
+
+        'createdAt':
+            FieldValue.serverTimestamp(),
+      });
+
+      _parentNoteController.clear();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            'تم إرسال ملاحظتك للمدرس بنجاح.',
+          ),
+          backgroundColor: primaryGreen,
+          behavior:
+              SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            'تعذر إرسال الملاحظة، حاول مرة أخرى.',
+          ),
+          backgroundColor: Colors.redAccent,
+          behavior:
+              SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _sendingParentNote = false;
+        });
+      }
+    }
   }
 
   // ============================================================
@@ -922,7 +1657,8 @@ class ChildDetailsScreen extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius:
+            BorderRadius.circular(10),
       ),
       child: Text(
         date,
@@ -978,7 +1714,8 @@ class ChildDetailsScreen extends StatelessWidget {
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: iconColor.withOpacity(0.07),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius:
+            BorderRadius.circular(16),
         border: Border.all(
           color: iconColor.withOpacity(0.18),
         ),
@@ -992,7 +1729,8 @@ class ChildDetailsScreen extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: iconColor.withOpacity(0.13),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius:
+                  BorderRadius.circular(12),
             ),
             child: Icon(
               icon,
@@ -1129,7 +1867,8 @@ class ChildDetailsScreen extends StatelessWidget {
           padding: const EdgeInsets.all(25),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(25),
+            borderRadius:
+                BorderRadius.circular(25),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.08),
@@ -1138,7 +1877,8 @@ class ChildDetailsScreen extends StatelessWidget {
             ],
           ),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize:
+                MainAxisSize.min,
             children: [
               Container(
                 width: 75,
@@ -1244,7 +1984,8 @@ class ChildDetailsScreen extends StatelessWidget {
       if (canLaunch) {
         await launchUrl(
           url,
-          mode: LaunchMode.externalApplication,
+          mode:
+              LaunchMode.externalApplication,
         );
       } else {
         if (!context.mounted) return;
@@ -1255,7 +1996,8 @@ class ChildDetailsScreen extends StatelessWidget {
             content: Text(
               'تعذر فتح واتساب.',
             ),
-            backgroundColor: Colors.redAccent,
+            backgroundColor:
+                Colors.redAccent,
             behavior:
                 SnackBarBehavior.floating,
           ),
@@ -1266,7 +2008,7 @@ class ChildDetailsScreen extends StatelessWidget {
 
       ScaffoldMessenger.of(context)
           .showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
             'حدث خطأ أثناء فتح واتساب.',
           ),
