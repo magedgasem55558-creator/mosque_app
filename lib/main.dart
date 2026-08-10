@@ -49,28 +49,37 @@ Future<void> main() async {
 
   try {
     await Firebase.initializeApp();
+
+    debugPrint('Firebase تم تشغيله بنجاح');
   } catch (e) {
     debugPrint(
-      'خطأ تهيئة Firebase: $e',
+      'خطأ في تهيئة Firebase: $e',
     );
   }
 
+
   // ==========================================================================
-  // تسجيل Background Handler
+  // FCM Background Handler
   // ==========================================================================
 
   FirebaseMessaging.onBackgroundMessage(
     firebaseMessagingBackgroundHandler,
   );
 
+
   // ==========================================================================
   // Firestore Cache
   // ==========================================================================
 
   try {
-    FirebaseFirestore.instance.settings = const Settings(
+    FirebaseFirestore.instance.settings =
+        const Settings(
       persistenceEnabled: true,
       cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    );
+
+    debugPrint(
+      'تم تفعيل Firestore Cache',
     );
   } catch (e) {
     debugPrint(
@@ -78,17 +87,24 @@ Future<void> main() async {
     );
   }
 
+
   // ==========================================================================
-  // تشغيل الصوت في الخلفية
+  // Just Audio Background
   // ==========================================================================
 
   try {
     await JustAudioBackground.init(
       androidNotificationChannelId:
           'com.mosque.system.channel.audio',
+
       androidNotificationChannelName:
           'تشغيل القرآن الكريم',
+
       androidNotificationOngoing: true,
+    );
+
+    debugPrint(
+      'تم تشغيل خدمة الصوت في الخلفية',
     );
   } catch (e) {
     debugPrint(
@@ -96,11 +112,14 @@ Future<void> main() async {
     );
   }
 
+
   // ==========================================================================
   // تشغيل التطبيق
   // ==========================================================================
 
-  runApp(const MosqueApp());
+  runApp(
+    const MosqueApp(),
+  );
 }
 
 
@@ -114,7 +133,8 @@ class MosqueApp extends StatefulWidget {
   });
 
   @override
-  State<MosqueApp> createState() => _MosqueAppState();
+  State<MosqueApp> createState() =>
+      _MosqueAppState();
 }
 
 
@@ -122,122 +142,246 @@ class MosqueApp extends StatefulWidget {
 // APP STATE
 // ============================================================================
 
-class _MosqueAppState extends State<MosqueApp> {
+class _MosqueAppState
+    extends State<MosqueApp> {
+
   @override
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // ننتظر حتى يتم بناء التطبيق
+    // ثم نبدأ تهيئة الإشعارات.
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) {
       _initializeNotifications();
     });
   }
 
 
   // ==========================================================================
-  // تهيئة الإشعارات بعد تشغيل التطبيق
+  // تهيئة نظام الإشعارات
   // ==========================================================================
 
-  Future<void> _initializeNotifications() async {
+  Future<void>
+      _initializeNotifications() async {
+
     try {
+
+      // ----------------------------------------------------------------------
+      // تهيئة NotificationService
+      // ----------------------------------------------------------------------
+
       await NotificationService.init();
 
+
+      // ----------------------------------------------------------------------
       // جدولة أذكار التذكير
+      // ----------------------------------------------------------------------
+
       await NotificationService.scheduleDhikr();
 
+
+      // ----------------------------------------------------------------------
       // المستخدم الحالي
-      final user = FirebaseAuth.instance.currentUser;
+      // ----------------------------------------------------------------------
+
+      final user =
+          FirebaseAuth.instance.currentUser;
+
+
+      // ----------------------------------------------------------------------
+      // إذا كان ولي الأمر مسجل الدخول
+      // ----------------------------------------------------------------------
 
       if (user != null) {
-        await NotificationService.saveCurrentToken();
 
-        NotificationService.startListeningToChildrenGrades(
-          user.uid,
+        debugPrint(
+          'ولي الأمر مسجل الدخول: ${user.uid}',
+        );
+
+
+        // --------------------------------------------------------------------
+        // الحصول على FCM Token وحفظه في Firestore
+        // --------------------------------------------------------------------
+
+        await NotificationService
+            .saveCurrentToken();
+
+
+        debugPrint(
+          'تم حفظ FCM Token لولي الأمر',
         );
       }
+
+
+      // ----------------------------------------------------------------------
+      // مراقبة تغيير FCM Token
+      // يتم التعامل معها داخل NotificationService
+      // ----------------------------------------------------------------------
 
       debugPrint(
         'تم تشغيل نظام الإشعارات بنجاح',
       );
+
     } catch (e) {
+
       debugPrint(
-        'خطأ إعداد الإشعارات: $e',
+        'خطأ في تهيئة الإشعارات: $e',
       );
     }
   }
 
 
   // ==========================================================================
-  // UI
+  // BUILD
   // ==========================================================================
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
+
     return MaterialApp(
+
       debugShowCheckedModeBanner: false,
 
       title: 'مسجدنا الذكي',
 
-      builder: (context, child) {
+
+      // ======================================================================
+      // RTL
+      // ======================================================================
+
+      builder: (
+        context,
+        child,
+      ) {
+
         return Directionality(
-          textDirection: TextDirection.rtl,
-          child: child ?? const SizedBox.shrink(),
+
+          textDirection:
+              TextDirection.rtl,
+
+          child:
+              child ??
+                  const SizedBox.shrink(),
         );
       },
 
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        colorSchemeSeed: Colors.tealAccent,
-        fontFamily: 'Cairo',
 
-        appBarTheme: const AppBarTheme(
+      // ======================================================================
+      // THEME
+      // ======================================================================
+
+      theme: ThemeData(
+
+        useMaterial3: true,
+
+        brightness:
+            Brightness.dark,
+
+        colorSchemeSeed:
+            Colors.tealAccent,
+
+        fontFamily:
+            'Cairo',
+
+        appBarTheme:
+            const AppBarTheme(
+
           centerTitle: true,
+
           elevation: 0,
         ),
       ),
+
 
       // ======================================================================
       // Authentication
       // ======================================================================
 
       home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
 
-        builder: (context, snapshot) {
+        stream:
+            FirebaseAuth
+                .instance
+                .authStateChanges(),
+
+
+        builder: (
+          context,
+          snapshot,
+        ) {
+
+          // ------------------------------------------------------------------
+          // انتظار Firebase Auth
+          // ------------------------------------------------------------------
+
           if (snapshot.connectionState ==
               ConnectionState.waiting) {
+
             return const Scaffold(
+
               body: Center(
-                child: CircularProgressIndicator(
-                  color: Colors.tealAccent,
+
+                child:
+                    CircularProgressIndicator(
+                  color:
+                      Colors.tealAccent,
                 ),
               ),
             );
           }
 
+
+          // ------------------------------------------------------------------
+          // المستخدم مسجل الدخول
+          // ------------------------------------------------------------------
+
           if (snapshot.hasData) {
+
             return const HomeScreen();
           }
+
+
+          // ------------------------------------------------------------------
+          // المستخدم غير مسجل الدخول
+          // ------------------------------------------------------------------
 
           return const LoginScreen();
         },
       ),
 
+
+      // ======================================================================
+      // ROUTES
+      // ======================================================================
+
       routes: {
-        '/login': (context) => const LoginScreen(),
-        '/home': (context) => const HomeScreen(),
+
+        '/login': (
+          context,
+        ) =>
+            const LoginScreen(),
+
+        '/home': (
+          context,
+        ) =>
+            const HomeScreen(),
       },
     );
   }
 
 
   // ==========================================================================
-  // تنظيف الموارد
+  // DISPOSE
   // ==========================================================================
 
   @override
   void dispose() {
+
     NotificationService.dispose();
+
     super.dispose();
   }
 }
