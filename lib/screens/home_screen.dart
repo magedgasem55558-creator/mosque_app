@@ -1,10 +1,12 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:adhan/adhan.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/services.dart';
+
 import '../services/firebase_service.dart';
 import '../models/mosque_models.dart';
 import 'login_screen.dart';
@@ -45,7 +47,12 @@ class HomeScreen extends StatelessWidget {
         child: SafeArea(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(18, 12, 18, 30),
+            padding: const EdgeInsets.fromLTRB(
+              18,
+              12,
+              18,
+              30,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -81,7 +88,7 @@ class HomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 25),
 
-                _buildLogoutButton(),
+                _buildLogoutButton(context),
 
                 const SizedBox(height: 10),
               ],
@@ -98,7 +105,12 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      padding: const EdgeInsets.fromLTRB(
+        18,
+        16,
+        18,
+        16,
+      ),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.97),
         borderRadius: BorderRadius.circular(26),
@@ -364,7 +376,7 @@ class HomeScreen extends StatelessWidget {
           'الأذكار',
           'حصن المسلم',
           Icons.auto_awesome_rounded,
-          const Color(0xFF00897B),
+          teal,
           () {
             Navigator.push(
               context,
@@ -429,7 +441,8 @@ class HomeScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(15),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
                   children: [
                     Container(
                       width: 52,
@@ -441,7 +454,8 @@ class HomeScreen extends StatelessWidget {
                             color.withOpacity(0.07),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(17),
+                        borderRadius:
+                            BorderRadius.circular(17),
                       ),
                       child: Icon(
                         icon,
@@ -547,7 +561,8 @@ class HomeScreen extends StatelessWidget {
                     as Map<String, dynamic>?;
 
             if (eventData == null ||
-                (eventData['title'] as String? ?? '').isEmpty) {
+                (eventData['title'] as String? ?? '')
+                    .isEmpty) {
               return _buildKhutbaCard(khutba);
             }
 
@@ -582,6 +597,7 @@ class HomeScreen extends StatelessWidget {
         }
 
         final now = DateTime.now();
+
         final List<Map<String, dynamic>> upcoming = [];
 
         for (final doc in snapshot.data!.docs) {
@@ -594,7 +610,9 @@ class HomeScreen extends StatelessWidget {
             final time = DateTime.tryParse(timeStr);
 
             if (time != null && time.isAfter(now)) {
-              final copy = Map<String, dynamic>.from(data);
+              final copy =
+                  Map<String, dynamic>.from(data);
+
               copy['id'] = doc.id;
               upcoming.add(copy);
             }
@@ -607,7 +625,9 @@ class HomeScreen extends StatelessWidget {
 
         upcoming.sort(
           (a, b) => DateTime.parse(a['time'])
-              .compareTo(DateTime.parse(b['time'])),
+              .compareTo(
+                DateTime.parse(b['time']),
+              ),
         );
 
         final lecture = upcoming.first;
@@ -643,7 +663,8 @@ class HomeScreen extends StatelessWidget {
                       Text(
                         lecture['title'] ?? 'محاضرة',
                         maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        overflow:
+                            TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Colors.black87,
                           fontSize: 16,
@@ -657,7 +678,8 @@ class HomeScreen extends StatelessWidget {
                         Text(
                           'المحاضر: ${lecture['speaker']}',
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          overflow:
+                              TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: Colors.black54,
                             fontSize: 11,
@@ -729,7 +751,8 @@ class HomeScreen extends StatelessWidget {
                     khutba?.title ??
                         'لم يتم تحديد العنوان',
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    overflow:
+                        TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Colors.black87,
                       fontSize: 16,
@@ -824,7 +847,8 @@ class HomeScreen extends StatelessWidget {
                   Text(
                     title,
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    overflow:
+                        TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Colors.black87,
                       fontSize: 16,
@@ -836,7 +860,8 @@ class HomeScreen extends StatelessWidget {
                     Text(
                       'المكان: $location',
                       maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      overflow:
+                          TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Colors.black54,
                         fontSize: 11,
@@ -923,275 +948,328 @@ class HomeScreen extends StatelessWidget {
   }
 
   // ============================================================
-// ============================================================
-// Logout + Developer Contact
-// ============================================================
+  // Logout + Developer Contact
+  // ============================================================
 
-Widget _buildLogoutButton() {
-  return Column(
-    children: [
-      StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const SizedBox.shrink();
-          }
+  Widget _buildLogoutButton(BuildContext context) {
+    return Column(
+      children: [
+        StreamBuilder<User?>(
+          stream:
+              FirebaseAuth.instance.authStateChanges(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const SizedBox.shrink();
+            }
 
-          return Center(
-            child: TextButton.icon(
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
-              },
-              icon: const Icon(
-                Icons.logout_rounded,
-                color: Colors.black45,
-                size: 19,
-              ),
-              label: const Text(
-                'تسجيل الخروج',
-                style: TextStyle(
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w600,
+            return Center(
+              child: TextButton.icon(
+                onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                },
+                icon: const Icon(
+                  Icons.logout_rounded,
+                  color: Colors.black45,
+                  size: 19,
+                ),
+                label: const Text(
+                  'تسجيل الخروج',
+                  style: TextStyle(
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-          );
-        },
-      ),
-
-      const SizedBox(height: 8),
-
-      // ============================================================
-      // طلب نسخة للمسجد / التواصل مع المطور
-      // ============================================================
-
-      Center(
-        child: TextButton.icon(
-          onPressed: () {
-            _showDeveloperContactDialog(context);
+            );
           },
-          icon: const Icon(
-            Icons.support_agent_rounded,
-            color: darkGreen,
-            size: 21,
-          ),
-          label: const Text(
-            'انقر هنا لطلب نسخة لمسجدك أو للتواصل مع المطور',
-            textAlign: TextAlign.center,
-            style: TextStyle(
+        ),
+
+        const SizedBox(height: 8),
+
+        // ======================================================
+        // طلب نسخة للمسجد / التواصل مع المطور
+        // ======================================================
+
+        Center(
+          child: TextButton.icon(
+            onPressed: () {
+              _showDeveloperContactDialog(context);
+            },
+            icon: const Icon(
+              Icons.support_agent_rounded,
               color: darkGreen,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+              size: 21,
+            ),
+            label: const Text(
+              'انقر هنا لطلب نسخة لمسجدك أو للتواصل مع المطور',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: darkGreen,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
-// ============================================================
-// نافذة التواصل مع المطور
-// ============================================================
+  // ============================================================
+  // Developer contact dialog
+  // ============================================================
 
-void _showDeveloperContactDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (context) {
-      return Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(
-          horizontal: 28,
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(25),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.15),
-                blurRadius: 25,
-                offset: const Offset(0, 8),
-              ),
-            ],
+  void _showDeveloperContactDialog(
+    BuildContext context,
+  ) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding:
+              const EdgeInsets.symmetric(
+            horizontal: 28,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // الأيقونة
-              Container(
-                width: 62,
-                height: 62,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      darkGreen,
-                      teal,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(19),
+          child: Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius:
+                  BorderRadius.circular(25),
+              boxShadow: [
+                BoxShadow(
+                  color:
+                      Colors.black.withOpacity(0.15),
+                  blurRadius: 25,
+                  offset: const Offset(0, 8),
                 ),
-                child: const Icon(
-                  Icons.support_agent_rounded,
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ),
-
-              const SizedBox(height: 15),
-
-              const Text(
-                'طلب نسخة لمسجدك',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontSize: 19,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-
-              const SizedBox(height: 7),
-
-              const Text(
-                'للتواصل مع المطور أو طلب نسخة خاصة لمسجدك',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.black54,
-                  fontSize: 12,
-                  height: 1.5,
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
-              // رقم التواصل
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 13,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F7FA),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: darkGreen.withOpacity(0.12),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(9),
-                      decoration: BoxDecoration(
-                        color: darkGreen.withOpacity(0.10),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.phone_rounded,
-                        color: darkGreen,
-                        size: 21,
-                      ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // الأيقونة
+                Container(
+                  width: 62,
+                  height: 62,
+                  decoration: BoxDecoration(
+                    gradient:
+                        const LinearGradient(
+                      colors: [
+                        darkGreen,
+                        teal,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                    borderRadius:
+                        BorderRadius.circular(19),
+                  ),
+                  child: const Icon(
+                    Icons.support_agent_rounded,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                ),
 
-                    const SizedBox(width: 11),
+                const SizedBox(height: 15),
 
-                    const Expanded(
-                      child: Text(
-                        '776503890',
-                        textDirection: TextDirection.ltr,
-                        style: TextStyle(
-                          color: Colors.black87,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1,
+                const Text(
+                  'طلب نسخة لمسجدك',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+
+                const SizedBox(height: 7),
+
+                const Text(
+                  'للتواصل مع المطور أو طلب نسخة خاصة لمسجدك',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.black54,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                // ==================================================
+                // رقم التواصل
+                // ==================================================
+
+                Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 13,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        const Color(0xFFF5F7FA),
+                    borderRadius:
+                        BorderRadius.circular(16),
+                    border: Border.all(
+                      color:
+                          darkGreen.withOpacity(0.12),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding:
+                            const EdgeInsets.all(9),
+                        decoration: BoxDecoration(
+                          color:
+                              darkGreen.withOpacity(
+                            0.10,
+                          ),
+                          borderRadius:
+                              BorderRadius.circular(
+                            12,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.phone_rounded,
+                          color: darkGreen,
+                          size: 21,
                         ),
                       ),
-                    ),
 
-                    IconButton(
-                      tooltip: 'نسخ الرقم',
-                      onPressed: () async {
-                        await Clipboard.setData(
-                          const ClipboardData(
-                            text: '776503890',
+                      const SizedBox(width: 11),
+
+                      const Expanded(
+                        child: Text(
+                          '776503890',
+                          textDirection:
+                              TextDirection.ltr,
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: 18,
+                            fontWeight:
+                                FontWeight.w900,
+                            letterSpacing: 1,
                           ),
-                        );
+                        ),
+                      ),
 
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context)
-                            .showSnackBar(
+                      IconButton(
+                        tooltip: 'نسخ الرقم',
+                        onPressed: () async {
+                          await Clipboard.setData(
+                            const ClipboardData(
+                              text: '776503890',
+                            ),
+                          );
+
+                          if (dialogContext
+                              .mounted) {
+                            ScaffoldMessenger.of(
+                              dialogContext,
+                            ).showSnackBar(
                               const SnackBar(
                                 content: Text(
                                   'تم نسخ رقم التواصل',
-                                  textAlign: TextAlign.center,
+                                  textAlign:
+                                      TextAlign.center,
                                 ),
                                 behavior:
-                                    SnackBarBehavior.floating,
+                                    SnackBarBehavior
+                                        .floating,
                                 duration:
-                                    Duration(seconds: 2),
+                                    Duration(
+                                  seconds: 2,
+                                ),
                               ),
                             );
-                        }
-                      },
-                      icon: const Icon(
-                        Icons.copy_rounded,
-                        color: darkGreen,
-                        size: 21,
+                          }
+                        },
+                        icon: const Icon(
+                          Icons.copy_rounded,
+                          color: darkGreen,
+                          size: 21,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                // ==================================================
+                // زر إغلاق
+                // ==================================================
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(
+                        dialogContext,
+                      );
+                    },
+                    style:
+                        ElevatedButton.styleFrom(
+                      backgroundColor: darkGreen,
+                      foregroundColor:
+                          Colors.white,
+                      elevation: 0,
+                      padding:
+                          const EdgeInsets.symmetric(
+                        vertical: 13,
+                      ),
+                      shape:
+                          RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(
+                          15,
+                        ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
-              // زر إغلاق
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: darkGreen,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 13,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                  child: const Text(
-                    'إغلاق',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
+                    child: const Text(
+                      'إغلاق',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight:
+                            FontWeight.w800,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      );
-    },
-  );
+        );
+      },
+    );
+  }
 }
 
-  String _formatLectureTime(String? isoTime) {
-    if (isoTime == null) return '';
+// ================================================================
+// Format lecture time
+// ================================================================
 
-    final dt = DateTime.tryParse(isoTime);
-
-    if (dt == null) return isoTime;
-
-    return '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}  '
-        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+String _formatLectureTime(String? isoTime) {
+  if (isoTime == null) {
+    return '';
   }
+
+  final dt = DateTime.tryParse(isoTime);
+
+  if (dt == null) {
+    return isoTime;
+  }
+
+  return '${dt.year}/'
+      '${dt.month.toString().padLeft(2, '0')}/'
+      '${dt.day.toString().padLeft(2, '0')}  '
+      '${dt.hour.toString().padLeft(2, '0')}:'
+      '${dt.minute.toString().padLeft(2, '0')}';
 }
 
 // ================================================================
@@ -1209,6 +1287,7 @@ class RemembranceCarousel extends StatefulWidget {
 class _RemembranceCarouselState
     extends State<RemembranceCarousel> {
   int _currentIndex = 0;
+
   Timer? _timer;
 
   final List<String> _remembrances = [
@@ -1236,13 +1315,13 @@ class _RemembranceCarouselState
     _timer = Timer.periodic(
       const Duration(seconds: 5),
       (_) {
-        if (mounted) {
-          setState(() {
-            _currentIndex =
-                (_currentIndex + 1) %
-                    _remembrances.length;
-          });
-        }
+        if (!mounted) return;
+
+        setState(() {
+          _currentIndex =
+              (_currentIndex + 1) %
+                  _remembrances.length;
+        });
       },
     );
   }
@@ -1279,9 +1358,8 @@ class _RemembranceCarouselState
 
           Expanded(
             child: AnimatedSwitcher(
-              duration: const Duration(
-                milliseconds: 700,
-              ),
+              duration:
+                  const Duration(milliseconds: 700),
               transitionBuilder:
                   (child, animation) {
                 return FadeTransition(
@@ -1315,13 +1393,13 @@ class _RemembranceCarouselState
     return Container(
       padding: const EdgeInsets.all(7),
       decoration: BoxDecoration(
-        color: const Color(0xFF2E7D32)
-            .withOpacity(0.09),
+        color:
+            HomeScreen.darkGreen.withOpacity(0.09),
         borderRadius: BorderRadius.circular(11),
       ),
       child: const Icon(
         Icons.format_quote_rounded,
-        color: Color(0xFF2E7D32),
+        color: HomeScreen.darkGreen,
         size: 19,
       ),
     );
@@ -1344,14 +1422,17 @@ class AutoPrayerCountdownGlass
 class _AutoPrayerCountdownGlassState
     extends State<AutoPrayerCountdownGlass> {
   String _nextPrayerName = "جاري الحساب...";
+
   Duration _timeLeft = Duration.zero;
 
   Timer? _timer;
+
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
+
     _initPrayerLogic();
   }
 
@@ -1360,7 +1441,8 @@ class _AutoPrayerCountdownGlassState
       LocationPermission permission =
           await Geolocator.requestPermission();
 
-      if (permission == LocationPermission.denied ||
+      if (permission ==
+              LocationPermission.denied ||
           permission ==
               LocationPermission.deniedForever) {
         if (mounted) {
@@ -1370,6 +1452,7 @@ class _AutoPrayerCountdownGlassState
                 "تعذر تحديد الموقع";
           });
         }
+
         return;
       }
 
@@ -1390,7 +1473,10 @@ class _AutoPrayerCountdownGlassState
 
       params.madhab = Madhab.shafi;
 
-      _updatePrayer(coordinates, params);
+      _updatePrayer(
+        coordinates,
+        params,
+      );
 
       _timer = Timer.periodic(
         const Duration(seconds: 1),
@@ -1429,7 +1515,9 @@ class _AutoPrayerCountdownGlassState
       final prayerTime =
           prayerTimes.timeForPrayer(next);
 
-      if (prayerTime == null) return;
+      if (prayerTime == null) {
+        return;
+      }
 
       final difference =
           prayerTime.difference(
@@ -1440,38 +1528,39 @@ class _AutoPrayerCountdownGlassState
         _nextPrayerName =
             _translatePrayer(next);
 
-        _timeLeft =
-            difference.isNegative
-                ? Duration.zero
-                : difference;
+        _timeLeft = difference.isNegative
+            ? Duration.zero
+            : difference;
 
         _loading = false;
       });
     } else {
       final tomorrow =
-          DateTime.now()
-              .add(const Duration(days: 1));
+          DateTime.now().add(
+        const Duration(days: 1),
+      );
 
       final tomorrowDate =
           DateComponents.from(tomorrow);
 
-      final tomorrowTimes =
-          PrayerTimes(
+      final tomorrowTimes = PrayerTimes(
         coordinates,
         tomorrowDate,
         params,
       );
 
       final difference =
-          tomorrowTimes.fajr
-              .difference(DateTime.now());
+          tomorrowTimes.fajr.difference(
+        DateTime.now(),
+      );
 
       setState(() {
         _nextPrayerName = "الفجر";
-        _timeLeft =
-            difference.isNegative
-                ? Duration.zero
-                : difference;
+
+        _timeLeft = difference.isNegative
+            ? Duration.zero
+            : difference;
+
         _loading = false;
       });
     }
@@ -1483,14 +1572,19 @@ class _AutoPrayerCountdownGlassState
     switch (prayer) {
       case Prayer.fajr:
         return "الفجر";
+
       case Prayer.dhuhr:
         return "الظهر";
+
       case Prayer.asr:
         return "العصر";
+
       case Prayer.maghrib:
         return "المغرب";
+
       case Prayer.isha:
         return "العشاء";
+
       default:
         return "الصلاة";
     }
@@ -1499,6 +1593,7 @@ class _AutoPrayerCountdownGlassState
   @override
   void dispose() {
     _timer?.cancel();
+
     super.dispose();
   }
 
@@ -1514,7 +1609,7 @@ class _AutoPrayerCountdownGlassState
         ),
         child: const Center(
           child: CircularProgressIndicator(
-            color: Color(0xFF00897B),
+            color: HomeScreen.teal,
           ),
         ),
       );
@@ -1533,7 +1628,7 @@ class _AutoPrayerCountdownGlassState
             BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF00897B)
+            color: HomeScreen.teal
                 .withOpacity(0.12),
             blurRadius: 16,
             offset: const Offset(0, 5),
@@ -1550,14 +1645,13 @@ class _AutoPrayerCountdownGlassState
                 padding:
                     const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: const Color(
-                    0xFF00897B,
-                  ).withOpacity(0.10),
+                  color: HomeScreen.teal
+                      .withOpacity(0.10),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.access_time_rounded,
-                  color: Color(0xFF00897B),
+                  color: HomeScreen.teal,
                   size: 19,
                 ),
               ),
@@ -1617,8 +1711,8 @@ class _AutoPrayerCountdownGlassState
               gradient:
                   const LinearGradient(
                 colors: [
-                  Color(0xFF2E7D32),
-                  Color(0xFF42A5F5),
+                  HomeScreen.darkGreen,
+                  HomeScreen.blue,
                 ],
               ),
               borderRadius:
@@ -1644,11 +1738,13 @@ class _AutoPrayerCountdownGlassState
             fontWeight: FontWeight.w900,
           ),
         ),
+
         const SizedBox(height: 1),
+
         Text(
           label,
           style: const TextStyle(
-            color: Color(0xFF00897B),
+            color: HomeScreen.teal,
             fontSize: 10,
             fontWeight: FontWeight.bold,
           ),
@@ -1665,7 +1761,7 @@ class _AutoPrayerCountdownGlassState
       child: const Text(
         ':',
         style: TextStyle(
-          color: Color(0xFF00897B),
+          color: HomeScreen.teal,
           fontSize: 24,
           fontWeight: FontWeight.bold,
         ),
