@@ -15,24 +15,23 @@ class ChildDetailsScreen extends StatefulWidget {
       _ChildDetailsScreenState();
 }
 
-class _ChildDetailsScreenState
-    extends State<ChildDetailsScreen> {
+class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
   // ============================================================
-  // الألوان الرسمية للتطبيق
+  // الألوان الرسمية
   // ============================================================
 
   static const Color primaryGreen = Color(0xFF2E7D32);
   static const Color primaryBlue = Color(0xFF42A5F5);
   static const Color background = Color(0xFFF5F7FA);
 
-  final TextEditingController _parentNoteController =
+  final TextEditingController _parentMessageController =
       TextEditingController();
 
-  bool _sendingParentNote = false;
+  bool _sendingMessage = false;
 
   @override
   void dispose() {
-    _parentNoteController.dispose();
+    _parentMessageController.dispose();
     super.dispose();
   }
 
@@ -46,9 +45,8 @@ class _ChildDetailsScreenState
         widget.child['id']?.toString() ?? '';
 
     final String studentName =
-        widget.child['name']?.toString().trim().isNotEmpty ==
-                true
-            ? widget.child['name'].toString()
+        widget.child['name']?.toString().trim().isNotEmpty == true
+            ? widget.child['name'].toString().trim()
             : 'الطالب';
 
     return DefaultTabController(
@@ -236,12 +234,6 @@ class _ChildDetailsScreenState
                 ],
               ),
               borderRadius: BorderRadius.circular(19),
-              boxShadow: [
-                BoxShadow(
-                  color: primaryGreen.withOpacity(0.25),
-                  blurRadius: 12,
-                ),
-              ],
             ),
             child: const Icon(
               Icons.person_rounded,
@@ -281,16 +273,20 @@ class _ChildDetailsScreenState
                 const SizedBox(height: 7),
 
                 Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding:
+                      const EdgeInsets.symmetric(
                     horizontal: 9,
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: primaryGreen.withOpacity(0.09),
-                    borderRadius: BorderRadius.circular(20),
+                    color:
+                        primaryGreen.withOpacity(0.09),
+                    borderRadius:
+                        BorderRadius.circular(20),
                   ),
                   child: const Row(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisSize:
+                        MainAxisSize.min,
                     children: [
                       Icon(
                         Icons.auto_stories_rounded,
@@ -303,7 +299,8 @@ class _ChildDetailsScreenState
                         style: TextStyle(
                           color: primaryGreen,
                           fontSize: 11,
-                          fontWeight: FontWeight.bold,
+                          fontWeight:
+                              FontWeight.bold,
                         ),
                       ),
                     ],
@@ -316,7 +313,8 @@ class _ChildDetailsScreenState
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: primaryBlue.withOpacity(0.08),
+              color:
+                  primaryBlue.withOpacity(0.08),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -361,19 +359,14 @@ class _ChildDetailsScreenState
           ),
           borderRadius: BorderRadius.circular(16),
         ),
-        indicatorSize: TabBarIndicatorSize.tab,
-        indicatorPadding: const EdgeInsets.all(5),
+        indicatorSize:
+            TabBarIndicatorSize.tab,
+        indicatorPadding:
+            const EdgeInsets.all(5),
         dividerColor: Colors.transparent,
         labelColor: Colors.white,
-        unselectedLabelColor: Colors.grey.shade600,
-        labelStyle: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 13,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 13,
-        ),
+        unselectedLabelColor:
+            Colors.grey.shade600,
         tabs: const [
           Tab(
             icon: Icon(
@@ -395,14 +388,16 @@ class _ChildDetailsScreenState
   }
 
   // ============================================================
-  // Daily Report
+  // Daily
   // ============================================================
 
   Widget _buildDailyReport(
     String studentId,
   ) {
     final String today =
-        DateTime.now().toIso8601String().split('T')[0];
+        DateTime.now()
+            .toIso8601String()
+            .split('T')[0];
 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -424,8 +419,10 @@ class _ChildDetailsScreenState
 
         if (snapshot.hasError) {
           return _buildEmptyState(
-            icon: Icons.error_outline_rounded,
-            title: 'تعذر تحميل البيانات',
+            icon:
+                Icons.error_outline_rounded,
+            title:
+                'تعذر تحميل البيانات',
             subtitle:
                 'حدث خطأ أثناء جلب سجل الطالب.',
           );
@@ -434,8 +431,10 @@ class _ChildDetailsScreenState
         if (!snapshot.hasData ||
             snapshot.data!.docs.isEmpty) {
           return _buildEmptyState(
-            icon: Icons.event_available_rounded,
-            title: 'لا يوجد سجل اليوم',
+            icon:
+                Icons.event_available_rounded,
+            title:
+                'لا يوجد سجل اليوم',
             subtitle:
                 'لم يتم تسجيل أي حالة للطالب بتاريخ\n$today',
           );
@@ -449,7 +448,7 @@ class _ChildDetailsScreenState
   }
 
   // ============================================================
-  // Monthly / All Reports
+  // Monthly
   // ============================================================
 
   Widget _buildMonthlyReport(
@@ -471,8 +470,10 @@ class _ChildDetailsScreenState
 
         if (snapshot.hasError) {
           return _buildEmptyState(
-            icon: Icons.error_outline_rounded,
-            title: 'تعذر تحميل السجل',
+            icon:
+                Icons.error_outline_rounded,
+            title:
+                'تعذر تحميل السجل',
             subtitle:
                 'حدث خطأ أثناء جلب البيانات.',
           );
@@ -481,8 +482,10 @@ class _ChildDetailsScreenState
         if (!snapshot.hasData ||
             snapshot.data!.docs.isEmpty) {
           return _buildEmptyState(
-            icon: Icons.history_rounded,
-            title: 'لا توجد سجلات سابقة',
+            icon:
+                Icons.history_rounded,
+            title:
+                'لا توجد سجلات سابقة',
             subtitle:
                 'ستظهر هنا جميع حالات وإنجازات الطالب.',
           );
@@ -491,23 +494,27 @@ class _ChildDetailsScreenState
         final List<DocumentSnapshot> docs =
             [...snapshot.data!.docs];
 
-        docs.sort(
-          (a, b) {
-            final String dateA =
-                (a.data()
-                        as Map<String, dynamic>)['date']
-                    ?.toString() ??
-                '';
+        docs.sort((a, b) {
+          final dataA =
+              a.data()
+                  as Map<String, dynamic>;
 
-            final String dateB =
-                (b.data()
-                        as Map<String, dynamic>)['date']
-                    ?.toString() ??
-                '';
+          final dataB =
+              b.data()
+                  as Map<String, dynamic>;
 
-            return dateB.compareTo(dateA);
-          },
-        );
+          final String dateA =
+              dataA['date']
+                      ?.toString() ??
+                  '';
+
+          final String dateB =
+              dataB['date']
+                      ?.toString() ??
+                  '';
+
+          return dateB.compareTo(dateA);
+        });
 
         return _buildRecordList(docs);
       },
@@ -515,22 +522,25 @@ class _ChildDetailsScreenState
   }
 
   // ============================================================
-  // Records List
+  // Records
   // ============================================================
 
   Widget _buildRecordList(
     List<DocumentSnapshot> docs,
   ) {
     return ListView.builder(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(
+      physics:
+          const BouncingScrollPhysics(),
+      padding:
+          const EdgeInsets.fromLTRB(
         16,
         12,
         16,
-        30,
+        40,
       ),
       itemCount: docs.length,
-      itemBuilder: (context, index) {
+      itemBuilder:
+          (context, index) {
         final data =
             docs[index].data()
                 as Map<String, dynamic>;
@@ -552,19 +562,26 @@ class _ChildDetailsScreenState
     Map<String, dynamic> data,
   ) {
     final String status =
-        data['status']?.toString() ?? 'حاضر';
+        data['status']?.toString() ??
+            'حاضر';
 
-    // الحالات الجديدة
-    final bool isAbsent = status == 'غائب';
-    final bool isVacation = status == 'إجازة';
-    final bool isExcused = status == 'مستأذن';
-    final bool isReview = status == 'مراجعة';
+    final bool isAbsent =
+        status == 'غائب';
+
+    final bool isVacation =
+        status == 'إجازة';
+
+    final bool isExcused =
+        status == 'مستأذن';
+
+    final bool isReviewStatus =
+        status == 'مراجعة';
 
     final bool isSpecialStatus =
         isAbsent ||
         isVacation ||
         isExcused ||
-        isReview;
+        isReviewStatus;
 
     final String surah =
         data['surah']?.toString() ??
@@ -576,43 +593,41 @@ class _ChildDetailsScreenState
     final String grade =
         data['grade']?.toString() ?? '';
 
-    // ------------------------------------------------------------
-    // تحديد اللون حسب الحالة
-    // ------------------------------------------------------------
-
     Color statusColor;
-
     IconData statusIcon;
 
     if (isAbsent) {
       statusColor = Colors.red;
-      statusIcon = Icons.person_off_rounded;
+      statusIcon =
+          Icons.person_off_rounded;
     } else if (isVacation) {
       statusColor = Colors.orange;
-      statusIcon = Icons.beach_access_rounded;
+      statusIcon =
+          Icons.beach_access_rounded;
     } else if (isExcused) {
-      statusColor = Colors.deepPurple;
-      statusIcon = Icons.event_available_rounded;
-    } else if (isReview) {
+      statusColor =
+          Colors.deepPurple;
+      statusIcon =
+          Icons.event_available_rounded;
+    } else if (isReviewStatus) {
       statusColor = Colors.blue;
-      statusIcon = Icons.fact_check_rounded;
+      statusIcon =
+          Icons.fact_check_rounded;
     } else {
       statusColor = primaryGreen;
-      statusIcon = Icons.menu_book_rounded;
+      statusIcon =
+          Icons.menu_book_rounded;
     }
 
-    final Color statusBackground =
-        isSpecialStatus
-            ? statusColor.withOpacity(0.035)
-            : Colors.white;
-
     return Container(
-      margin: const EdgeInsets.only(
-        bottom: 16,
-      ),
+      margin:
+          const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: statusBackground,
-        borderRadius: BorderRadius.circular(24),
+        color: isSpecialStatus
+            ? statusColor.withOpacity(0.035)
+            : Colors.white,
+        borderRadius:
+            BorderRadius.circular(24),
         border: Border.all(
           color: isSpecialStatus
               ? statusColor.withOpacity(0.25)
@@ -620,126 +635,136 @@ class _ChildDetailsScreenState
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.07),
+            color:
+                Colors.black.withOpacity(0.07),
             blurRadius: 18,
-            offset: const Offset(0, 6),
+            offset:
+                const Offset(0, 6),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius:
+            BorderRadius.circular(24),
         child: Column(
           children: [
-            // ----------------------------------------------------
-            // Top accent
-            // ----------------------------------------------------
-
             Container(
               height: 5,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isSpecialStatus
-                      ? [
-                          statusColor,
-                          statusColor.withOpacity(0.5),
-                        ]
-                      : const [
-                          primaryGreen,
-                          primaryBlue,
-                        ],
+              decoration:
+                  BoxDecoration(
+                gradient:
+                    LinearGradient(
+                  colors:
+                      isSpecialStatus
+                          ? [
+                              statusColor,
+                              statusColor
+                                  .withOpacity(
+                                      0.5),
+                            ]
+                          : const [
+                              primaryGreen,
+                              primaryBlue,
+                            ],
                 ),
               ),
             ),
 
             Padding(
-              padding: const EdgeInsets.all(17),
+              padding:
+                  const EdgeInsets.all(17),
               child: Column(
                 children: [
-                  // ------------------------------------------------
-                  // Header
-                  // ------------------------------------------------
-
                   Row(
                     children: [
                       Container(
                         width: 50,
                         height: 50,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: isSpecialStatus
-                                ? [
-                                    statusColor,
-                                    statusColor
-                                        .withOpacity(0.65),
-                                  ]
-                                : const [
-                                    primaryGreen,
-                                    primaryBlue,
-                                  ],
+                        decoration:
+                            BoxDecoration(
+                          gradient:
+                              LinearGradient(
+                            colors:
+                                isSpecialStatus
+                                    ? [
+                                        statusColor,
+                                        statusColor
+                                            .withOpacity(
+                                                0.65),
+                                      ]
+                                    : const [
+                                        primaryGreen,
+                                        primaryBlue,
+                                      ],
                           ),
                           borderRadius:
-                              BorderRadius.circular(15),
+                              BorderRadius.circular(
+                                  15),
                         ),
                         child: Icon(
                           statusIcon,
-                          color: Colors.white,
+                          color:
+                              Colors.white,
                           size: 26,
                         ),
                       ),
 
-                      const SizedBox(width: 13),
+                      const SizedBox(
+                          width: 13),
 
                       Expanded(
                         child: Column(
                           crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                              CrossAxisAlignment
+                                  .start,
                           children: [
                             Text(
                               isSpecialStatus
                                   ? 'حالة الطالب'
                                   : 'إنجاز القرآن الكريم',
-                              style: TextStyle(
-                                color:
-                                    Colors.grey.shade600,
+                              style:
+                                  TextStyle(
+                                color: Colors
+                                    .grey
+                                    .shade600,
                                 fontSize: 12,
-                                fontWeight:
-                                    FontWeight.w500,
                               ),
                             ),
-
-                            const SizedBox(height: 4),
-
+                            const SizedBox(
+                                height: 4),
                             Text(
                               isSpecialStatus
                                   ? status
                                   : 'سورة $surah',
                               maxLines: 1,
                               overflow:
-                                  TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: isSpecialStatus
-                                    ? statusColor
-                                    : Colors.black87,
+                                  TextOverflow
+                                      .ellipsis,
+                              style:
+                                  TextStyle(
+                                color:
+                                    isSpecialStatus
+                                        ? statusColor
+                                        : Colors
+                                            .black87,
                                 fontSize: 18,
                                 fontWeight:
-                                    FontWeight.bold,
+                                    FontWeight
+                                        .bold,
                               ),
                             ),
                           ],
                         ),
                       ),
 
-                      _buildDateBadge(date),
+                      _buildDateBadge(
+                          date),
                     ],
                   ),
 
-                  // ------------------------------------------------
-                  // Special Status Description
-                  // ------------------------------------------------
-
                   if (isSpecialStatus) ...[
-                    const SizedBox(height: 18),
-
+                    const SizedBox(
+                        height: 18),
                     _buildStatusDescription(
                       status: status,
                       color: statusColor,
@@ -747,217 +772,79 @@ class _ChildDetailsScreenState
                     ),
                   ],
 
-                  // ------------------------------------------------
-                  // Ayahs
-                  // ------------------------------------------------
-
                   if (!isSpecialStatus) ...[
-                    const SizedBox(height: 18),
+                    const SizedBox(
+                        height: 18),
 
-                    Container(
-                      width: double.infinity,
-                      padding:
-                          const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 13,
-                      ),
-                      decoration: BoxDecoration(
-                        color:
-                            primaryGreen.withOpacity(0.06),
-                        borderRadius:
-                            BorderRadius.circular(15),
-                        border: Border.all(
-                          color: primaryGreen
-                              .withOpacity(0.12),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding:
-                                const EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                              color: primaryGreen
-                                  .withOpacity(0.12),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.format_list_numbered_rounded,
-                              color: primaryGreen,
-                              size: 19,
-                            ),
-                          ),
+                    _buildHighlightCard(
+                      icon: Icons
+                          .format_list_numbered_rounded,
+                      iconColor:
+                          primaryGreen,
+                      label:
+                          'نطاق التسميع',
+                      value:
+                          'من الآية ${data['fromAyah'] ?? '0'} إلى الآية ${data['toAyah'] ?? '0'}',
+                    ),
 
-                          const SizedBox(width: 10),
+                    const SizedBox(
+                        height: 17),
 
-                          Expanded(
-                            child: Text(
-                              'من الآية ${data['fromAyah'] ?? '0'} '
-                              'إلى الآية ${data['toAyah'] ?? '0'}',
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontSize: 14,
-                                fontWeight:
-                                    FontWeight.bold,
-                              ),
-                            ),
-                          ),
-
-                          const Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            color: primaryGreen,
-                            size: 15,
-                          ),
-                        ],
-                      ),
+                    _buildEvaluationSection(
+                      grade,
                     ),
                   ],
-
-                  // ------------------------------------------------
-                  // Evaluation
-                  // ------------------------------------------------
-
-                  if (!isSpecialStatus) ...[
-                    const SizedBox(height: 17),
-
-                    _buildSectionTitle(
-                      icon: Icons.star_rounded,
-                      title: 'التقييم',
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    Container(
-                      padding:
-                          const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius:
-                            BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildEvaluationTag(
-                            'إتقان',
-                            grade.contains('إتقان'),
-                          ),
-                          _buildEvaluationTag(
-                            'حفظ',
-                            grade.contains('حفظ'),
-                          ),
-                          _buildEvaluationTag(
-                            'تجويد',
-                            grade.contains('تجويد'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-
-                  // ------------------------------------------------
-                  // Tomorrow
-                  // ------------------------------------------------
 
                   if (_hasText(
                     data['tomorrowRequirement'],
                   )) ...[
-                    const SizedBox(height: 15),
-
+                    const SizedBox(
+                        height: 15),
                     _buildHighlightCard(
-                      icon: Icons.auto_stories_rounded,
-                      iconColor: primaryBlue,
-                      label: 'المطلوب غداً',
+                      icon: Icons
+                          .auto_stories_rounded,
+                      iconColor:
+                          primaryBlue,
+                      label:
+                          'المطلوب غداً',
                       value: data[
-                        'tomorrowRequirement'
-                      ].toString(),
+                              'tomorrowRequirement']
+                          .toString(),
                     ),
                   ],
-
-                  // ------------------------------------------------
-                  // Teacher Notes
-                  // ------------------------------------------------
 
                   if (_hasText(
                     data['notes'],
                   )) ...[
-                    const SizedBox(height: 11),
-
+                    const SizedBox(
+                        height: 11),
                     _buildHighlightCard(
-                      icon: Icons.edit_note_rounded,
-                      iconColor: primaryGreen,
-                      label: 'ملاحظة المدرس',
-                      value: data['notes'].toString(),
+                      icon: Icons
+                          .edit_note_rounded,
+                      iconColor:
+                          primaryGreen,
+                      label:
+                          'ملاحظة المدرس',
+                      value: data['notes']
+                          .toString(),
                     ),
                   ],
 
-                  // ------------------------------------------------
-                  // WhatsApp / Chat
-                  // ------------------------------------------------
-
-                  const SizedBox(height: 16),
+                  const SizedBox(
+                      height: 16),
 
                   Container(
                     height: 1,
-                    color: Colors.grey.shade200,
+                    color:
+                        Colors.grey.shade200,
                   ),
 
-                  const SizedBox(height: 13),
+                  const SizedBox(
+                      height: 15),
 
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        _openWhatsApp(
-                          context,
-                          data['teacherPhone']
-                                  ?.toString() ??
-                              '967770000000',
-                          surah,
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.chat_rounded,
-                        size: 20,
-                      ),
-                      label: const Text(
-                        'الدردشة مع المدرس',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style:
-                          ElevatedButton.styleFrom(
-                        backgroundColor:
-                            primaryGreen,
-                        foregroundColor:
-                            Colors.white,
-                        elevation: 0,
-                        padding:
-                            const EdgeInsets.symmetric(
-                          vertical: 13,
-                        ),
-                        shape:
-                            RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
+                  _buildChatSection(
+                    data,
                   ),
-
-                  // ------------------------------------------------
-                  // Parent Notes / Questions
-                  // ------------------------------------------------
-
-                  const SizedBox(height: 16),
-
-                  _buildParentNotesSection(),
                 ],
               ),
             ),
@@ -968,7 +855,819 @@ class _ChildDetailsScreenState
   }
 
   // ============================================================
-  // Status Description
+  // ⭐ Evaluation - الأربعة
+  // ============================================================
+
+  Widget _buildEvaluationSection(
+    String grade,
+  ) {
+    final bool memorization =
+        _gradeContains(
+      grade,
+      'حفظ',
+    );
+
+    final bool mastery =
+        _gradeContains(
+      grade,
+      'إتقان',
+    );
+
+    final bool tajweed =
+        _gradeContains(
+      grade,
+      'تجويد',
+    );
+
+    final bool review =
+        _gradeContains(
+      grade,
+      'مراجعة',
+    );
+
+    return Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(
+          icon: Icons.star_rounded,
+          title: 'التقييم',
+        ),
+
+        const SizedBox(height: 10),
+
+        Container(
+          padding:
+              const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 14,
+          ),
+          decoration:
+              BoxDecoration(
+            color:
+                Colors.grey.shade50,
+            borderRadius:
+                BorderRadius.circular(17),
+            border: Border.all(
+              color:
+                  Colors.grey.shade200,
+            ),
+          ),
+          child: Row(
+            children: [
+              _buildEvaluationTag(
+                'حفظ',
+                memorization,
+                Icons.menu_book_rounded,
+              ),
+              _buildEvaluationTag(
+                'إتقان',
+                mastery,
+                Icons.verified_rounded,
+              ),
+              _buildEvaluationTag(
+                'تجويد',
+                tajweed,
+                Icons.record_voice_over_rounded,
+              ),
+              _buildEvaluationTag(
+                'مراجعة',
+                review,
+                Icons.replay_rounded,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  bool _gradeContains(
+    String grade,
+    String value,
+  ) {
+    return grade
+        .split('-')
+        .map(
+          (e) => e.trim(),
+        )
+        .contains(value);
+  }
+
+  // ============================================================
+  // 💬 Chat Section
+  // ============================================================
+
+  Widget _buildChatSection(
+    Map<String, dynamic> record,
+  ) {
+    final String studentId =
+        widget.child['id']?.toString() ?? '';
+
+    final String parentId =
+        widget.child['parentId']?.toString() ??
+        widget.child['parentUid']?.toString() ??
+        widget.child['guardianId']?.toString() ??
+        record['parentId']?.toString() ??
+        '';
+
+    final String halaqaId =
+        record['halaqaId']?.toString() ??
+        widget.child['halaqaId']?.toString() ??
+        '';
+
+    if (studentId.isEmpty ||
+        parentId.isEmpty ||
+        halaqaId.isEmpty) {
+      return _buildParentMessageFallback(
+        record,
+      );
+    }
+
+    return _buildMessagesSection(
+      studentId: studentId,
+      parentId: parentId,
+      halaqaId: halaqaId,
+      teacherName:
+          record['teacherName']
+                  ?.toString() ??
+              'المدرس',
+    );
+  }
+
+  // ============================================================
+  // 💬 Messages
+  // ============================================================
+
+  Widget _buildMessagesSection({
+    required String studentId,
+    required String parentId,
+    required String halaqaId,
+    required String teacherName,
+  }) {
+    final Stream<QuerySnapshot> stream =
+        FirebaseFirestore.instance
+            .collection('messages')
+            .where(
+              'studentId',
+              isEqualTo: studentId,
+            )
+            .where(
+              'parentId',
+              isEqualTo: parentId,
+            )
+            .where(
+              'halaqaId',
+              isEqualTo: halaqaId,
+            )
+            .snapshots();
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: stream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return _buildChatError();
+        }
+
+        if (snapshot.connectionState ==
+                ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return _buildChatLoading();
+        }
+
+        final List<DocumentSnapshot> docs =
+            snapshot.data?.docs.toList() ??
+                [];
+
+        docs.sort((a, b) {
+          final dataA =
+              a.data()
+                  as Map<String, dynamic>;
+
+          final dataB =
+              b.data()
+                  as Map<String, dynamic>;
+
+          final Timestamp? timeA =
+              dataA['createdAt']
+                  as Timestamp?;
+
+          final Timestamp? timeB =
+              dataB['createdAt']
+                  as Timestamp?;
+
+          if (timeA == null &&
+              timeB == null) {
+            return 0;
+          }
+
+          if (timeA == null) {
+            return -1;
+          }
+
+          if (timeB == null) {
+            return 1;
+          }
+
+          return timeA.compareTo(timeB);
+        });
+
+        return Column(
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration:
+                      BoxDecoration(
+                    color: primaryBlue
+                        .withOpacity(
+                            0.10),
+                    borderRadius:
+                        BorderRadius
+                            .circular(13),
+                  ),
+                  child: const Icon(
+                    Icons
+                        .chat_bubble_rounded,
+                    color: primaryBlue,
+                    size: 22,
+                  ),
+                ),
+
+                const SizedBox(
+                    width: 10),
+
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment
+                            .start,
+                    children: [
+                      Text(
+                        'المحادثة',
+                        style:
+                            TextStyle(
+                          color: Colors
+                              .black87,
+                          fontSize: 15,
+                          fontWeight:
+                              FontWeight
+                                  .bold,
+                        ),
+                      ),
+                      SizedBox(
+                          height: 3),
+                      Text(
+                        'رسائل ولي الأمر والمدرس',
+                        style:
+                            TextStyle(
+                          color: Colors
+                              .black45,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                if (docs.isNotEmpty)
+                  Container(
+                    padding:
+                        const EdgeInsets
+                            .symmetric(
+                      horizontal: 8,
+                      vertical: 5,
+                    ),
+                    decoration:
+                        BoxDecoration(
+                      color: primaryGreen
+                          .withOpacity(
+                              0.09),
+                      borderRadius:
+                          BorderRadius
+                              .circular(10),
+                    ),
+                    child: Text(
+                      '${docs.length}',
+                      style:
+                          const TextStyle(
+                        color:
+                            primaryGreen,
+                        fontSize: 11,
+                        fontWeight:
+                            FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+
+            const SizedBox(
+                height: 12),
+
+            if (docs.isEmpty)
+              _buildNoMessages()
+            else
+              Container(
+                constraints:
+                    const BoxConstraints(
+                  maxHeight: 360,
+                ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics:
+                      const BouncingScrollPhysics(),
+                  itemCount:
+                      docs.length,
+                  itemBuilder:
+                      (context, index) {
+                    final data =
+                        docs[index]
+                                .data()
+                            as Map<String,
+                                dynamic>;
+
+                    return _buildMessageBubble(
+                      data,
+                      teacherName,
+                    );
+                  },
+                ),
+              ),
+
+            const SizedBox(
+                height: 13),
+
+            _buildSendMessageBox(
+              studentId: studentId,
+              parentId: parentId,
+              halaqaId: halaqaId,
+              teacherName: teacherName,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ============================================================
+  // Message Bubble
+  // ============================================================
+
+  Widget _buildMessageBubble(
+    Map<String, dynamic> data,
+    String teacherName,
+  ) {
+    final String role =
+        data['senderRole']
+                ?.toString() ??
+            'parent';
+
+    final bool isTeacher =
+        role == 'teacher';
+
+    final String text =
+        data['text']?.toString() ??
+            '';
+
+    final Timestamp? createdAt =
+        data['createdAt']
+            as Timestamp?;
+
+    String timeText = '';
+
+    if (createdAt != null) {
+      final date =
+          createdAt.toDate();
+
+      timeText =
+          '${date.hour.toString().padLeft(2, '0')}:'
+          '${date.minute.toString().padLeft(2, '0')}';
+    }
+
+    return Align(
+      alignment: isTeacher
+          ? Alignment.centerLeft
+          : Alignment.centerRight,
+      child: Container(
+        constraints:
+            const BoxConstraints(
+          maxWidth: 310,
+        ),
+        margin:
+            const EdgeInsets.only(
+          bottom: 9,
+        ),
+        padding:
+            const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isTeacher
+              ? primaryGreen
+                  .withOpacity(0.09)
+              : primaryBlue
+                  .withOpacity(0.09),
+          borderRadius:
+              BorderRadius.circular(16),
+          border: Border.all(
+            color: isTeacher
+                ? primaryGreen
+                    .withOpacity(0.16)
+                : primaryBlue
+                    .withOpacity(0.16),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisSize:
+                  MainAxisSize.min,
+              children: [
+                Icon(
+                  isTeacher
+                      ? Icons.school_rounded
+                      : Icons.person_rounded,
+                  color: isTeacher
+                      ? primaryGreen
+                      : primaryBlue,
+                  size: 15,
+                ),
+                const SizedBox(
+                    width: 5),
+                Text(
+                  isTeacher
+                      ? teacherName
+                      : 'ولي الأمر',
+                  style: TextStyle(
+                    color: isTeacher
+                        ? primaryGreen
+                        : primaryBlue,
+                    fontSize: 10,
+                    fontWeight:
+                        FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(
+                height: 6),
+
+            Text(
+              text,
+              textDirection:
+                  TextDirection.rtl,
+              textAlign:
+                  TextAlign.right,
+              style:
+                  const TextStyle(
+                color:
+                    Colors.black87,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+
+            if (timeText.isNotEmpty) ...[
+              const SizedBox(
+                  height: 5),
+              Text(
+                timeText,
+                style: TextStyle(
+                  color:
+                      Colors.grey.shade500,
+                  fontSize: 9,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // Send Message
+  // ============================================================
+
+  Widget _buildSendMessageBox({
+    required String studentId,
+    required String parentId,
+    required String halaqaId,
+    required String teacherName,
+  }) {
+    return Container(
+      padding:
+          const EdgeInsets.all(11),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment:
+            CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: TextField(
+              controller:
+                  _parentMessageController,
+              maxLines: 3,
+              minLines: 1,
+              textDirection:
+                  TextDirection.rtl,
+              textAlign:
+                  TextAlign.right,
+              decoration:
+                  InputDecoration(
+                hintText:
+                    'اكتب رسالة للمدرس...',
+                hintStyle:
+                    TextStyle(
+                  color:
+                      Colors.grey.shade400,
+                  fontSize: 12,
+                ),
+                border:
+                    InputBorder.none,
+              ),
+            ),
+          ),
+
+          const SizedBox(
+              width: 8),
+
+          Container(
+            width: 45,
+            height: 45,
+            decoration:
+                const BoxDecoration(
+              gradient:
+                  LinearGradient(
+                colors: [
+                  primaryGreen,
+                  primaryBlue,
+                ],
+              ),
+              shape:
+                  BoxShape.circle,
+            ),
+            child: IconButton(
+              onPressed:
+                  _sendingMessage
+                      ? null
+                      : () {
+                          _sendMessage(
+                            studentId:
+                                studentId,
+                            parentId:
+                                parentId,
+                            halaqaId:
+                                halaqaId,
+                            teacherName:
+                                teacherName,
+                          );
+                        },
+              icon:
+                  _sendingMessage
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child:
+                              CircularProgressIndicator(
+                            strokeWidth:
+                                2,
+                            color:
+                                Colors.white,
+                          ),
+                        )
+                      : const Icon(
+                          Icons
+                              .send_rounded,
+                          color:
+                              Colors.white,
+                          size: 20,
+                        ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // Send Parent -> Teacher
+  // ============================================================
+
+  Future<void> _sendMessage({
+    required String studentId,
+    required String parentId,
+    required String halaqaId,
+    required String teacherName,
+  }) async {
+    final String text =
+        _parentMessageController
+            .text
+            .trim();
+
+    if (text.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _sendingMessage = true;
+    });
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('messages')
+          .add({
+        'studentId': studentId,
+        'studentName':
+            widget.child['name']
+                    ?.toString() ??
+                'الطالب',
+
+        'parentId': parentId,
+
+        'halaqaId': halaqaId,
+
+        'halaqaName':
+            widget.child['halaqaName']
+                    ?.toString() ??
+                '',
+
+        'teacherId':
+            widget.child['teacherId']
+                    ?.toString() ??
+                '',
+
+        'teacherName':
+            teacherName,
+
+        'senderId': parentId,
+        'senderRole': 'parent',
+
+        'text': text,
+
+        'createdAt':
+            FieldValue.serverTimestamp(),
+
+        'updatedAt':
+            FieldValue.serverTimestamp(),
+      });
+
+      _parentMessageController.clear();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            'تم إرسال الرسالة للمدرس.',
+          ),
+          backgroundColor:
+              primaryGreen,
+          behavior:
+              SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            'تعذر إرسال الرسالة: $e',
+          ),
+          backgroundColor:
+              Colors.redAccent,
+          behavior:
+              SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _sendingMessage = false;
+        });
+      }
+    }
+  }
+
+  // ============================================================
+  // Fallback
+  // ============================================================
+
+  Widget _buildParentMessageFallback(
+    Map<String, dynamic> record,
+  ) {
+    return Container(
+      padding:
+          const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color:
+            primaryBlue.withOpacity(0.05),
+        borderRadius:
+            BorderRadius.circular(16),
+      ),
+      child: const Text(
+        'المحادثة غير متاحة حالياً لعدم اكتمال ربط الطالب بولي الأمر والحلقة.',
+        textAlign:
+            TextAlign.center,
+        style: TextStyle(
+          color: Colors.black54,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoMessages() {
+    return Container(
+      width: double.infinity,
+      padding:
+          const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius:
+            BorderRadius.circular(15),
+      ),
+      child: const Column(
+        children: [
+          Icon(
+            Icons.chat_bubble_outline_rounded,
+            color: Colors.grey,
+            size: 30,
+          ),
+          SizedBox(height: 7),
+          Text(
+            'لا توجد رسائل بعد',
+            style: TextStyle(
+              color: Colors.black54,
+              fontSize: 12,
+              fontWeight:
+                  FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChatLoading() {
+    return const Center(
+      child: Padding(
+        padding:
+            EdgeInsets.all(15),
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child:
+              CircularProgressIndicator(
+            strokeWidth: 2,
+            color: primaryBlue,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChatError() {
+    return Container(
+      width: double.infinity,
+      padding:
+          const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color:
+            Colors.red.withOpacity(0.05),
+        borderRadius:
+            BorderRadius.circular(14),
+      ),
+      child: const Text(
+        'تعذر تحميل المحادثة.',
+        textAlign:
+            TextAlign.center,
+        style: TextStyle(
+          color: Colors.red,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // Status
   // ============================================================
 
   Widget _buildStatusDescription({
@@ -1006,12 +1705,16 @@ class _ChildDetailsScreenState
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(15),
+      padding:
+          const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.07),
-        borderRadius: BorderRadius.circular(17),
+        color:
+            color.withOpacity(0.07),
+        borderRadius:
+            BorderRadius.circular(17),
         border: Border.all(
-          color: color.withOpacity(0.16),
+          color:
+              color.withOpacity(0.16),
         ),
       ),
       child: Row(
@@ -1021,8 +1724,10 @@ class _ChildDetailsScreenState
           Container(
             width: 42,
             height: 42,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+            decoration:
+                BoxDecoration(
+              color:
+                  color.withOpacity(0.12),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -1044,16 +1749,18 @@ class _ChildDetailsScreenState
                   style: TextStyle(
                     color: color,
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontWeight:
+                        FontWeight.bold,
                   ),
                 ),
-
-                const SizedBox(height: 5),
-
+                const SizedBox(
+                    height: 5),
                 Text(
                   description,
-                  style: const TextStyle(
-                    color: Colors.black87,
+                  style:
+                      const TextStyle(
+                    color:
+                        Colors.black87,
                     fontSize: 13,
                     height: 1.5,
                   ),
@@ -1067,605 +1774,32 @@ class _ChildDetailsScreenState
   }
 
   // ============================================================
-  // Parent Notes Section
-  // ============================================================
-
-  Widget _buildParentNotesSection() {
-    final String studentId =
-        widget.child['id']?.toString() ?? '';
-
-    if (studentId.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.blueGrey.withOpacity(0.035),
-        borderRadius: BorderRadius.circular(19),
-        border: Border.all(
-          color: Colors.blueGrey.withOpacity(0.12),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
-        children: [
-          // ------------------------------------------------------
-          // Title
-          // ------------------------------------------------------
-
-          Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: primaryBlue.withOpacity(0.11),
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: const Icon(
-                  Icons.family_restroom_rounded,
-                  color: primaryBlue,
-                  size: 23,
-                ),
-              ),
-
-              const SizedBox(width: 10),
-
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'ملاحظات ولي الأمر',
-                      style: TextStyle(
-                        color: Colors.black87,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 3),
-                    Text(
-                      'اكتب ملاحظة أو استفسار للمدرس',
-                      style: TextStyle(
-                        color: Colors.black45,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 13),
-
-          // ------------------------------------------------------
-          // Text Field
-          // ------------------------------------------------------
-
-          TextField(
-            controller: _parentNoteController,
-            maxLines: 4,
-            minLines: 3,
-            textDirection: TextDirection.rtl,
-            textAlign: TextAlign.right,
-            decoration: InputDecoration(
-              hintText:
-                  'مثال: أود الاستفسار عن مستوى ابني...\n'
-                  'أو كتابة ملاحظة للمدرس',
-              hintStyle: TextStyle(
-                color: Colors.grey.shade400,
-                fontSize: 13,
-                height: 1.5,
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding:
-                  const EdgeInsets.all(14),
-              border: OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(15),
-                borderSide: BorderSide(
-                  color:
-                      Colors.grey.shade200,
-                ),
-              ),
-              enabledBorder:
-                  OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(15),
-                borderSide: BorderSide(
-                  color:
-                      Colors.grey.shade200,
-                ),
-              ),
-              focusedBorder:
-                  OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(15),
-                borderSide:
-                    const BorderSide(
-                  color: primaryBlue,
-                  width: 1.5,
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 11),
-
-          // ------------------------------------------------------
-          // Send Button
-          // ------------------------------------------------------
-
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _sendingParentNote
-                  ? null
-                  : _sendParentNote,
-              icon: _sendingParentNote
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child:
-                          CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(
-                      Icons.send_rounded,
-                      size: 19,
-                    ),
-              label: Text(
-                _sendingParentNote
-                    ? 'جاري الإرسال...'
-                    : 'إرسال للمدرس',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style:
-                  ElevatedButton.styleFrom(
-                backgroundColor:
-                    primaryBlue,
-                foregroundColor:
-                    Colors.white,
-                disabledBackgroundColor:
-                    primaryBlue.withOpacity(0.5),
-                elevation: 0,
-                padding:
-                    const EdgeInsets.symmetric(
-                  vertical: 13,
-                ),
-                shape:
-                    RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(14),
-                ),
-              ),
-            ),
-          ),
-
-          // ------------------------------------------------------
-          // Previous Parent Notes
-          // ------------------------------------------------------
-
-          const SizedBox(height: 18),
-
-          _buildPreviousParentNotes(
-            studentId,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // Previous Parent Notes
-  // ============================================================
-
-  Widget _buildPreviousParentNotes(
-    String studentId,
-  ) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('parent_notes')
-          .where(
-            'studentId',
-            isEqualTo: studentId,
-          )
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState ==
-            ConnectionState.waiting) {
-          return const SizedBox(
-            height: 40,
-            child: Center(
-              child: SizedBox(
-                width: 18,
-                height: 18,
-                child:
-                    CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: primaryBlue,
-                ),
-              ),
-            ),
-          );
-        }
-
-        if (snapshot.hasError ||
-            !snapshot.hasData ||
-            snapshot.data!.docs.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        final docs =
-            [...snapshot.data!.docs];
-
-        docs.sort((a, b) {
-          final dataA =
-              a.data()
-                  as Map<String, dynamic>;
-
-          final dataB =
-              b.data()
-                  as Map<String, dynamic>;
-
-          final Timestamp? timeA =
-              dataA['createdAt']
-                  as Timestamp?;
-
-          final Timestamp? timeB =
-              dataB['createdAt']
-                  as Timestamp?;
-
-          if (timeA == null &&
-              timeB == null) {
-            return 0;
-          }
-
-          if (timeA == null) {
-            return 1;
-          }
-
-          if (timeB == null) {
-            return -1;
-          }
-
-          return timeB.compareTo(timeA);
-        });
-
-        return Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 1,
-              color: Colors.grey.shade200,
-            ),
-
-            const SizedBox(height: 14),
-
-            Row(
-              children: [
-                const Icon(
-                  Icons.history_rounded,
-                  color: primaryBlue,
-                  size: 19,
-                ),
-                const SizedBox(width: 7),
-                Text(
-                  'ملاحظاتك السابقة',
-                  style: TextStyle(
-                    color: Colors.grey.shade700,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            ...docs.take(5).map(
-              (doc) {
-                final data =
-                    doc.data()
-                        as Map<String, dynamic>;
-
-                return _buildParentNoteItem(
-                  data,
-                );
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // ============================================================
-  // Parent Note Item
-  // ============================================================
-
-  Widget _buildParentNoteItem(
-    Map<String, dynamic> data,
-  ) {
-    final String message =
-        data['message']?.toString() ?? '';
-
-    final String status =
-        data['status']?.toString() ?? 'جديدة';
-
-    final Timestamp? createdAt =
-        data['createdAt'] as Timestamp?;
-
-    String dateText = '';
-
-    if (createdAt != null) {
-      final date =
-          createdAt.toDate();
-
-      dateText =
-          '${date.year}/${date.month.toString().padLeft(2, '0')}/'
-          '${date.day.toString().padLeft(2, '0')} '
-          '${date.hour.toString().padLeft(2, '0')}:'
-          '${date.minute.toString().padLeft(2, '0')}';
-    }
-
-    final bool isAnswered =
-        status == 'تم الرد';
-
-    return Container(
-      width: double.infinity,
-      margin:
-          const EdgeInsets.only(bottom: 9),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius:
-            BorderRadius.circular(14),
-        border: Border.all(
-          color: Colors.grey.shade200,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.person_rounded,
-                color: primaryBlue,
-                size: 17,
-              ),
-
-              const SizedBox(width: 5),
-
-              const Expanded(
-                child: Text(
-                  'ولي الأمر',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
-
-              if (isAnswered)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        primaryGreen.withOpacity(0.08),
-                    borderRadius:
-                        BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'تم الرد',
-                    style: TextStyle(
-                      color: primaryGreen,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                )
-              else
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        Colors.orange.withOpacity(0.08),
-                    borderRadius:
-                        BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'بانتظار الرد',
-                    style: TextStyle(
-                      color: Colors.orange,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-
-          const SizedBox(height: 7),
-
-          Text(
-            message,
-            textDirection: TextDirection.rtl,
-            textAlign: TextAlign.right,
-            style: const TextStyle(
-              color: Colors.black87,
-              fontSize: 12,
-              height: 1.5,
-            ),
-          ),
-
-          if (dateText.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(
-              dateText,
-              style: TextStyle(
-                color: Colors.grey.shade400,
-                fontSize: 9,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // Send Parent Note
-  // ============================================================
-
-  Future<void> _sendParentNote() async {
-    final String message =
-        _parentNoteController.text.trim();
-
-    final String studentId =
-        widget.child['id']?.toString() ?? '';
-
-    final String studentName =
-        widget.child['name']?.toString() ??
-            'الطالب';
-
-    if (message.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
-          content: Text(
-            'اكتب الملاحظة أو الاستفسار أولاً.',
-          ),
-          behavior:
-              SnackBarBehavior.floating,
-        ),
-      );
-
-      return;
-    }
-
-    if (studentId.isEmpty) {
-      return;
-    }
-
-    setState(() {
-      _sendingParentNote = true;
-    });
-
-    try {
-      await FirebaseFirestore.instance
-          .collection('parent_notes')
-          .add({
-        'studentId': studentId,
-        'studentName': studentName,
-
-        // إذا كان عندك parentId داخل child
-        'parentId':
-            widget.child['parentId']?.toString() ?? '',
-
-        'parentName':
-            widget.child['parentName']?.toString() ??
-                'ولي الأمر',
-
-        'teacherId':
-            widget.child['teacherId']?.toString() ?? '',
-
-        'teacherName':
-            widget.child['teacherName']?.toString() ?? '',
-
-        'message': message,
-
-        // حالة الرسالة
-        'status': 'جديدة',
-
-        'createdAt':
-            FieldValue.serverTimestamp(),
-      });
-
-      _parentNoteController.clear();
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
-          content: Text(
-            'تم إرسال ملاحظتك للمدرس بنجاح.',
-          ),
-          backgroundColor: primaryGreen,
-          behavior:
-              SnackBarBehavior.floating,
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
-          content: Text(
-            'تعذر إرسال الملاحظة، حاول مرة أخرى.',
-          ),
-          backgroundColor: Colors.redAccent,
-          behavior:
-              SnackBarBehavior.floating,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _sendingParentNote = false;
-        });
-      }
-    }
-  }
-
-  // ============================================================
-  // Date Badge
+  // Date
   // ============================================================
 
   Widget _buildDateBadge(
     String date,
   ) {
     return Container(
-      padding: const EdgeInsets.symmetric(
+      padding:
+          const EdgeInsets.symmetric(
         horizontal: 9,
         vertical: 7,
       ),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color:
+            Colors.grey.shade100,
         borderRadius:
             BorderRadius.circular(10),
       ),
       child: Text(
         date,
         style: TextStyle(
-          color: Colors.grey.shade600,
+          color:
+              Colors.grey.shade600,
           fontSize: 10,
-          fontWeight: FontWeight.bold,
+          fontWeight:
+              FontWeight.bold,
         ),
       ),
     );
@@ -1689,10 +1823,12 @@ class _ChildDetailsScreenState
         const SizedBox(width: 7),
         Text(
           title,
-          style: const TextStyle(
+          style:
+              const TextStyle(
             color: Colors.black87,
             fontSize: 14,
-            fontWeight: FontWeight.bold,
+            fontWeight:
+                FontWeight.bold,
           ),
         ),
       ],
@@ -1700,7 +1836,7 @@ class _ChildDetailsScreenState
   }
 
   // ============================================================
-  // Highlight Card
+  // Highlight
   // ============================================================
 
   Widget _buildHighlightCard({
@@ -1711,13 +1847,16 @@ class _ChildDetailsScreenState
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(13),
+      padding:
+          const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: iconColor.withOpacity(0.07),
+        color:
+            iconColor.withOpacity(0.07),
         borderRadius:
             BorderRadius.circular(16),
         border: Border.all(
-          color: iconColor.withOpacity(0.18),
+          color:
+              iconColor.withOpacity(0.18),
         ),
       ),
       child: Row(
@@ -1727,8 +1866,11 @@ class _ChildDetailsScreenState
           Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.13),
+            decoration:
+                BoxDecoration(
+              color:
+                  iconColor.withOpacity(
+                      0.13),
               borderRadius:
                   BorderRadius.circular(12),
             ),
@@ -1751,16 +1893,18 @@ class _ChildDetailsScreenState
                   style: TextStyle(
                     color: iconColor,
                     fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    fontWeight:
+                        FontWeight.bold,
                   ),
                 ),
-
-                const SizedBox(height: 5),
-
+                const SizedBox(
+                    height: 5),
                 Text(
                   value,
-                  style: const TextStyle(
-                    color: Colors.black87,
+                  style:
+                      const TextStyle(
+                    color:
+                        Colors.black87,
                     fontSize: 14,
                     height: 1.55,
                   ),
@@ -1780,9 +1924,12 @@ class _ChildDetailsScreenState
   Widget _buildEvaluationTag(
     String title,
     bool isDone,
+    IconData icon,
   ) {
     final Color color =
-        isDone ? primaryGreen : Colors.grey;
+        isDone
+            ? primaryGreen
+            : Colors.grey;
 
     return Expanded(
       child: Column(
@@ -1790,46 +1937,54 @@ class _ChildDetailsScreenState
           Container(
             width: 38,
             height: 38,
-            decoration: BoxDecoration(
+            decoration:
+                BoxDecoration(
               color: isDone
-                  ? primaryGreen.withOpacity(0.10)
-                  : Colors.grey.withOpacity(0.08),
+                  ? primaryGreen
+                      .withOpacity(0.10)
+                  : Colors.grey
+                      .withOpacity(0.08),
               shape: BoxShape.circle,
             ),
             child: Icon(
               isDone
-                  ? Icons.check_rounded
+                  ? icon
                   : Icons.remove_rounded,
               color: color,
-              size: 21,
+              size: 19,
             ),
           ),
 
-          const SizedBox(height: 6),
+          const SizedBox(
+              height: 6),
 
           Text(
             title,
-            textAlign: TextAlign.center,
+            textAlign:
+                TextAlign.center,
             style: TextStyle(
-              color:
-                  isDone ? Colors.black87 : Colors.grey,
-              fontSize: 12,
-              fontWeight:
-                  isDone
-                      ? FontWeight.bold
-                      : FontWeight.normal,
+              color: isDone
+                  ? Colors.black87
+                  : Colors.grey,
+              fontSize: 11,
+              fontWeight: isDone
+                  ? FontWeight.bold
+                  : FontWeight.normal,
             ),
           ),
 
-          const SizedBox(height: 2),
+          const SizedBox(
+              height: 2),
 
           Text(
-            isDone ? 'ممتاز' : 'لم يسجل',
+            isDone
+                ? 'ممتاز'
+                : 'لم يسجل',
             style: TextStyle(
               color: isDone
                   ? primaryGreen
                   : Colors.grey.shade400,
-              fontSize: 9,
+              fontSize: 8,
             ),
           ),
         ],
@@ -1843,7 +1998,8 @@ class _ChildDetailsScreenState
 
   Widget _buildLoading() {
     return const Center(
-      child: CircularProgressIndicator(
+      child:
+          CircularProgressIndicator(
         color: Colors.white,
         strokeWidth: 3,
       ),
@@ -1851,7 +2007,7 @@ class _ChildDetailsScreenState
   }
 
   // ============================================================
-  // Empty State
+  // Empty
   // ============================================================
 
   Widget _buildEmptyState({
@@ -1861,17 +2017,20 @@ class _ChildDetailsScreenState
   }) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(30),
+        padding:
+            const EdgeInsets.all(30),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(25),
+          padding:
+              const EdgeInsets.all(25),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius:
                 BorderRadius.circular(25),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black
+                    .withOpacity(0.08),
                 blurRadius: 20,
               ),
             ],
@@ -1883,41 +2042,57 @@ class _ChildDetailsScreenState
               Container(
                 width: 75,
                 height: 75,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
+                decoration:
+                    BoxDecoration(
+                  gradient:
+                      LinearGradient(
                     colors: [
-                      primaryGreen.withOpacity(0.12),
-                      primaryBlue.withOpacity(0.12),
+                      primaryGreen
+                          .withOpacity(
+                              0.12),
+                      primaryBlue
+                          .withOpacity(
+                              0.12),
                     ],
                   ),
-                  shape: BoxShape.circle,
+                  shape:
+                      BoxShape.circle,
                 ),
                 child: Icon(
                   icon,
-                  color: primaryGreen,
+                  color:
+                      primaryGreen,
                   size: 38,
                 ),
               ),
 
-              const SizedBox(height: 18),
+              const SizedBox(
+                  height: 18),
 
               Text(
                 title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.black87,
+                textAlign:
+                    TextAlign.center,
+                style:
+                    const TextStyle(
+                  color:
+                      Colors.black87,
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontWeight:
+                      FontWeight.bold,
                 ),
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(
+                  height: 8),
 
               Text(
                 subtitle,
-                textAlign: TextAlign.center,
+                textAlign:
+                    TextAlign.center,
                 style: TextStyle(
-                  color: Colors.grey.shade600,
+                  color:
+                      Colors.grey.shade600,
                   fontSize: 13,
                   height: 1.5,
                 ),
@@ -1929,95 +2104,21 @@ class _ChildDetailsScreenState
     );
   }
 
-  // ============================================================
-  // Error
-  // ============================================================
-
   Widget _buildErrorState() {
     return _buildEmptyState(
-      icon: Icons.person_off_rounded,
-      title: 'تعذر العثور على الطالب',
+      icon:
+          Icons.person_off_rounded,
+      title:
+          'تعذر العثور على الطالب',
       subtitle:
           'لم يتم العثور على معرف الطالب المطلوب.',
     );
   }
 
-  // ============================================================
-  // Check Text
-  // ============================================================
-
   bool _hasText(dynamic value) {
     return value != null &&
-        value.toString().trim().isNotEmpty;
-  }
-
-  // ============================================================
-  // WhatsApp
-  // ============================================================
-
-  Future<void> _openWhatsApp(
-    BuildContext context,
-    String phone,
-    String subject,
-  ) async {
-    String cleanPhone =
-        phone.replaceAll(RegExp(r'[^\d]'), '');
-
-    if (cleanPhone.startsWith('00')) {
-      cleanPhone =
-          cleanPhone.substring(2);
-    }
-
-    final String message =
-        'السلام عليكم، أستفسر عن مستوى ابني في حلقة القرآن الكريم '
-        'بخصوص $subject.';
-
-    final Uri url = Uri.parse(
-      'https://wa.me/$cleanPhone'
-      '?text=${Uri.encodeComponent(message)}',
-    );
-
-    try {
-      final bool canLaunch =
-          await canLaunchUrl(url);
-
-      if (canLaunch) {
-        await launchUrl(
-          url,
-          mode:
-              LaunchMode.externalApplication,
-        );
-      } else {
-        if (!context.mounted) return;
-
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-          const SnackBar(
-            content: Text(
-              'تعذر فتح واتساب.',
-            ),
-            backgroundColor:
-                Colors.redAccent,
-            behavior:
-                SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      if (!context.mounted) return;
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
-          content: Text(
-            'حدث خطأ أثناء فتح واتساب.',
-          ),
-          backgroundColor:
-              Colors.redAccent,
-          behavior:
-              SnackBarBehavior.floating,
-        ),
-      );
-    }
+        value.toString().trim().isNotEmpty &&
+        value.toString().trim() !=
+            'لا يوجد';
   }
 }
