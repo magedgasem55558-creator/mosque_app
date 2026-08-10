@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hijri_date/hijri.dart';
 
 class ChildDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> child;
@@ -442,7 +443,6 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
         final List<DocumentSnapshot> docs =
             [...snapshot.data!.docs];
 
-        // الأحدث أولاً
         _sortRecordsNewestFirst(docs);
 
         return _buildRecordList(
@@ -499,10 +499,6 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
         final List<DocumentSnapshot> docs =
             [...snapshot.data!.docs];
 
-        // ======================================================
-        // الأحدث في الأعلى والأقدم في الأسفل
-        // ======================================================
-
         _sortRecordsNewestFirst(docs);
 
         return _buildRecordList(docs);
@@ -532,7 +528,6 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
       final DateTime dateB =
           _recordDateTime(dataB);
 
-      // الأحدث أولاً
       return dateB.compareTo(dateA);
     });
   }
@@ -544,7 +539,6 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
   DateTime _recordDateTime(
     Map<String, dynamic> data,
   ) {
-    // نعتمد على createdAt إذا كان موجودًا
     final dynamic createdAt =
         data['createdAt'];
 
@@ -552,7 +546,6 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
       return createdAt.toDate();
     }
 
-    // إذا لم يوجد createdAt نستخدم date
     final String date =
         data['date']?.toString() ?? '';
 
@@ -933,15 +926,24 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
       );
     }
 
+    // ==========================================================
+    // التحويل من الميلادي إلى الهجري
+    // باستخدام Umm Al-Qura من مكتبة hijri_date
+    // ==========================================================
+
     final HijriDate hijri =
-        _gregorianToHijri(
-      gregorianDate.year,
-      gregorianDate.month,
-      gregorianDate.day,
+        HijriDate.fromDate(
+      DateTime(
+        gregorianDate.year,
+        gregorianDate.month,
+        gregorianDate.day,
+      ),
     );
 
     final String hijriText =
-        '${_toArabicNumber(hijri.day)} ${hijri.monthName} ${_toArabicNumber(hijri.year)} هـ';
+        '${_toArabicNumber(hijri.hDay)} '
+        '${_getHijriMonthName(hijri.hMonth)} '
+        '${_toArabicNumber(hijri.hYear)} هـ';
 
     final String gregorianText =
         '${_toArabicNumber(gregorianDate.day)}/'
@@ -1002,6 +1004,35 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
   }
 
   // ============================================================
+  // أسماء الأشهر الهجرية
+  // ============================================================
+
+  String _getHijriMonthName(
+    int month,
+  ) {
+    const months = [
+      'محرم',
+      'صفر',
+      'ربيع الأول',
+      'ربيع الآخر',
+      'جمادى الأولى',
+      'جمادى الآخرة',
+      'رجب',
+      'شعبان',
+      'رمضان',
+      'شوال',
+      'ذو القعدة',
+      'ذو الحجة',
+    ];
+
+    if (month < 1 || month > 12) {
+      return '';
+    }
+
+    return months[month - 1];
+  }
+
+  // ============================================================
   // تحويل الأرقام إلى عربية
   // ============================================================
 
@@ -1020,83 +1051,6 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
         .replaceAll('7', '٧')
         .replaceAll('8', '٨')
         .replaceAll('9', '٩');
-  }
-
-  // ============================================================
-  // التاريخ الهجري
-  // ============================================================
-
-  HijriDate _gregorianToHijri(
-    int year,
-    int month,
-    int day,
-  ) {
-    int jd;
-
-    if (month <= 2) {
-      year -= 1;
-      month += 12;
-    }
-
-    final int a =
-        (year / 100).floor();
-
-    final int b =
-        2 -
-        a +
-        (a / 4).floor();
-
-    jd =
-        (365.25 * (year + 4716))
-            .floor() +
-        (30.6001 * (month + 1))
-            .floor() +
-        day +
-        b -
-        1524;
-
-    // التحويل الحسابي للتقويم الهجري
-    final int l = jd - 1948440 + 10632;
-
-    final int n =
-        ((l - 1) / 10631).floor();
-
-    final int l2 =
-        l -
-        10631 * n +
-        354;
-
-    final int j =
-        (((10985 - l2) / 5316).floor()) *
-                ((50 * l2 / 17719).floor()) +
-            ((l2 / 5670).floor()) *
-                ((43 * l2 / 15238).floor());
-
-    final int l3 =
-        l2 -
-        ((30 - j) / 15).floor() *
-            ((17719 * j) / 50).floor() -
-        (j / 16).floor() *
-            ((15238 * j) / 43).floor() +
-        29;
-
-    final int m =
-        ((24 * l3) / 709).floor();
-
-    final int d =
-        l3 -
-        ((709 * m) / 24).floor();
-
-    final int y =
-        30 * n +
-        j -
-        30;
-
-    return HijriDate(
-      year: y,
-      month: m,
-      day: d,
-    );
   }
 
   // ============================================================
@@ -2333,44 +2287,5 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
         value.toString().trim().isNotEmpty &&
         value.toString().trim() !=
             'لا يوجد';
-  }
-}
-
-// ============================================================
-// نموذج التاريخ الهجري
-// ============================================================
-
-class HijriDate {
-  final int year;
-  final int month;
-  final int day;
-
-  const HijriDate({
-    required this.year,
-    required this.month,
-    required this.day,
-  });
-
-  String get monthName {
-    const months = [
-      'محرم',
-      'صفر',
-      'ربيع الأول',
-      'ربيع الآخر',
-      'جمادى الأولى',
-      'جمادى الآخرة',
-      'رجب',
-      'شعبان',
-      'رمضان',
-      'شوال',
-      'ذو القعدة',
-      'ذو الحجة',
-    ];
-
-    if (month < 1 || month > 12) {
-      return '';
-    }
-
-    return months[month - 1];
   }
 }
