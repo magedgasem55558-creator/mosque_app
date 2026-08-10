@@ -1,33 +1,48 @@
-name: Build Flutter APK
+name: Build and Release Flutter APK
 
 on:
   push:
     branches:
       - main
       - master
-  workflow_dispatch: # يتيح لك تشغيل البناء يدوياً من واجهة GitHub عند الحاجة
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+      # ============================================================
+      # تحميل المشروع
+      # ============================================================
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # ============================================================
+      # Java
+      # ============================================================
       - name: Set up Java JDK 21
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: '21' # 👈 ترقية إلى JDK 21 للتوافق مع أحدث إصدارات Gradle/AGP
+          distribution: zulu
+          java-version: '21'
 
+      # ============================================================
+      # Flutter
+      # ============================================================
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: stable
           cache: true
-          cache-key: "flutter-:os:-:channel:-:version:-:arch:-:hash:"
 
+      # ============================================================
+      # Gradle Cache
+      # ============================================================
       - name: Setup Gradle Cache
         uses: actions/cache@v4
         with:
@@ -38,26 +53,87 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      # ============================================================
+      # Debug Keystore
+      # ============================================================
       - name: Create Debug Keystore
         run: |
           mkdir -p ~/.android
+
           if [ ! -f ~/.android/debug.keystore ]; then
-            keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+            keytool -genkey -v \
+              -keystore ~/.android/debug.keystore \
+              -storepass android \
+              -alias androiddebugkey \
+              -keypass android \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
           fi
 
+      # ============================================================
+      # Dependencies
+      # ============================================================
       - name: Install Flutter dependencies
         run: flutter pub get
 
-      # 👈 خطوة توليد الأيقونات تلقائياً
+      # ============================================================
+      # Launcher Icons
+      # ============================================================
       - name: Generate Launcher Icons
         run: dart run flutter_launcher_icons
 
-      - name: Build APK (Release)
-        run: flutter build apk --release --no-tree-shake-icons --android-skip-build-dependency-validation
+      # ============================================================
+      # Build APK
+      # ============================================================
+      - name: Build APK Release
+        run: |
+          flutter build apk \
+            --release \
+            --no-tree-shake-icons \
+            --android-skip-build-dependency-validation
 
+      # ============================================================
+      # Rename APK
+      # ============================================================
+      - name: Rename APK
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk \
+          mosque-app-release.apk
+
+      # ============================================================
+      # Create GitHub Release
+      # ============================================================
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: مسجدنا الذكي - الإصدار ${{ github.run_number }}
+          body: |
+            ## مسجدنا الذكي
+
+            تم إصدار نسخة جديدة من تطبيق مسجدنا الذكي.
+
+            ### التحميل
+            قم بتحميل ملف APK الموجود أسفل هذه الصفحة.
+
+            ### ملاحظات
+            - نسخة Android
+            - Release Build
+            - الإصدار رقم ${{ github.run_number }}
+          files: |
+            mosque-app-release.apk
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ============================================================
+      # الاحتفاظ أيضًا بالـ Artifact
+      # ============================================================
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: mosque-app-release
+          path: mosque-app-release.apk
           retention-days: 7
