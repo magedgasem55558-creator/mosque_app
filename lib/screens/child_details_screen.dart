@@ -29,10 +29,55 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
 
   bool _sendingMessage = false;
 
+  String? _adminId;
+  bool _loadingAdmin = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loadAdmin();
+  }
+
   @override
   void dispose() {
     _parentMessageController.dispose();
     super.dispose();
+  }
+
+  // ============================================================
+  // جلب المدير
+  // ============================================================
+
+  Future<void> _loadAdmin() async {
+    if (_loadingAdmin) return;
+
+    setState(() {
+      _loadingAdmin = true;
+    });
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where(
+            'role',
+            isEqualTo: 'admin',
+          )
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        _adminId = snapshot.docs.first.id;
+      }
+    } catch (e) {
+      debugPrint('Load Admin Error: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingAdmin = false;
+        });
+      }
+    }
   }
 
   // ============================================================
@@ -162,7 +207,9 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+
                 const SizedBox(height: 3),
+
                 Text(
                   studentName,
                   maxLines: 1,
@@ -188,7 +235,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
               ),
             ),
             child: const Icon(
-              Icons.menu_book_rounded,
+              Icons.admin_panel_settings_rounded,
               color: Colors.white,
               size: 23,
             ),
@@ -233,7 +280,8 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                   primaryBlue,
                 ],
               ),
-              borderRadius: BorderRadius.circular(19),
+              borderRadius:
+                  BorderRadius.circular(19),
             ),
             child: const Icon(
               Icons.person_rounded,
@@ -357,7 +405,8 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
               primaryBlue,
             ],
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius:
+              BorderRadius.circular(16),
         ),
         indicatorSize:
             TabBarIndicatorSize.tab,
@@ -445,15 +494,13 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
 
         _sortRecordsNewestFirst(docs);
 
-        return _buildRecordList(
-          docs,
-        );
+        return _buildRecordList(docs);
       },
     );
   }
 
   // ============================================================
-  // Monthly / Full History
+  // Monthly
   // ============================================================
 
   Widget _buildMonthlyReport(
@@ -515,11 +562,13 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
   ) {
     docs.sort((a, b) {
       final Map<String, dynamic> dataA =
-          (a.data() as Map<String, dynamic>?) ??
+          (a.data()
+                  as Map<String, dynamic>?) ??
               {};
 
       final Map<String, dynamic> dataB =
-          (b.data() as Map<String, dynamic>?) ??
+          (b.data()
+                  as Map<String, dynamic>?) ??
               {};
 
       final DateTime dateA =
@@ -531,10 +580,6 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
       return dateB.compareTo(dateA);
     });
   }
-
-  // ============================================================
-  // استخراج تاريخ الرصد للترتيب
-  // ============================================================
 
   DateTime _recordDateTime(
     Map<String, dynamic> data,
@@ -764,8 +809,10 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                                 fontSize: 12,
                               ),
                             ),
+
                             const SizedBox(
                                 height: 4),
+
                             Text(
                               isSpecialStatus
                                   ? status
@@ -791,7 +838,6 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                         ),
                       ),
 
-                      // التاريخ الهجري + الميلادي
                       _buildDateBadge(
                         date,
                       ),
@@ -891,7 +937,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
   }
 
   // ============================================================
-  // التاريخ الهجري + الميلادي
+  // التاريخ
   // ============================================================
 
   Widget _buildDateBadge(
@@ -925,11 +971,6 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
         ),
       );
     }
-
-    // ==========================================================
-    // التحويل من الميلادي إلى الهجري
-    // باستخدام Umm Al-Qura من مكتبة hijri_date
-    // ==========================================================
 
     final HijriDate hijri =
         HijriDate.fromDate(
@@ -976,7 +1017,8 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
         children: [
           Text(
             hijriText,
-            textAlign: TextAlign.center,
+            textAlign:
+                TextAlign.center,
             style: const TextStyle(
               color: primaryGreen,
               fontSize: 10,
@@ -989,7 +1031,8 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
 
           Text(
             gregorianText,
-            textAlign: TextAlign.center,
+            textAlign:
+                TextAlign.center,
             style: TextStyle(
               color:
                   Colors.grey.shade600,
@@ -1002,10 +1045,6 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
       ),
     );
   }
-
-  // ============================================================
-  // أسماء الأشهر الهجرية
-  // ============================================================
 
   String _getHijriMonthName(
     int month,
@@ -1032,10 +1071,6 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
     return months[month - 1];
   }
 
-  // ============================================================
-  // تحويل الأرقام إلى عربية
-  // ============================================================
-
   String _toArabicNumber(
     dynamic value,
   ) {
@@ -1054,7 +1089,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
   }
 
   // ============================================================
-  // Evaluation - الأربعة
+  // Evaluation
   // ============================================================
 
   Widget _buildEvaluationSection(
@@ -1154,7 +1189,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
   }
 
   // ============================================================
-  // Chat Section
+  // 💬 محادثة ولي الأمر مع المدير
   // ============================================================
 
   Widget _buildChatSection(
@@ -1165,32 +1200,31 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
 
     final String parentId =
         widget.child['parentId']?.toString() ??
-        widget.child['parentUid']?.toString() ??
-        widget.child['guardianId']?.toString() ??
-        record['parentId']?.toString() ??
-        '';
+            widget.child['parentUid']?.toString() ??
+            widget.child['guardianId']?.toString() ??
+            record['parentId']?.toString() ??
+            '';
 
     final String halaqaId =
         record['halaqaId']?.toString() ??
-        widget.child['halaqaId']?.toString() ??
-        '';
+            widget.child['halaqaId']?.toString() ??
+            '';
 
     if (studentId.isEmpty ||
-        parentId.isEmpty ||
-        halaqaId.isEmpty) {
+        parentId.isEmpty) {
       return _buildParentMessageFallback(
         record,
       );
+    }
+
+    if (_adminId == null) {
+      return _buildAdminLoading();
     }
 
     return _buildMessagesSection(
       studentId: studentId,
       parentId: parentId,
       halaqaId: halaqaId,
-      teacherName:
-          record['teacherName']
-                  ?.toString() ??
-              'المدرس',
     );
   }
 
@@ -1202,22 +1236,21 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
     required String studentId,
     required String parentId,
     required String halaqaId,
-    required String teacherName,
   }) {
     final Stream<QuerySnapshot> stream =
         FirebaseFirestore.instance
             .collection('messages')
             .where(
-              'studentId',
-              isEqualTo: studentId,
+              'adminId',
+              isEqualTo: _adminId,
             )
             .where(
               'parentId',
               isEqualTo: parentId,
             )
             .where(
-              'halaqaId',
-              isEqualTo: halaqaId,
+              'studentId',
+              isEqualTo: studentId,
             )
             .snapshots();
 
@@ -1235,8 +1268,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
         }
 
         final List<DocumentSnapshot> docs =
-            snapshot.data?.docs.toList() ??
-                [];
+            snapshot.data?.docs.toList() ?? [];
 
         docs.sort((a, b) {
           final dataA =
@@ -1283,16 +1315,15 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                   decoration:
                       BoxDecoration(
                     color: primaryBlue
-                        .withOpacity(
-                            0.10),
+                        .withOpacity(0.10),
                     borderRadius:
-                        BorderRadius
-                            .circular(13),
+                        BorderRadius.circular(
+                            13),
                   ),
                   child: const Icon(
-                    Icons
-                        .chat_bubble_rounded,
-                    color: primaryBlue,
+                    Icons.admin_panel_settings_rounded,
+                    color:
+                        primaryBlue,
                     size: 22,
                   ),
                 ),
@@ -1303,29 +1334,27 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                 const Expanded(
                   child: Column(
                     crossAxisAlignment:
-                        CrossAxisAlignment
-                            .start,
+                        CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'المحادثة',
+                        'التواصل مع الإدارة',
                         style:
                             TextStyle(
-                          color: Colors
-                              .black87,
+                          color:
+                              Colors.black87,
                           fontSize: 15,
                           fontWeight:
-                              FontWeight
-                                  .bold,
+                              FontWeight.bold,
                         ),
                       ),
                       SizedBox(
                           height: 3),
                       Text(
-                        'رسائل ولي الأمر والمدرس',
+                        'رسائل ولي الأمر والمدير',
                         style:
                             TextStyle(
-                          color: Colors
-                              .black45,
+                          color:
+                              Colors.black45,
                           fontSize: 11,
                         ),
                       ),
@@ -1376,7 +1405,8 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                     const BoxConstraints(
                   maxHeight: 360,
                 ),
-                child: ListView.builder(
+                child:
+                    ListView.builder(
                   shrinkWrap: true,
                   physics:
                       const BouncingScrollPhysics(),
@@ -1385,14 +1415,12 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                   itemBuilder:
                       (context, index) {
                     final data =
-                        docs[index]
-                                .data()
+                        docs[index].data()
                             as Map<String,
                                 dynamic>;
 
                     return _buildMessageBubble(
                       data,
-                      teacherName,
                     );
                   },
                 ),
@@ -1405,7 +1433,6 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
               studentId: studentId,
               parentId: parentId,
               halaqaId: halaqaId,
-              teacherName: teacherName,
             ),
           ],
         );
@@ -1419,19 +1446,17 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
 
   Widget _buildMessageBubble(
     Map<String, dynamic> data,
-    String teacherName,
   ) {
     final String role =
         data['senderRole']
                 ?.toString() ??
             'parent';
 
-    final bool isTeacher =
-        role == 'teacher';
+    final bool isAdmin =
+        role == 'admin';
 
     final String text =
-        data['text']?.toString() ??
-            '';
+        data['text']?.toString() ?? '';
 
     final Timestamp? createdAt =
         data['createdAt']
@@ -1449,7 +1474,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
     }
 
     return Align(
-      alignment: isTeacher
+      alignment: isAdmin
           ? Alignment.centerLeft
           : Alignment.centerRight,
       child: Container(
@@ -1464,7 +1489,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
         padding:
             const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isTeacher
+          color: isAdmin
               ? primaryGreen
                   .withOpacity(0.09)
               : primaryBlue
@@ -1472,7 +1497,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
           borderRadius:
               BorderRadius.circular(16),
           border: Border.all(
-            color: isTeacher
+            color: isAdmin
                 ? primaryGreen
                     .withOpacity(0.16)
                 : primaryBlue
@@ -1488,22 +1513,24 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                   MainAxisSize.min,
               children: [
                 Icon(
-                  isTeacher
-                      ? Icons.school_rounded
+                  isAdmin
+                      ? Icons.admin_panel_settings_rounded
                       : Icons.person_rounded,
-                  color: isTeacher
+                  color: isAdmin
                       ? primaryGreen
                       : primaryBlue,
                   size: 15,
                 ),
+
                 const SizedBox(
                     width: 5),
+
                 Text(
-                  isTeacher
-                      ? teacherName
+                  isAdmin
+                      ? 'المدير'
                       : 'ولي الأمر',
                   style: TextStyle(
-                    color: isTeacher
+                    color: isAdmin
                         ? primaryGreen
                         : primaryBlue,
                     fontSize: 10,
@@ -1551,14 +1578,13 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
   }
 
   // ============================================================
-  // Send Message
+  // Send Message Box
   // ============================================================
 
   Widget _buildSendMessageBox({
     required String studentId,
     required String parentId,
     required String halaqaId,
-    required String teacherName,
   }) {
     return Container(
       padding:
@@ -1568,7 +1594,8 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
         borderRadius:
             BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.grey.shade200,
+          color:
+              Colors.grey.shade200,
         ),
       ),
       child: Row(
@@ -1588,7 +1615,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
               decoration:
                   InputDecoration(
                 hintText:
-                    'اكتب رسالة للمدرس...',
+                    'اكتب رسالة للإدارة...',
                 hintStyle:
                     TextStyle(
                   color:
@@ -1631,8 +1658,6 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                                 parentId,
                             halaqaId:
                                 halaqaId,
-                            teacherName:
-                                teacherName,
                           );
                         },
               icon:
@@ -1642,8 +1667,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                           height: 18,
                           child:
                               CircularProgressIndicator(
-                            strokeWidth:
-                                2,
+                            strokeWidth: 2,
                             color:
                                 Colors.white,
                           ),
@@ -1663,14 +1687,13 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
   }
 
   // ============================================================
-  // Send Parent -> Teacher
+  // إرسال ولي الأمر -> المدير
   // ============================================================
 
   Future<void> _sendMessage({
     required String studentId,
     required String parentId,
     required String halaqaId,
-    required String teacherName,
   }) async {
     final String text =
         _parentMessageController
@@ -1681,41 +1704,129 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
       return;
     }
 
+    if (_adminId == null) {
+      await _loadAdmin();
+
+      if (_adminId == null) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text(
+              'تعذر العثور على حساب المدير.',
+            ),
+            backgroundColor:
+                Colors.redAccent,
+          ),
+        );
+
+        return;
+      }
+    }
+
     setState(() {
       _sendingMessage = true;
     });
 
     try {
-      await FirebaseFirestore.instance
+      final String studentName =
+          widget.child['name']
+                  ?.toString() ??
+              'الطالب';
+
+      final String parentName =
+          widget.child['parentName']
+                  ?.toString() ??
+              widget.child['guardianName']
+                  ?.toString() ??
+              'ولي الأمر';
+
+      final String halaqaName =
+          widget.child['halaqaName']
+                  ?.toString() ??
+              '';
+
+      final String currentParentId =
+          parentId;
+
+      final String conversationId =
+          '${currentParentId}_$studentId';
+
+      await FirebaseFirestore
+          .instance
           .collection('messages')
           .add({
-        'studentId': studentId,
+        // =====================================================
+        // المحادثة
+        // =====================================================
+
+        'conversationId':
+            conversationId,
+
+        // =====================================================
+        // الطالب
+        // =====================================================
+
+        'studentId':
+            studentId,
+
         'studentName':
-            widget.child['name']
-                    ?.toString() ??
-                'الطالب',
+            studentName,
 
-        'parentId': parentId,
+        // =====================================================
+        // ولي الأمر
+        // =====================================================
 
-        'halaqaId': halaqaId,
+        'parentId':
+            currentParentId,
+
+        'parentName':
+            parentName,
+
+        // =====================================================
+        // الحلقة
+        // =====================================================
+
+        'halaqaId':
+            halaqaId,
 
         'halaqaName':
-            widget.child['halaqaName']
-                    ?.toString() ??
-                '',
+            halaqaName,
 
-        'teacherId':
-            widget.child['teacherId']
-                    ?.toString() ??
-                '',
+        // =====================================================
+        // المدير
+        // =====================================================
 
-        'teacherName':
-            teacherName,
+        'adminId':
+            _adminId,
 
-        'senderId': parentId,
-        'senderRole': 'parent',
+        // =====================================================
+        // المرسل والمستقبل
+        // =====================================================
 
-        'text': text,
+        'senderId':
+            currentParentId,
+
+        'senderRole':
+            'parent',
+
+        'receiverId':
+            _adminId,
+
+        'receiverRole':
+            'admin',
+
+        // =====================================================
+        // الرسالة
+        // =====================================================
+
+        'text':
+            text,
+
+        // =====================================================
+        // الوقت
+        // =====================================================
 
         'createdAt':
             FieldValue.serverTimestamp(),
@@ -1732,7 +1843,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
           .showSnackBar(
         const SnackBar(
           content: Text(
-            'تم إرسال الرسالة للمدرس.',
+            'تم إرسال الرسالة إلى الإدارة.',
           ),
           backgroundColor:
               primaryGreen,
@@ -1781,7 +1892,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
             BorderRadius.circular(16),
       ),
       child: const Text(
-        'المحادثة غير متاحة حالياً لعدم اكتمال ربط الطالب بولي الأمر والحلقة.',
+        'التواصل مع الإدارة غير متاح حالياً لعدم اكتمال ربط الطالب بولي الأمر.',
         textAlign:
             TextAlign.center,
         style: TextStyle(
@@ -1798,7 +1909,8 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
       padding:
           const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color:
+            Colors.grey.shade50,
         borderRadius:
             BorderRadius.circular(15),
       ),
@@ -1838,6 +1950,45 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
             color: primaryBlue,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAdminLoading() {
+    return Container(
+      width: double.infinity,
+      padding:
+          const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color:
+            primaryBlue.withOpacity(0.05),
+        borderRadius:
+            BorderRadius.circular(16),
+      ),
+      child: const Row(
+        mainAxisAlignment:
+            MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 18,
+            height: 18,
+            child:
+                CircularProgressIndicator(
+              strokeWidth: 2,
+              color:
+                  primaryBlue,
+            ),
+          ),
+          SizedBox(width: 10),
+          Text(
+            'جاري الاتصال بالإدارة...',
+            style: TextStyle(
+              fontSize: 12,
+              color:
+                  Colors.black54,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1927,7 +2078,8 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                 BoxDecoration(
               color:
                   color.withOpacity(0.12),
-              shape: BoxShape.circle,
+              shape:
+                  BoxShape.circle,
             ),
             child: Icon(
               icon,
@@ -1952,8 +2104,10 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                         FontWeight.bold,
                   ),
                 ),
+
                 const SizedBox(
                     height: 5),
+
                 Text(
                   description,
                   style:
@@ -2064,8 +2218,10 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                         FontWeight.bold,
                   ),
                 ),
+
                 const SizedBox(
                     height: 5),
+
                 Text(
                   value,
                   style:
@@ -2111,7 +2267,8 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                       .withOpacity(0.10)
                   : Colors.grey
                       .withOpacity(0.08),
-              shape: BoxShape.circle,
+              shape:
+                  BoxShape.circle,
             ),
             child: Icon(
               isDone
