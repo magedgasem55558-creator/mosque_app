@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -13,24 +14,49 @@ import 'screens/login_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // ============================================================
+  // Firebase
+  // ============================================================
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // استقبال إشعارات FCM عندما يكون التطبيق في الخلفية أو مغلقًا
+  // ============================================================
+  // FCM Background Handler
+  // ============================================================
+
   FirebaseMessaging.onBackgroundMessage(
     firebaseMessagingBackgroundHandler,
   );
+
+  // ============================================================
+  // Firestore
+  // ============================================================
 
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
 
-  // تهيئة نظام الإشعارات
-  await NotificationService.init();
+  // ============================================================
+  // تشغيل التطبيق أولاً
+  // ============================================================
 
   runApp(const MosqueApp());
+
+  // ============================================================
+  // تهيئة الإشعارات بعد تشغيل التطبيق
+  //
+  // مهم:
+  // لا نستخدم await هنا حتى لا تتجمد شاشة البداية
+  // ============================================================
+
+  NotificationService.init().catchError((error) {
+    debugPrint(
+      'خطأ في تهيئة NotificationService: $error',
+    );
+  });
 }
 
 class MosqueApp extends StatelessWidget {
@@ -40,7 +66,12 @@ class MosqueApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+
       title: 'مسجدنا الذكي',
+
+      // ==========================================================
+      // RTL
+      // ==========================================================
 
       builder: (context, child) {
         return Directionality(
@@ -49,18 +80,34 @@ class MosqueApp extends StatelessWidget {
         );
       },
 
+      // ==========================================================
+      // Theme
+      // ==========================================================
+
       theme: ThemeData(
         useMaterial3: true,
+
         brightness: Brightness.dark,
+
         colorSchemeSeed: Colors.tealAccent,
+
         fontFamily: 'Cairo',
+
         appBarTheme: const AppBarTheme(
           centerTitle: true,
           elevation: 0,
         ),
       ),
 
+      // ==========================================================
+      // الصفحة الرئيسية
+      // ==========================================================
+
       home: const HomeScreen(),
+
+      // ==========================================================
+      // Routes
+      // ==========================================================
 
       routes: {
         '/login': (context) => const LoginScreen(),
