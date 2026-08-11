@@ -607,7 +607,23 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
   Widget _buildRecordList(
     List<DocumentSnapshot> docs,
   ) {
-    return ListView.builder(
+    if (docs.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // ==========================================================
+    // نأخذ أول سجل فقط للحصول على بيانات الطالب والحلقة
+    // للمحادثة.
+    //
+    // المحادثة تظهر مرة واحدة فقط.
+    // ==========================================================
+
+    final Map<String, dynamic> firstRecord =
+        (docs.first.data()
+                as Map<String, dynamic>?) ??
+            {};
+
+    return ListView(
       physics:
           const BouncingScrollPhysics(),
       padding:
@@ -617,18 +633,152 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
         16,
         40,
       ),
-      itemCount: docs.length,
-      itemBuilder:
-          (context, index) {
-        final data =
-            docs[index].data()
-                as Map<String, dynamic>;
+      children: [
+        // ======================================================
+        // 💬 المحادثة
+        // ======================================================
 
-        return _buildRecordCard(
-          context,
-          data,
-        );
-      },
+        _buildChatSection(
+          firstRecord,
+        ),
+
+        const SizedBox(height: 20),
+
+        // ======================================================
+        // 📖 عنوان الإنجازات
+        // ======================================================
+
+        _buildRecordsHeader(
+          docs.length,
+        ),
+
+        const SizedBox(height: 12),
+
+        // ======================================================
+        // 📚 جميع الإنجازات
+        // ======================================================
+
+        ...docs.map(
+          (doc) {
+            final Map<String, dynamic> data =
+                (doc.data()
+                        as Map<String, dynamic>?) ??
+                    {};
+
+            return _buildRecordCard(
+              context,
+              data,
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // ============================================================
+  // عنوان الإنجازات
+  // ============================================================
+
+  Widget _buildRecordsHeader(
+    int count,
+  ) {
+    return Container(
+      padding:
+          const EdgeInsets.symmetric(
+        horizontal: 15,
+        vertical: 13,
+      ),
+      decoration: BoxDecoration(
+        color:
+            Colors.white.withOpacity(0.96),
+        borderRadius:
+            BorderRadius.circular(17),
+        boxShadow: [
+          BoxShadow(
+            color:
+                Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset:
+                const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              gradient:
+                  const LinearGradient(
+                colors: [
+                  primaryGreen,
+                  primaryBlue,
+                ],
+              ),
+              borderRadius:
+                  BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.auto_stories_rounded,
+              color: Colors.white,
+              size: 21,
+            ),
+          ),
+
+          const SizedBox(width: 11),
+
+          const Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'إنجازات الطالب',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontSize: 15,
+                    fontWeight:
+                        FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'سجل التسميع والتقييم والملاحظات',
+                  style: TextStyle(
+                    color: Colors.black45,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Container(
+            padding:
+                const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 6,
+            ),
+            decoration: BoxDecoration(
+              color:
+                  primaryGreen.withOpacity(0.09),
+              borderRadius:
+                  BorderRadius.circular(12),
+            ),
+            child: Text(
+              '$count',
+              style:
+                  const TextStyle(
+                color: primaryGreen,
+                fontSize: 12,
+                fontWeight:
+                    FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -727,6 +877,10 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
             BorderRadius.circular(24),
         child: Column(
           children: [
+            // ==================================================
+            // الشريط العلوي
+            // ==================================================
+
             Container(
               height: 5,
               decoration:
@@ -754,6 +908,10 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                   const EdgeInsets.all(17),
               child: Column(
                 children: [
+                  // ==========================================
+                  // رأس الإنجاز
+                  // ==========================================
+
                   Row(
                     children: [
                       Container(
@@ -844,15 +1002,24 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                     ],
                   ),
 
+                  // ==========================================
+                  // حالات الغياب والإجازة والاستئذان
+                  // ==========================================
+
                   if (isSpecialStatus) ...[
                     const SizedBox(
                         height: 18),
+
                     _buildStatusDescription(
                       status: status,
                       color: statusColor,
                       icon: statusIcon,
                     ),
                   ],
+
+                  // ==========================================
+                  // إنجاز الحفظ
+                  // ==========================================
 
                   if (!isSpecialStatus) ...[
                     const SizedBox(
@@ -877,11 +1044,16 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                     ),
                   ],
 
+                  // ==========================================
+                  // 📚 المطلوب غداً
+                  // ==========================================
+
                   if (_hasText(
                     data['tomorrowRequirement'],
                   )) ...[
                     const SizedBox(
                         height: 15),
+
                     _buildHighlightCard(
                       icon: Icons
                           .auto_stories_rounded,
@@ -889,17 +1061,23 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                           primaryBlue,
                       label:
                           'المطلوب غداً',
-                      value: data[
-                              'tomorrowRequirement']
-                          .toString(),
+                      value:
+                          data[
+                                  'tomorrowRequirement']
+                              .toString(),
                     ),
                   ],
+
+                  // ==========================================
+                  // 📝 ملاحظة المدرس
+                  // ==========================================
 
                   if (_hasText(
                     data['notes'],
                   )) ...[
                     const SizedBox(
                         height: 11),
+
                     _buildHighlightCard(
                       icon: Icons
                           .edit_note_rounded,
@@ -907,26 +1085,14 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                           primaryGreen,
                       label:
                           'ملاحظة المدرس',
-                      value: data['notes']
-                          .toString(),
+                      value:
+                          data['notes']
+                              .toString(),
                     ),
                   ],
 
                   const SizedBox(
-                      height: 16),
-
-                  Container(
-                    height: 1,
-                    color:
-                        Colors.grey.shade200,
-                  ),
-
-                  const SizedBox(
-                      height: 15),
-
-                  _buildChatSection(
-                    data,
-                  ),
+                      height: 4),
                 ],
               ),
             ),
@@ -1190,6 +1356,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
 
   // ============================================================
   // 💬 محادثة ولي الأمر مع المدير
+  // تظهر مرة واحدة فقط أعلى الإنجازات
   // ============================================================
 
   Widget _buildChatSection(
@@ -1200,15 +1367,15 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
 
     final String parentId =
         widget.child['parentId']?.toString() ??
-            widget.child['parentUid']?.toString() ??
-            widget.child['guardianId']?.toString() ??
-            record['parentId']?.toString() ??
-            '';
+        widget.child['parentUid']?.toString() ??
+        widget.child['guardianId']?.toString() ??
+        record['parentId']?.toString() ??
+        '';
 
     final String halaqaId =
+        widget.child['halaqaId']?.toString() ??
         record['halaqaId']?.toString() ??
-            widget.child['halaqaId']?.toString() ??
-            '';
+        '';
 
     if (studentId.isEmpty ||
         parentId.isEmpty) {
@@ -1271,13 +1438,15 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
             snapshot.data?.docs.toList() ?? [];
 
         docs.sort((a, b) {
-          final dataA =
-              a.data()
-                  as Map<String, dynamic>;
+          final Map<String, dynamic> dataA =
+              (a.data()
+                      as Map<String, dynamic>?) ??
+                  {};
 
-          final dataB =
-              b.data()
-                  as Map<String, dynamic>;
+          final Map<String, dynamic> dataB =
+              (b.data()
+                      as Map<String, dynamic>?) ??
+                  {};
 
           final Timestamp? timeA =
               dataA['createdAt']
@@ -1303,138 +1472,176 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
           return timeA.compareTo(timeB);
         });
 
-        return Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration:
-                      BoxDecoration(
-                    color: primaryBlue
-                        .withOpacity(0.10),
-                    borderRadius:
-                        BorderRadius.circular(
-                            13),
-                  ),
-                  child: const Icon(
-                    Icons.admin_panel_settings_rounded,
-                    color:
-                        primaryBlue,
-                    size: 22,
-                  ),
-                ),
+        return Container(
+          width: double.infinity,
+          padding:
+              const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius:
+                BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color:
+                    Colors.black.withOpacity(0.07),
+                blurRadius: 18,
+                offset:
+                    const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              // ==================================================
+              // عنوان المحادثة
+              // ==================================================
 
-                const SizedBox(
-                    width: 10),
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration:
+                        BoxDecoration(
+                      color: primaryBlue
+                          .withOpacity(0.10),
+                      borderRadius:
+                          BorderRadius.circular(
+                              13),
+                    ),
+                    child: const Icon(
+                      Icons
+                          .admin_panel_settings_rounded,
+                      color:
+                          primaryBlue,
+                      size: 23,
+                    ),
+                  ),
 
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'التواصل مع الإدارة',
+                  const SizedBox(
+                      width: 10),
+
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment
+                              .start,
+                      children: [
+                        Text(
+                          'التواصل مع الإدارة',
+                          style:
+                              TextStyle(
+                            color:
+                                Colors.black87,
+                            fontSize: 15,
+                            fontWeight:
+                                FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(
+                            height: 3),
+                        Text(
+                          'رسائل ولي الأمر والمدير',
+                          style:
+                              TextStyle(
+                            color:
+                                Colors.black45,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  if (docs.isNotEmpty)
+                    Container(
+                      padding:
+                          const EdgeInsets
+                              .symmetric(
+                        horizontal: 9,
+                        vertical: 6,
+                      ),
+                      decoration:
+                          BoxDecoration(
+                        color: primaryGreen
+                            .withOpacity(
+                                0.09),
+                        borderRadius:
+                            BorderRadius
+                                .circular(
+                                    10),
+                      ),
+                      child: Text(
+                        '${docs.length}',
                         style:
-                            TextStyle(
+                            const TextStyle(
                           color:
-                              Colors.black87,
-                          fontSize: 15,
+                              primaryGreen,
+                          fontSize: 11,
                           fontWeight:
                               FontWeight.bold,
                         ),
                       ),
-                      SizedBox(
-                          height: 3),
-                      Text(
-                        'رسائل ولي الأمر والمدير',
-                        style:
-                            TextStyle(
-                          color:
-                              Colors.black45,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                if (docs.isNotEmpty)
-                  Container(
-                    padding:
-                        const EdgeInsets
-                            .symmetric(
-                      horizontal: 8,
-                      vertical: 5,
                     ),
-                    decoration:
-                        BoxDecoration(
-                      color: primaryGreen
-                          .withOpacity(
-                              0.09),
-                      borderRadius:
-                          BorderRadius
-                              .circular(10),
-                    ),
-                    child: Text(
-                      '${docs.length}',
-                      style:
-                          const TextStyle(
-                        color:
-                            primaryGreen,
-                        fontSize: 11,
-                        fontWeight:
-                            FontWeight.bold,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-
-            const SizedBox(
-                height: 12),
-
-            if (docs.isEmpty)
-              _buildNoMessages()
-            else
-              Container(
-                constraints:
-                    const BoxConstraints(
-                  maxHeight: 360,
-                ),
-                child:
-                    ListView.builder(
-                  shrinkWrap: true,
-                  physics:
-                      const BouncingScrollPhysics(),
-                  itemCount:
-                      docs.length,
-                  itemBuilder:
-                      (context, index) {
-                    final data =
-                        docs[index].data()
-                            as Map<String,
-                                dynamic>;
-
-                    return _buildMessageBubble(
-                      data,
-                    );
-                  },
-                ),
+                ],
               ),
 
-            const SizedBox(
-                height: 13),
+              const SizedBox(
+                  height: 14),
 
-            _buildSendMessageBox(
-              studentId: studentId,
-              parentId: parentId,
-              halaqaId: halaqaId,
-            ),
-          ],
+              // ==================================================
+              // الرسائل
+              // ==================================================
+
+              if (docs.isEmpty)
+                _buildNoMessages()
+              else
+                Container(
+                  constraints:
+                      const BoxConstraints(
+                    maxHeight: 360,
+                  ),
+                  child:
+                      ListView.builder(
+                    shrinkWrap: true,
+                    physics:
+                        const BouncingScrollPhysics(),
+                    itemCount:
+                        docs.length,
+                    itemBuilder:
+                        (context, index) {
+                      final Map<String,
+                              dynamic>
+                          data =
+                          (docs[index]
+                                  .data()
+                              as Map<String,
+                                  dynamic>?) ??
+                              {};
+
+                      return _buildMessageBubble(
+                        data,
+                      );
+                    },
+                  ),
+                ),
+
+              const SizedBox(
+                  height: 13),
+
+              // ==================================================
+              // إرسال رسالة
+              // ==================================================
+
+              _buildSendMessageBox(
+                studentId: studentId,
+                parentId: parentId,
+                halaqaId: halaqaId,
+              ),
+            ],
+          ),
         );
       },
     );
@@ -1514,7 +1721,8 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
               children: [
                 Icon(
                   isAdmin
-                      ? Icons.admin_panel_settings_rounded
+                      ? Icons
+                          .admin_panel_settings_rounded
                       : Icons.person_rounded,
                   color: isAdmin
                       ? primaryGreen
@@ -1580,100 +1788,125 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
   // ============================================================
   // Send Message Box
   // ============================================================
-Widget _buildSendMessageBox({
-  required String studentId,
-  required String parentId,
-  required String halaqaId,
-}) {
-  return Container(
-    padding: const EdgeInsets.all(11),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: Colors.grey.shade200,
+
+  Widget _buildSendMessageBox({
+    required String studentId,
+    required String parentId,
+    required String halaqaId,
+  }) {
+    return Container(
+      padding:
+          const EdgeInsets.all(11),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius:
+            BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
       ),
-    ),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: TextField(
-            controller: _parentMessageController,
+      child: Row(
+        crossAxisAlignment:
+            CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: TextField(
+              controller:
+                  _parentMessageController,
 
-            maxLines: 3,
-            minLines: 1,
+              maxLines: 3,
+              minLines: 1,
 
-            textDirection: TextDirection.rtl,
-            textAlign: TextAlign.right,
+              textDirection:
+                  TextDirection.rtl,
+              textAlign:
+                  TextAlign.right,
 
-            // =====================================================
-            // لون وحجم النص الذي يكتبه ولي الأمر
-            // =====================================================
-            style: const TextStyle(
-              color: Colors.black87,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              height: 1.5,
-            ),
-
-            decoration: InputDecoration(
-              hintText: 'اكتب رسالة للإدارة...',
-              hintStyle: TextStyle(
-                color: Colors.grey.shade400,
-                fontSize: 12,
+              style: const TextStyle(
+                color: Colors.black87,
+                fontSize: 14,
+                fontWeight:
+                    FontWeight.w500,
+                height: 1.5,
               ),
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
+
+              decoration:
+                  InputDecoration(
+                hintText:
+                    'اكتب رسالة للإدارة...',
+                hintStyle:
+                    TextStyle(
+                  color:
+                      Colors.grey.shade400,
+                  fontSize: 12,
+                ),
+                border:
+                    InputBorder.none,
+                enabledBorder:
+                    InputBorder.none,
+                focusedBorder:
+                    InputBorder.none,
+              ),
             ),
           ),
-        ),
 
-        const SizedBox(width: 8),
+          const SizedBox(width: 8),
 
-        Container(
-          width: 45,
-          height: 45,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                primaryGreen,
-                primaryBlue,
-              ],
+          Container(
+            width: 45,
+            height: 45,
+            decoration:
+                const BoxDecoration(
+              gradient:
+                  LinearGradient(
+                colors: [
+                  primaryGreen,
+                  primaryBlue,
+                ],
+              ),
+              shape:
+                  BoxShape.circle,
             ),
-            shape: BoxShape.circle,
+            child: IconButton(
+              onPressed:
+                  _sendingMessage
+                      ? null
+                      : () {
+                          _sendMessage(
+                            studentId:
+                                studentId,
+                            parentId:
+                                parentId,
+                            halaqaId:
+                                halaqaId,
+                          );
+                        },
+              icon:
+                  _sendingMessage
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child:
+                              CircularProgressIndicator(
+                            strokeWidth:
+                                2,
+                            color:
+                                Colors.white,
+                          ),
+                        )
+                      : const Icon(
+                          Icons
+                              .send_rounded,
+                          color:
+                              Colors.white,
+                          size: 20,
+                        ),
+            ),
           ),
-          child: IconButton(
-            onPressed: _sendingMessage
-                ? null
-                : () {
-                    _sendMessage(
-                      studentId: studentId,
-                      parentId: parentId,
-                      halaqaId: halaqaId,
-                    );
-                  },
-            icon: _sendingMessage
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Icon(
-                    Icons.send_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
   // ============================================================
   // إرسال ولي الأمر -> المدير
@@ -1872,22 +2105,52 @@ Widget _buildSendMessageBox({
     Map<String, dynamic> record,
   ) {
     return Container(
+      width: double.infinity,
       padding:
-          const EdgeInsets.all(14),
+          const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color:
-            primaryBlue.withOpacity(0.05),
+            Colors.white.withOpacity(0.95),
         borderRadius:
-            BorderRadius.circular(16),
+            BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color:
+                Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+          ),
+        ],
       ),
-      child: const Text(
-        'التواصل مع الإدارة غير متاح حالياً لعدم اكتمال ربط الطالب بولي الأمر.',
-        textAlign:
-            TextAlign.center,
-        style: TextStyle(
-          color: Colors.black54,
-          fontSize: 12,
-        ),
+      child: const Column(
+        children: [
+          Icon(
+            Icons.chat_bubble_outline_rounded,
+            color: Colors.grey,
+            size: 30,
+          ),
+          SizedBox(height: 7),
+          Text(
+            'التواصل مع الإدارة غير متاح حالياً',
+            textAlign:
+                TextAlign.center,
+            style: TextStyle(
+              color: Colors.black54,
+              fontSize: 12,
+              fontWeight:
+                  FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            'لم يتم ربط الطالب بحساب ولي الأمر.',
+            textAlign:
+                TextAlign.center,
+            style: TextStyle(
+              color: Colors.black38,
+              fontSize: 10,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1920,19 +2183,33 @@ Widget _buildSendMessageBox({
                   FontWeight.bold,
             ),
           ),
+          SizedBox(height: 3),
+          Text(
+            'يمكنك إرسال رسالة للإدارة من هنا.',
+            style: TextStyle(
+              color: Colors.black38,
+              fontSize: 10,
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildChatLoading() {
-    return const Center(
-      child: Padding(
-        padding:
-            EdgeInsets.all(15),
+    return Container(
+      width: double.infinity,
+      padding:
+          const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(20),
+      ),
+      child: const Center(
         child: SizedBox(
-          width: 20,
-          height: 20,
+          width: 22,
+          height: 22,
           child:
               CircularProgressIndicator(
             strokeWidth: 2,
@@ -1947,12 +2224,18 @@ Widget _buildSendMessageBox({
     return Container(
       width: double.infinity,
       padding:
-          const EdgeInsets.all(15),
+          const EdgeInsets.all(17),
       decoration: BoxDecoration(
-        color:
-            primaryBlue.withOpacity(0.05),
+        color: Colors.white,
         borderRadius:
-            BorderRadius.circular(16),
+            BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color:
+                Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+          ),
+        ],
       ),
       child: const Row(
         mainAxisAlignment:
@@ -1986,12 +2269,16 @@ Widget _buildSendMessageBox({
     return Container(
       width: double.infinity,
       padding:
-          const EdgeInsets.all(14),
+          const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color:
-            Colors.red.withOpacity(0.05),
+            Colors.white,
         borderRadius:
-            BorderRadius.circular(14),
+            BorderRadius.circular(18),
+        border: Border.all(
+          color:
+              Colors.red.withOpacity(0.15),
+        ),
       ),
       child: const Text(
         'تعذر تحميل المحادثة.',
@@ -2213,6 +2500,10 @@ Widget _buildSendMessageBox({
 
                 Text(
                   value,
+                  textDirection:
+                      TextDirection.rtl,
+                  textAlign:
+                      TextAlign.right,
                   style:
                       const TextStyle(
                     color:
@@ -2428,10 +2719,26 @@ Widget _buildSendMessageBox({
     );
   }
 
+  // ============================================================
+  // التحقق من وجود نص
+  // ============================================================
+
   bool _hasText(dynamic value) {
-    return value != null &&
-        value.toString().trim().isNotEmpty &&
-        value.toString().trim() !=
-            'لا يوجد';
+    if (value == null) {
+      return false;
+    }
+
+    final String text =
+        value.toString().trim();
+
+    if (text.isEmpty) {
+      return false;
+    }
+
+    if (text == 'لا يوجد') {
+      return false;
+    }
+
+    return true;
   }
 }
