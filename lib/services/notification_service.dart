@@ -25,95 +25,50 @@ class NotificationService {
 
   static const List<String> dhikrList = [
     'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، سُبْحَانَ اللَّهِ الْعَظِيمِ',
-
     'لَا إِلَهَ إِلَّا أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظَّالِمِينَ',
-
     'سُبْحَانَ اللَّهِ، وَالْحَمْدُ لِلَّهِ، وَلَا إِلَهَ إِلَّا اللَّهُ، وَاللَّهُ أَكْبَرُ',
-
     'أَسْتَغْفِرُ اللَّهَ الَّذِي لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ وَأَتُوبُ إِلَيْهِ',
-
     'اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ',
-
     'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ',
-
     'رَبِّ اغْفِرْ لِي وَتُبْ عَلَيَّ إِنَّكَ أَنْتَ التَّوَّابُ الرَّحِيمُ',
-
     'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ عَدَدَ خَلْقِهِ، وَرِضَا نَفْسِهِ، وَزِنَةَ عَرْشِهِ، وَمِدَادَ كَلِمَاتِهِ',
-
     'اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا، وَرِزْقًا طَيِّبًا، وَعَمَلًا مُتَقَبَّلًا',
-
     'اللَّهُمَّ أَجِرْنِي مِنَ النَّارِ',
-
     'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ مِائَةَ مَرَّةٍ',
-
     'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
-
     'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنْ شَرِّ مَا عَمِلْتُ، وَمِنْ شَرِّ مَا لَمْ أَعْمَلْ',
-
     'رَضِيتُ بِاللَّهِ رَبًّا، وَبِالْإِسْلَامِ دِينًا، وَبِمُحَمَّدٍ نَبِيًّا وَرَسُولًا',
-
     'يَا حَيُّ يَا قَيُّومُ، بِرَحْمَتِكَ أَسْتَغِيثُ',
-
     'سُبْحَانَ اللَّهِ وَالْحَمْدُ لِلَّهِ وَلَا إِلَهَ إِلَّا اللَّهُ وَاللَّهُ أَكْبَرُ',
-
     'أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ',
-
     'اللَّهُمَّ اغْفِرْ لِي وَارْحَمْنِي وَاهْدِنِي وَعَافِنِي وَارْزُقْنِي',
-
     'اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ',
-
     'اللَّهُمَّ إِنَّكَ عَفُوٌّ تُحِبُّ الْعَفْوَ فَاعْفُ عَنِّي',
-
     'رَبِّ زِدْنِي عِلْمًا',
-
     'رَبِّ اشْرَحْ لِي صَدْرِي وَيَسِّرْ لِي أَمْرِي',
-
     'حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ، عَلَيْهِ تَوَكَّلْتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ',
-
     'اللَّهُمَّ إِنِّي أَسْأَلُكَ الْجَنَّةَ وَأَعُوذُ بِكَ مِنَ النَّارِ',
-
     'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ',
-
     'اللَّهُمَّ اهْدِنِي وَسَدِّدْنِي',
-
     'اللَّهُمَّ ارْزُقْنِي قَلْبًا خَاشِعًا وَلِسَانًا ذَاكِرًا',
-
     'اللَّهُمَّ بَارِكْ لِي فِي وَقْتِي وَعَمَلِي وَرِزْقِي',
-
     'اللَّهُمَّ اكْفِنِي بِحَلَالِكَ عَنْ حَرَامِكَ وَأَغْنِنِي بِفَضْلِكَ عَمَّنْ سِوَاكَ',
-
     'اللَّهُمَّ أَصْلِحْ لِي دِينِي وَدُنْيَايَ وَآخِرَتِي',
-
     'رَبِّ أَعُوذُ بِكَ مِنْ هَمَزَاتِ الشَّيَاطِينِ وَأَعُوذُ بِكَ رَبِّ أَنْ يَحْضُرُونِ',
-
     'اللَّهُمَّ اجْعَلْ الْقُرْآنَ رَبِيعَ قَلْبِي وَنُورَ صَدْرِي',
-
     'اللَّهُمَّ اجْعَلْنِي مِنَ التَّوَّابِينَ وَاجْعَلْنِي مِنَ الْمُتَطَهِّرِينَ',
-
     'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، عَدَدَ مَا خَلَقَ، وَرِضَا نَفْسِهِ، وَزِنَةَ عَرْشِهِ، وَمِدَادَ كَلِمَاتِهِ',
-
     'اللَّهُمَّ صَلِّ وَسَلِّمْ وَبَارِكْ عَلَى نَبِيِّنَا مُحَمَّدٍ',
-
     'اللَّهُمَّ إِنِّي أَسْأَلُكَ حُبَّكَ وَحُبَّ مَنْ يُحِبُّكَ وَحُبَّ عَمَلٍ يُقَرِّبُنِي إِلَى حُبِّكَ',
-
     'يَا رَبِّ لَا تَذَرْ لِي ذَنْبًا إِلَّا غَفَرْتَهُ، وَلَا هَمًّا إِلَّا فَرَّجْتَهُ',
-
     'اللَّهُمَّ اجْعَلْنَا مِنْ أَهْلِ الْقُرْآنِ الَّذِينَ هُمْ أَهْلُكَ وَخَاصَّتُكَ',
-
     'اللَّهُمَّ اخْتِمْ لَنَا بِخَيْرٍ',
-
     'اللَّهُمَّ ثَبِّتْ قُلُوبَنَا عَلَى دِينِكَ',
-
     'اللَّهُمَّ ارْحَمْ وَالِدَيْنَا وَاغْفِرْ لَهُمَا',
-
     'اللَّهُمَّ اشْفِ مَرْضَانَا وَارْحَمْ مَوْتَانَا',
-
     'اللَّهُمَّ احْفَظْنَا وَأَهْلَنَا مِنْ كُلِّ سُوءٍ',
-
     'اللَّهُمَّ اجْعَلْ أَيَّامَنَا عَامِرَةً بِذِكْرِكَ',
-
     'اللَّهُمَّ لَا تَحْرِمْنَا فَضْلَكَ وَرَحْمَتَكَ',
-
     'اللَّهُمَّ اجْعَلْنَا مِمَّنْ يَسْمَعُونَ الْقَوْلَ فَيَتَّبِعُونَ أَحْسَنَهُ',
   ];
 
@@ -127,15 +82,23 @@ class NotificationService {
     }
 
     try {
-      // timezone
+      // =========================================================================
+      // Timezone
+      // =========================================================================
+
       tz.initializeTimeZones();
 
       try {
-        tz.setLocalLocation(tz.getLocation('Asia/Riyadh'));
-      } catch (_) {
-        // إذا لم يتم العثور على المنطقة الزمنية
-        // سيتم استخدام المنطقة الافتراضية.
-      }
+        // استخدم توقيت الجهاز/المستخدم لاحقًا إذا كان التطبيق
+        // يعتمد على مواقيت الصلاة.
+        tz.setLocalLocation(
+          tz.getLocation('Asia/Riyadh'),
+        );
+      } catch (_) {}
+
+      // =========================================================================
+      // Local Notifications
+      // =========================================================================
 
       const androidSettings = AndroidInitializationSettings(
         '@mipmap/ic_launcher',
@@ -154,17 +117,33 @@ class NotificationService {
         ),
       );
 
+      // =========================================================================
+      // Notification Channels
+      // =========================================================================
+
       await _createNotificationChannels();
+
+      // =========================================================================
+      // Permissions
+      // =========================================================================
 
       await _requestPermissions();
 
       _initialized = true;
 
+      // =========================================================================
+      // FCM
+      // =========================================================================
+
       await _initFCM();
 
-      debugPrint('تم تهيئة NotificationService بنجاح');
+      debugPrint(
+        'تم تهيئة NotificationService بنجاح',
+      );
     } catch (e, stackTrace) {
-      debugPrint('خطأ في تهيئة NotificationService: $e');
+      debugPrint(
+        'خطأ في تهيئة NotificationService: $e',
+      );
       debugPrint('$stackTrace');
     }
   }
@@ -200,15 +179,23 @@ class NotificationService {
 
     const gradesChannel = AndroidNotificationChannel(
       'grades_channel',
-      'رصد الدرجات',
-      description: 'إشعارات تحديث درجات ونقاط الأبناء',
+      'رصد الأبناء',
+      description: 'إشعارات تحديث رصد وأداء الأبناء',
       importance: Importance.max,
       playSound: true,
     );
 
-    await androidPlugin.createNotificationChannel(dhikrChannel);
-    await androidPlugin.createNotificationChannel(mosqueChannel);
-    await androidPlugin.createNotificationChannel(gradesChannel);
+    await androidPlugin.createNotificationChannel(
+      dhikrChannel,
+    );
+
+    await androidPlugin.createNotificationChannel(
+      mosqueChannel,
+    );
+
+    await androidPlugin.createNotificationChannel(
+      gradesChannel,
+    );
   }
 
   // ==========================================================================
@@ -227,7 +214,9 @@ class NotificationService {
         try {
           await androidPlugin.requestExactAlarmsPermission();
         } catch (e) {
-          debugPrint('تعذر طلب إذن المنبهات الدقيقة: $e');
+          debugPrint(
+            'تعذر طلب إذن المنبهات الدقيقة: $e',
+          );
         }
       }
 
@@ -238,7 +227,9 @@ class NotificationService {
         provisional: false,
       );
     } catch (e) {
-      debugPrint('خطأ أثناء طلب صلاحيات الإشعارات: $e');
+      debugPrint(
+        'خطأ أثناء طلب صلاحيات الإشعارات: $e',
+      );
     }
   }
 
@@ -254,69 +245,120 @@ class NotificationService {
         alert: true,
         badge: true,
         sound: true,
+        provisional: false,
       );
 
       if (settings.authorizationStatus !=
               AuthorizationStatus.authorized &&
           settings.authorizationStatus !=
               AuthorizationStatus.provisional) {
-        debugPrint('لم يتم السماح بإشعارات FCM');
+        debugPrint(
+          'لم يتم السماح بإشعارات FCM',
+        );
         return;
       }
 
+      // -----------------------------------------------------------------------
+      // الحصول على Token
+      // -----------------------------------------------------------------------
+
       final token = await messaging.getToken();
 
-      debugPrint('FCM Token: $token');
+      debugPrint(
+        'FCM Token: $token',
+      );
 
+      // قد يكون المستخدم غير مسجل الدخول هنا.
+      // سيتم حفظه بعد تسجيل الدخول بواسطة saveCurrentToken().
       await _saveTokenToFirestore(token);
 
-      // مهم:
-      // onTokenRefresh يرجع String وليس RemoteMessage
+      // -----------------------------------------------------------------------
+      // مراقبة تغير Token
+      // -----------------------------------------------------------------------
+
       await _tokenRefreshSub?.cancel();
 
-      _tokenRefreshSub = messaging.onTokenRefresh.listen(
+      _tokenRefreshSub =
+          messaging.onTokenRefresh.listen(
         (newToken) async {
-          debugPrint('تم تحديث FCM Token');
+          debugPrint(
+            'تم تحديث FCM Token',
+          );
 
-          await _saveTokenToFirestore(newToken);
+          await _saveTokenToFirestore(
+            newToken,
+          );
         },
       );
 
+      // -----------------------------------------------------------------------
+      // استقبال الرسائل عندما التطبيق مفتوح
+      // -----------------------------------------------------------------------
+
       await _foregroundMessageSub?.cancel();
 
-      _foregroundMessageSub = FirebaseMessaging.onMessage.listen(
+      _foregroundMessageSub =
+          FirebaseMessaging.onMessage.listen(
         _showFCMNotification,
       );
+
+      debugPrint(
+        'تم تشغيل مستمع FCM بنجاح',
+      );
     } catch (e) {
-      debugPrint('فشل إعداد FCM: $e');
+      debugPrint(
+        'فشل إعداد FCM: $e',
+      );
     }
   }
 
   // ==========================================================================
-  // حفظ FCM Token
+  // حفظ Token بعد تسجيل الدخول
   // ==========================================================================
 
   static Future<void> saveCurrentToken() async {
-    try {
-      final token = await FirebaseMessaging.instance.getToken();
-
-      await _saveTokenToFirestore(token);
-    } catch (e) {
-      debugPrint('فشل حفظ FCM Token: $e');
-    }
-  }
-
-  static Future<void> _saveTokenToFirestore(String? token) async {
-    if (token == null || token.isEmpty) {
-      return;
-    }
-
     try {
       final user = FirebaseAuth.instance.currentUser;
 
       if (user == null) {
         debugPrint(
-          'لم يتم حفظ FCM Token لأن المستخدم غير مسجل الدخول',
+          'لا يوجد ولي أمر مسجل الدخول لحفظ FCM Token',
+        );
+        return;
+      }
+
+      final token =
+          await FirebaseMessaging.instance.getToken();
+
+      await _saveTokenToFirestore(token);
+    } catch (e) {
+      debugPrint(
+        'فشل حفظ FCM Token: $e',
+      );
+    }
+  }
+
+  // ==========================================================================
+  // حفظ FCM Token في parents
+  // ==========================================================================
+
+  static Future<void> _saveTokenToFirestore(
+    String? token,
+  ) async {
+    if (token == null || token.isEmpty) {
+      debugPrint(
+        'FCM Token فارغ',
+      );
+      return;
+    }
+
+    try {
+      final user =
+          FirebaseAuth.instance.currentUser;
+
+      if (user == null) {
+        debugPrint(
+          'لم يتم حفظ FCM Token لأن ولي الأمر غير مسجل الدخول',
         );
         return;
       }
@@ -327,26 +369,34 @@ class NotificationService {
           .set(
         {
           'fcmToken': token,
-          'lastUpdated': FieldValue.serverTimestamp(),
+          'lastUpdated':
+              FieldValue.serverTimestamp(),
         },
-        SetOptions(merge: true),
+        SetOptions(
+          merge: true,
+        ),
       );
 
-      debugPrint('تم حفظ FCM Token للمستخدم ${user.uid}');
+      debugPrint(
+        'تم حفظ FCM Token لولي الأمر ${user.uid}',
+      );
     } catch (e) {
-      debugPrint('فشل حفظ FCM Token في Firestore: $e');
+      debugPrint(
+        'فشل حفظ FCM Token في Firestore: $e',
+      );
     }
   }
 
   // ==========================================================================
-  // استقبال FCM أثناء فتح التطبيق
+  // استقبال FCM عندما التطبيق مفتوح
   // ==========================================================================
 
   static Future<void> _showFCMNotification(
     RemoteMessage message,
   ) async {
     try {
-      final notification = message.notification;
+      final notification =
+          message.notification;
 
       final title =
           notification?.title ??
@@ -358,46 +408,101 @@ class NotificationService {
           message.data['body']?.toString() ??
           'لديك إشعار جديد';
 
+      final type =
+          message.data['type']?.toString();
+
+      String channelId =
+          'mosque_channel';
+
+      String channelName =
+          'إشعارات المسجد';
+
+      if (type == 'grade_update' ||
+          type == 'attendance' ||
+          type == 'memorization' ||
+          type == 'recitation') {
+        channelId =
+            'grades_channel';
+
+        channelName =
+            'رصد الأبناء';
+      }
+
       await _plugin.show(
         notification.hashCode,
         title,
         body,
-        const NotificationDetails(
+        NotificationDetails(
           android: AndroidNotificationDetails(
-            'mosque_channel',
-            'إشعارات المسجد',
+            channelId,
+            channelName,
             channelDescription:
-                'إشعارات تطبيق المسجد العامة',
+                'إشعارات تطبيق مسجدنا الذكي',
             importance: Importance.max,
             priority: Priority.high,
             playSound: true,
             icon: '@mipmap/ic_launcher',
           ),
-          iOS: DarwinNotificationDetails(
+          iOS: const DarwinNotificationDetails(
             presentAlert: true,
             presentBadge: true,
             presentSound: true,
           ),
         ),
-        payload: message.data.toString(),
+        payload: message.data.isNotEmpty
+            ? message.data.toString()
+            : null,
+      );
+
+      debugPrint(
+        'تم عرض إشعار FCM: $title',
       );
     } catch (e) {
-      debugPrint('فشل عرض إشعار FCM: $e');
+      debugPrint(
+        'فشل عرض إشعار FCM: $e',
+      );
     }
   }
 
   // ==========================================================================
-  // يستخدم مع Background Handler
+  // Background FCM
   // ==========================================================================
 
-  static Future<void> showLocalNotificationFromMessage(
+  static Future<void>
+      showLocalNotificationFromMessage(
     RemoteMessage message,
   ) async {
     try {
-      await _showFCMNotification(message);
+      // التأكد من تهيئة Local Notifications
+      if (!_initialized) {
+        tz.initializeTimeZones();
+
+        const androidSettings =
+            AndroidInitializationSettings(
+          '@mipmap/ic_launcher',
+        );
+
+        const iosSettings =
+            DarwinInitializationSettings();
+
+        await _plugin.initialize(
+          const InitializationSettings(
+            android: androidSettings,
+            iOS: iosSettings,
+          ),
+        );
+
+        await _createNotificationChannels();
+
+        _initialized = true;
+      }
+
+      await _showFCMNotification(
+        message,
+      );
     } catch (e) {
       debugPrint(
-        'فشل عرض إشعار الرسالة في الخلفية: $e',
+        'فشل عرض إشعار FCM في الخلفية: $e',
       );
     }
   }
@@ -412,19 +517,24 @@ class NotificationService {
         await init();
       }
 
-      final now = tz.TZDateTime.now(tz.local);
+      final now =
+          tz.TZDateTime.now(tz.local);
 
-      // من 8 صباحًا إلى 10 مساءً
-      // كل نصف ساعة
+      // من 08:00 صباحًا إلى 22:00 مساءً
+      // كل نصف ساعة.
       for (
         int totalMinutes = 8 * 60;
         totalMinutes <= 22 * 60;
         totalMinutes += 30
       ) {
-        final hour = totalMinutes ~/ 60;
-        final minute = totalMinutes % 60;
+        final hour =
+            totalMinutes ~/ 60;
 
-        var scheduledDate = tz.TZDateTime(
+        final minute =
+            totalMinutes % 60;
+
+        var scheduledDate =
+            tz.TZDateTime(
           tz.local,
           now.year,
           now.month,
@@ -433,21 +543,27 @@ class NotificationService {
           minute,
         );
 
-        // إذا مر الوقت اليوم،
-        // جدوله لليوم التالي.
+        // إذا مر الوقت، جدولة الإشعار لليوم التالي.
         if (!scheduledDate.isAfter(now)) {
-          scheduledDate = scheduledDate.add(
-            const Duration(days: 1),
+          scheduledDate =
+              scheduledDate.add(
+            const Duration(
+              days: 1,
+            ),
           );
         }
 
         final index =
-            (totalMinutes ~/ 30) % dhikrList.length;
+            (totalMinutes ~/ 30) %
+                dhikrList.length;
 
-        final notificationId = totalMinutes;
+        final notificationId =
+            totalMinutes;
 
-        // منع تكرار نفس الإشعار
-        await _plugin.cancel(notificationId);
+        // منع تكرار نفس الإشعار.
+        await _plugin.cancel(
+          notificationId,
+        );
 
         await _plugin.zonedSchedule(
           notificationId,
@@ -455,39 +571,50 @@ class NotificationService {
           dhikrList[index],
           scheduledDate,
           const NotificationDetails(
-            android: AndroidNotificationDetails(
+            android:
+                AndroidNotificationDetails(
               'dhikr_channel',
               'أذكار وتذكير',
               channelDescription:
                   'تذكير دوري بذكر الله',
-              importance: Importance.max,
-              priority: Priority.high,
+              importance:
+                  Importance.max,
+              priority:
+                  Priority.high,
               playSound: true,
-              icon: '@mipmap/ic_launcher',
+              icon:
+                  '@mipmap/ic_launcher',
             ),
-            iOS: DarwinNotificationDetails(
+            iOS:
+                DarwinNotificationDetails(
               presentAlert: true,
               presentBadge: true,
               presentSound: true,
             ),
           ),
           androidScheduleMode:
-              AndroidScheduleMode.exactAllowWhileIdle,
+              AndroidScheduleMode
+                  .exactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
+              UILocalNotificationDateInterpretation
+                  .absoluteTime,
           matchDateTimeComponents:
               DateTimeComponents.time,
         );
       }
 
-      debugPrint('تمت جدولة الأذكار بنجاح');
+      debugPrint(
+        'تمت جدولة الأذكار بنجاح',
+      );
     } catch (e) {
-      debugPrint('فشل جدولة الأذكار: $e');
+      debugPrint(
+        'فشل جدولة الأذكار: $e',
+      );
     }
   }
 
   // ==========================================================================
-  // إلغاء جميع الأذكار
+  // إلغاء الأذكار
   // ==========================================================================
 
   static Future<void> cancelDhikr() async {
@@ -497,12 +624,18 @@ class NotificationService {
         totalMinutes <= 22 * 60;
         totalMinutes += 30
       ) {
-        await _plugin.cancel(totalMinutes);
+        await _plugin.cancel(
+          totalMinutes,
+        );
       }
 
-      debugPrint('تم إلغاء إشعارات الأذكار');
+      debugPrint(
+        'تم إلغاء إشعارات الأذكار',
+      );
     } catch (e) {
-      debugPrint('فشل إلغاء الأذكار: $e');
+      debugPrint(
+        'فشل إلغاء الأذكار: $e',
+      );
     }
   }
 
@@ -510,62 +643,85 @@ class NotificationService {
   // إشعار اختباري
   // ==========================================================================
 
-  static Future<void> showTestNotification() async {
+  static Future<void>
+      showTestNotification() async {
     try {
+      if (!_initialized) {
+        await init();
+      }
+
       await _plugin.show(
         999999,
         'مسجدنا الذكي',
         'تم إرسال الإشعار بنجاح! 🔔',
         const NotificationDetails(
-          android: AndroidNotificationDetails(
+          android:
+              AndroidNotificationDetails(
             'mosque_channel',
             'إشعارات المسجد',
             channelDescription:
-                'إشعارات تطبيق المسجد العامة',
-            importance: Importance.max,
-            priority: Priority.high,
+                'الإشعارات العامة لتطبيق المسجد',
+            importance:
+                Importance.max,
+            priority:
+                Priority.high,
             playSound: true,
-            icon: '@mipmap/ic_launcher',
+            icon:
+                '@mipmap/ic_launcher',
           ),
-          iOS: DarwinNotificationDetails(
+          iOS:
+              DarwinNotificationDetails(
             presentAlert: true,
             presentBadge: true,
             presentSound: true,
           ),
         ),
       );
+
+      debugPrint(
+        'تم إرسال الإشعار الاختباري',
+      );
     } catch (e) {
-      debugPrint('فشل الإشعار الاختباري: $e');
+      debugPrint(
+        'فشل الإشعار الاختباري: $e',
+      );
     }
   }
 
   // ==========================================================================
-  // رصد درجات الأبناء
+  // مراقبة رصد الأبناء أثناء فتح التطبيق
+  //
+  // ملاحظة:
+  // هذا الجزء للإشعار المحلي عندما يكون التطبيق يعمل.
+  // الإشعار حتى لو التطبيق مغلق يجب أن يأتي من Cloud Function + FCM.
   // ==========================================================================
 
-  static void startListeningToChildrenGrades(
+  static void
+      startListeningToChildrenGrades(
     String parentId,
   ) {
     try {
       _childrenSub?.cancel();
 
-      _childrenSub = FirebaseFirestore.instance
-          .collection('children')
-          .where(
-            'parentId',
-            isEqualTo: parentId,
-          )
-          .snapshots()
-          .listen(
+      _childrenSub =
+          FirebaseFirestore.instance
+              .collection('children')
+              .where(
+                'parentId',
+                isEqualTo: parentId,
+              )
+              .snapshots()
+              .listen(
         (snapshot) {
-          for (final change in snapshot.docChanges) {
-            // إشعار عند تعديل بيانات الابن
+          for (final change
+              in snapshot.docChanges) {
             if (change.type !=
                 DocumentChangeType.modified) {
               continue;
             }
 
-            final data = change.doc.data();
+            final data =
+                change.doc.data();
 
             if (data == null) {
               continue;
@@ -573,7 +729,7 @@ class NotificationService {
 
             final childName =
                 data['name']?.toString() ??
-                'الابن';
+                    'الابن';
 
             final pointsValue =
                 data['totalPoints'];
@@ -581,11 +737,13 @@ class NotificationService {
             double totalPoints = 0;
 
             if (pointsValue is num) {
-              totalPoints = pointsValue.toDouble();
+              totalPoints =
+                  pointsValue.toDouble();
             } else {
               totalPoints =
                   double.tryParse(
-                    pointsValue?.toString() ?? '',
+                    pointsValue?.toString() ??
+                        '',
                   ) ??
                   0;
             }
@@ -604,7 +762,7 @@ class NotificationService {
       );
 
       debugPrint(
-        'بدأت مراقبة درجات الأبناء للمستخدم: $parentId',
+        'بدأت مراقبة رصد أبناء ولي الأمر: $parentId',
       );
     } catch (e) {
       debugPrint(
@@ -614,11 +772,13 @@ class NotificationService {
   }
 
   // ==========================================================================
-  // إيقاف مراقبة درجات الأبناء
+  // إيقاف مراقبة الرصد
   // ==========================================================================
 
-  static Future<void> stopListeningToChildrenGrades() async {
+  static Future<void>
+      stopListeningToChildrenGrades() async {
     await _childrenSub?.cancel();
+
     _childrenSub = null;
 
     debugPrint(
@@ -627,54 +787,41 @@ class NotificationService {
   }
 
   // ==========================================================================
-  // إشعار الدرجات
+  // إشعار تحديث الرصد
   // ==========================================================================
 
-  static Future<void> _showGradeNotification(
+  static Future<void>
+      _showGradeNotification(
     String childName,
     double totalPoints,
   ) async {
     try {
-      final androidPlugin = _plugin
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
-
-      if (androidPlugin != null) {
-        const channel = AndroidNotificationChannel(
-          'grades_channel',
-          'رصد الدرجات',
-          description:
-              'إشعارات تحديث درجات ونقاط الأبناء',
-          importance: Importance.max,
-          playSound: true,
-        );
-
-        await androidPlugin.createNotificationChannel(
-          channel,
-        );
-      }
-
       final notificationId =
-          DateTime.now().millisecondsSinceEpoch.remainder(
-                2147483647,
-              );
+          DateTime.now()
+              .millisecondsSinceEpoch
+              .remainder(2147483647);
 
       await _plugin.show(
         notificationId,
-        '📊 تحديث في درجات الابن',
-        'مجموع نقاط $childName الحالي هو ${_formatPoints(totalPoints)} نقطة',
+        '📊 تم تحديث رصد ابنك',
+        'تم تحديث رصد $childName. مجموع النقاط الحالي: ${_formatPoints(totalPoints)} نقطة',
         const NotificationDetails(
-          android: AndroidNotificationDetails(
+          android:
+              AndroidNotificationDetails(
             'grades_channel',
-            'رصد الدرجات',
+            'رصد الأبناء',
             channelDescription:
-                'إشعارات تحديث درجات ونقاط الأبناء',
-            importance: Importance.max,
-            priority: Priority.high,
+                'إشعارات تحديث رصد وأداء الأبناء',
+            importance:
+                Importance.max,
+            priority:
+                Priority.high,
             playSound: true,
-            icon: '@mipmap/ic_launcher',
+            icon:
+                '@mipmap/ic_launcher',
           ),
-          iOS: DarwinNotificationDetails(
+          iOS:
+              DarwinNotificationDetails(
             presentAlert: true,
             presentBadge: true,
             presentSound: true,
@@ -683,14 +830,23 @@ class NotificationService {
       );
     } catch (e) {
       debugPrint(
-        'فشل إرسال إشعار الدرجات: $e',
+        'فشل إشعار تحديث الرصد: $e',
       );
     }
   }
 
-  static String _formatPoints(double value) {
-    if (value == value.roundToDouble()) {
-      return value.toInt().toString();
+  // ==========================================================================
+  // تنسيق النقاط
+  // ==========================================================================
+
+  static String _formatPoints(
+    double value,
+  ) {
+    if (value ==
+        value.roundToDouble()) {
+      return value
+          .toInt()
+          .toString();
     }
 
     return value.toStringAsFixed(1);
@@ -700,11 +856,15 @@ class NotificationService {
   // إلغاء إشعار معين
   // ==========================================================================
 
-  static Future<void> cancel(int id) async {
+  static Future<void> cancel(
+    int id,
+  ) async {
     try {
       await _plugin.cancel(id);
     } catch (e) {
-      debugPrint('فشل إلغاء الإشعار: $e');
+      debugPrint(
+        'فشل إلغاء الإشعار: $e',
+      );
     }
   }
 
@@ -715,8 +875,14 @@ class NotificationService {
   static Future<void> cancelAll() async {
     try {
       await _plugin.cancelAll();
+
+      debugPrint(
+        'تم إلغاء جميع الإشعارات',
+      );
     } catch (e) {
-      debugPrint('فشل إلغاء جميع الإشعارات: $e');
+      debugPrint(
+        'فشل إلغاء جميع الإشعارات: $e',
+      );
     }
   }
 
@@ -725,9 +891,14 @@ class NotificationService {
   // ==========================================================================
 
   static Future<void> dispose() async {
-    await _foregroundMessageSub?.cancel();
-    await _tokenRefreshSub?.cancel();
-    await _childrenSub?.cancel();
+    await _foregroundMessageSub
+        ?.cancel();
+
+    await _tokenRefreshSub
+        ?.cancel();
+
+    await _childrenSub
+        ?.cancel();
 
     _foregroundMessageSub = null;
     _tokenRefreshSub = null;
