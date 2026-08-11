@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/notification_service.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -71,6 +73,7 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() {
       _emailController.text =
           prefs.getString('saved_email') ?? '';
+
       _rememberMe =
           prefs.getBool('remember_me') ?? false;
     });
@@ -170,13 +173,41 @@ class _LoginScreenState extends State<LoginScreen>
     });
 
     try {
-      await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
+      // ========================================================
+      // تسجيل الدخول إلى Firebase
+      // ========================================================
+
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
+      // ========================================================
+      // حفظ FCM Token بعد نجاح تسجيل الدخول
+      // ========================================================
+      //
+      // مهم:
+      // NotificationService يتم تشغيله في main.dart
+      // قبل تسجيل الدخول، لذلك currentUser يكون null.
+      //
+      // بعد تسجيل الدخول أصبح لدينا المستخدم،
+      // لذلك نحفظ الـ FCM Token الآن داخل:
+      //
+      // parents/{uid}/fcmToken
+      //
+      // ========================================================
+
+      await NotificationService.saveCurrentToken();
+
+      // ========================================================
+      // حفظ خيار تذكرني
+      // ========================================================
+
       await _handleRememberMe();
+
+      // ========================================================
+      // الرجوع إلى الصفحة السابقة
+      // ========================================================
 
       if (mounted) {
         Navigator.pop(context);
@@ -512,8 +543,7 @@ class _LoginScreenState extends State<LoginScreen>
             label: 'البريد الإلكتروني',
             hint: 'example@email.com',
             icon: Icons.email_outlined,
-            keyboardType:
-                TextInputType.emailAddress,
+            keyboardType: TextInputType.emailAddress,
           ),
 
           const SizedBox(height: 15),
