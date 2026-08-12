@@ -1358,9 +1358,11 @@ class _RemembranceCarouselState
 // ================================================================
 // PRAYER COUNTDOWN
 // ================================================================
+// ================================================================
+// PRAYER COUNTDOWN
+// ================================================================
 
-class AutoPrayerCountdownGlass
-    extends StatefulWidget {
+class AutoPrayerCountdownGlass extends StatefulWidget {
   const AutoPrayerCountdownGlass({super.key});
 
   @override
@@ -1370,7 +1372,7 @@ class AutoPrayerCountdownGlass
 
 class _AutoPrayerCountdownGlassState
     extends State<AutoPrayerCountdownGlass> {
-  String _nextPrayerName = 'جاري الحساب...';
+  String _nextPrayerName = 'جاري تحديد الموقع...';
 
   Duration _timeLeft = Duration.zero;
 
@@ -1382,69 +1384,122 @@ class _AutoPrayerCountdownGlassState
   void initState() {
     super.initState();
 
+    // طلب الموقع مباشرة عند فتح الصفحة
     _initPrayerLogic();
   }
 
+  // ============================================================
+  // طلب الموقع وحساب الصلاة
+  // ============================================================
+
   Future<void> _initPrayerLogic() async {
     try {
-      bool serviceEnabled =
+      // ----------------------------------------------------------
+      // 1. التأكد أن خدمة الموقع مفعلة
+      // ----------------------------------------------------------
+
+      final serviceEnabled =
           await Geolocator.isLocationServiceEnabled();
 
       if (!serviceEnabled) {
-        if (mounted) {
-          setState(() {
-            _loading = false;
-            _nextPrayerName = 'الموقع غير مفعل';
-          });
-        }
+        if (!mounted) return;
+
+        setState(() {
+          _loading = false;
+          _nextPrayerName = 'فعّل الموقع من إعدادات الهاتف';
+        });
 
         return;
       }
+
+      // ----------------------------------------------------------
+      // 2. معرفة حالة صلاحية الموقع الحالية
+      // ----------------------------------------------------------
 
       LocationPermission permission =
           await Geolocator.checkPermission();
 
+      // ----------------------------------------------------------
+      // 3. إذا لم يتم طلب الصلاحية من قبل
+      // سيظهر مربع Android لطلب الموقع
+      // ----------------------------------------------------------
+
       if (permission == LocationPermission.denied) {
-        permission =
-            await Geolocator.requestPermission();
+        permission = await Geolocator.requestPermission();
       }
 
-      if (permission ==
-              LocationPermission.denied ||
-          permission ==
-              LocationPermission.deniedForever) {
-        if (mounted) {
-          setState(() {
-            _loading = false;
-            _nextPrayerName =
-                'تعذر تحديد الموقع';
-          });
-        }
+      // ----------------------------------------------------------
+      // 4. المستخدم رفض صلاحية الموقع
+      // ----------------------------------------------------------
+
+      if (permission == LocationPermission.denied) {
+        if (!mounted) return;
+
+        setState(() {
+          _loading = false;
+          _nextPrayerName = 'يجب السماح بالوصول للموقع';
+        });
 
         return;
       }
 
+      // ----------------------------------------------------------
+      // 5. المستخدم اختار عدم السماح نهائيًا
+      // ----------------------------------------------------------
+
+      if (permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+
+        setState(() {
+          _loading = false;
+          _nextPrayerName =
+              'السماح بالموقع مغلق من إعدادات التطبيق';
+        });
+
+        return;
+      }
+
+      // ----------------------------------------------------------
+      // 6. الحصول على الموقع الحالي
+      // ----------------------------------------------------------
+
       final position =
           await Geolocator.getCurrentPosition(
-        desiredAccuracy:
-            LocationAccuracy.high,
+        desiredAccuracy: LocationAccuracy.high,
       );
+
+      // ----------------------------------------------------------
+      // 7. إنشاء الإحداثيات
+      // ----------------------------------------------------------
 
       final coordinates = Coordinates(
         position.latitude,
         position.longitude,
       );
 
+      // ----------------------------------------------------------
+      // 8. إعداد طريقة حساب مواقيت الصلاة
+      // ----------------------------------------------------------
+
       final params =
-          CalculationMethod.umm_al_qura
-              .getParameters();
+          CalculationMethod.umm_al_qura.getParameters();
 
       params.madhab = Madhab.shafi;
+
+      // ----------------------------------------------------------
+      // 9. حساب الصلاة مباشرة
+      // ----------------------------------------------------------
 
       _updatePrayer(
         coordinates,
         params,
       );
+
+      // ----------------------------------------------------------
+      // 10. تحديث العداد كل ثانية
+      // ----------------------------------------------------------
+
+      _timer?.cancel();
 
       _timer = Timer.periodic(
         const Duration(seconds: 1),
@@ -1456,20 +1511,30 @@ class _AutoPrayerCountdownGlassState
         },
       );
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _loading = false;
-          _nextPrayerName =
-              'تعذر تحديد الموقع';
-        });
-      }
+      debugPrint(
+        'Prayer location error: $e',
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _loading = false;
+        _nextPrayerName =
+            'تعذر تحديد الموقع';
+      });
     }
   }
+
+  // ============================================================
+  // تحديث الصلاة القادمة
+  // ============================================================
 
   void _updatePrayer(
     Coordinates coordinates,
     CalculationParameters params,
   ) {
+    final now = DateTime.now();
+
     final prayerTimes = PrayerTimes.today(
       coordinates,
       params,
@@ -1478,6 +1543,10 @@ class _AutoPrayerCountdownGlassState
     final next = prayerTimes.nextPrayer();
 
     if (!mounted) return;
+
+    // ----------------------------------------------------------
+    // توجد صلاة قادمة اليوم
+    // ----------------------------------------------------------
 
     if (next != Prayer.none) {
       final prayerTime =
@@ -1488,9 +1557,7 @@ class _AutoPrayerCountdownGlassState
       }
 
       final difference =
-          prayerTime.difference(
-        DateTime.now(),
-      );
+          prayerTime.difference(now);
 
       setState(() {
         _nextPrayerName =
@@ -1502,37 +1569,44 @@ class _AutoPrayerCountdownGlassState
 
         _loading = false;
       });
-    } else {
-      final tomorrow =
-          DateTime.now().add(
-        const Duration(days: 1),
-      );
 
-      final tomorrowDate =
-          DateComponents.from(tomorrow);
-
-      final tomorrowTimes = PrayerTimes(
-        coordinates,
-        tomorrowDate,
-        params,
-      );
-
-      final difference =
-          tomorrowTimes.fajr.difference(
-        DateTime.now(),
-      );
-
-      setState(() {
-        _nextPrayerName = 'الفجر';
-
-        _timeLeft = difference.isNegative
-            ? Duration.zero
-            : difference;
-
-        _loading = false;
-      });
+      return;
     }
+
+    // ----------------------------------------------------------
+    // انتهت صلوات اليوم
+    // نحسب فجر الغد
+    // ----------------------------------------------------------
+
+    final tomorrow =
+        now.add(const Duration(days: 1));
+
+    final tomorrowDate =
+        DateComponents.from(tomorrow);
+
+    final tomorrowTimes = PrayerTimes(
+      coordinates,
+      tomorrowDate,
+      params,
+    );
+
+    final difference =
+        tomorrowTimes.fajr.difference(now);
+
+    setState(() {
+      _nextPrayerName = 'الفجر';
+
+      _timeLeft = difference.isNegative
+          ? Duration.zero
+          : difference;
+
+      _loading = false;
+    });
   }
+
+  // ============================================================
+  // ترجمة أسماء الصلوات
+  // ============================================================
 
   String _translatePrayer(
     Prayer prayer,
@@ -1558,14 +1632,27 @@ class _AutoPrayerCountdownGlassState
     }
   }
 
+  // ============================================================
+  // تنظيف Timer
+  // ============================================================
+
   @override
   void dispose() {
     _timer?.cancel();
+
     super.dispose();
   }
 
+  // ============================================================
+  // UI
+  // ============================================================
+
   @override
   Widget build(BuildContext context) {
+    // ----------------------------------------------------------
+    // أثناء تحديد الموقع
+    // ----------------------------------------------------------
+
     if (_loading) {
       return Container(
         height: 105,
@@ -1573,11 +1660,19 @@ class _AutoPrayerCountdownGlassState
           color: Colors.white.withOpacity(0.97),
           borderRadius:
               BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color:
+                  HomeScreen.teal.withOpacity(0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: const Center(
           child: SizedBox(
-            width: 22,
-            height: 22,
+            width: 23,
+            height: 23,
             child: CircularProgressIndicator(
               strokeWidth: 2,
               color: HomeScreen.teal,
@@ -1586,6 +1681,10 @@ class _AutoPrayerCountdownGlassState
         ),
       );
     }
+
+    // ----------------------------------------------------------
+    // العداد
+    // ----------------------------------------------------------
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -1598,8 +1697,8 @@ class _AutoPrayerCountdownGlassState
             BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: HomeScreen.teal
-                .withOpacity(0.10),
+            color:
+                HomeScreen.teal.withOpacity(0.10),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1607,6 +1706,10 @@ class _AutoPrayerCountdownGlassState
       ),
       child: Column(
         children: [
+          // ------------------------------------------------------
+          // عنوان الصلاة
+          // ------------------------------------------------------
+
           Row(
             mainAxisAlignment:
                 MainAxisAlignment.center,
@@ -1628,18 +1731,26 @@ class _AutoPrayerCountdownGlassState
 
               const SizedBox(width: 7),
 
-              Text(
-                'المتبقي لصلاة $_nextPrayerName',
-                style: const TextStyle(
-                  color: Colors.black54,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              Flexible(
+                child: Text(
+                  'المتبقي لصلاة $_nextPrayerName',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.black54,
+                    fontSize: 12,
+                    fontWeight:
+                        FontWeight.w600,
+                  ),
                 ),
               ),
             ],
           ),
 
           const SizedBox(height: 8),
+
+          // ------------------------------------------------------
+          // العداد
+          // ------------------------------------------------------
 
           Row(
             mainAxisAlignment:
@@ -1674,11 +1785,16 @@ class _AutoPrayerCountdownGlassState
 
           const SizedBox(height: 7),
 
+          // ------------------------------------------------------
+          // الخط السفلي
+          // ------------------------------------------------------
+
           Container(
             height: 3,
             width: 70,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
+              gradient:
+                  const LinearGradient(
                 colors: [
                   HomeScreen.darkGreen,
                   HomeScreen.blue,
@@ -1692,6 +1808,10 @@ class _AutoPrayerCountdownGlassState
       ),
     );
   }
+
+  // ============================================================
+  // جزء الوقت
+  // ============================================================
 
   Widget _timePart(
     String value,
@@ -1722,9 +1842,14 @@ class _AutoPrayerCountdownGlassState
     );
   }
 
+  // ============================================================
+  // الفاصل :
+  // ============================================================
+
   Widget _buildDivider() {
     return Padding(
-      padding: const EdgeInsets.symmetric(
+      padding:
+          const EdgeInsets.symmetric(
         horizontal: 7,
       ).copyWith(bottom: 11),
       child: const Text(
@@ -1738,3 +1863,4 @@ class _AutoPrayerCountdownGlassState
     );
   }
 }
+                                        
