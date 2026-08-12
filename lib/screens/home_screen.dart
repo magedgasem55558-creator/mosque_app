@@ -7,8 +7,6 @@ import 'package:adhan/adhan.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/services.dart';
 
-import '../services/firebase_service.dart';
-import '../models/mosque_models.dart';
 import 'login_screen.dart';
 import 'my_children_screen.dart';
 import 'leaderboard_screen.dart';
@@ -27,8 +25,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final service = FirebaseService();
-
     return Scaffold(
       backgroundColor: lightBg,
       body: Container(
@@ -68,7 +64,8 @@ class HomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 18),
 
-                _buildInfoRow(service),
+                // بطاقة الفعالية فقط
+                _buildUpcomingEvent(),
 
                 const SizedBox(height: 12),
 
@@ -504,76 +501,149 @@ class HomeScreen extends StatelessWidget {
   }
 
   // ============================================================
-  // Info row
+  // Upcoming Event
+  // لا توجد بطاقة خطبة الجمعة هنا
   // ============================================================
 
-  Widget _buildInfoRow(FirebaseService service) {
-    return StreamBuilder<NextKhutba>(
-      stream: service.streamNextKhutba(),
-      builder: (context, khutbaSnapshot) {
-        if (khutbaSnapshot.connectionState ==
-            ConnectionState.waiting) {
-          return _buildGlassCard(
-            child: const Padding(
-              padding: EdgeInsets.all(20),
-              child: Row(
+  Widget _buildUpcomingEvent() {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('settings')
+          .doc('next_event')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+
+        if (snapshot.hasError ||
+            !snapshot.hasData ||
+            !snapshot.data!.exists) {
+          return const SizedBox.shrink();
+        }
+
+        final data =
+            snapshot.data!.data() as Map<String, dynamic>?;
+
+        if (data == null) {
+          return const SizedBox.shrink();
+        }
+
+        final title = data['title'] as String? ?? '';
+
+        if (title.trim().isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return _buildEventCard(data);
+      },
+    );
+  }
+
+  // ============================================================
+  // Event card
+  // ============================================================
+
+  Widget _buildEventCard(
+    Map<String, dynamic> event,
+  ) {
+    final title = event['title'] ?? 'فعالية';
+    final location = event['location'] ?? '';
+
+    String? timeStr = event['time'] as String?;
+
+    if (timeStr == null || timeStr.isEmpty) {
+      timeStr = event['date'] as String?;
+    }
+
+    String dateStr = '';
+
+    if (timeStr != null && timeStr.isNotEmpty) {
+      dateStr = _formatLectureTime(timeStr);
+    } else {
+      final lastUpdated =
+          event['lastUpdated'] as Timestamp?;
+
+      if (lastUpdated != null) {
+        final dt = lastUpdated.toDate();
+
+        dateStr =
+            '${dt.year}/'
+            '${dt.month.toString().padLeft(2, '0')}/'
+            '${dt.day.toString().padLeft(2, '0')}';
+      }
+    }
+
+    return _buildGlassCard(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            _buildSmallIcon(
+              Icons.event_rounded,
+              Colors.orange,
+            ),
+
+            const SizedBox(width: 13),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
                 children: [
-                  CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: teal,
-                  ),
-                  SizedBox(width: 14),
-                  Text(
-                    'جاري جلب بيانات الخطبة...',
+                  const Text(
+                    'فعالية قادمة',
                     style: TextStyle(
-                      color: Colors.black54,
+                      color: Colors.orange,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
+
+                  const SizedBox(height: 4),
+
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+
+                  if (location.isNotEmpty)
+                    Text(
+                      'المكان: $location',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 11,
+                      ),
+                    ),
+
+                  if (dateStr.isNotEmpty)
+                    Text(
+                      dateStr,
+                      style: const TextStyle(
+                        color: Colors.black45,
+                        fontSize: 11,
+                      ),
+                    ),
                 ],
               ),
             ),
-          );
-        }
 
-        final khutba = khutbaSnapshot.data;
-
-        return StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('settings')
-              .doc('next_event')
-              .snapshots(),
-          builder: (context, eventSnapshot) {
-            if (eventSnapshot.connectionState ==
-                ConnectionState.waiting) {
-              return _buildKhutbaCard(khutba);
-            }
-
-            if (eventSnapshot.hasError ||
-                !eventSnapshot.hasData ||
-                !eventSnapshot.data!.exists) {
-              return _buildKhutbaCard(khutba);
-            }
-
-            final eventData =
-                eventSnapshot.data!.data()
-                    as Map<String, dynamic>?;
-
-            if (eventData == null ||
-                (eventData['title'] as String? ?? '')
-                    .isEmpty) {
-              return _buildKhutbaCard(khutba);
-            }
-
-            return Column(
-              children: [
-                _buildKhutbaCard(khutba),
-                const SizedBox(height: 10),
-                _buildEventCard(eventData),
-              ],
-            );
-          },
-        );
-      },
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Colors.black26,
+              size: 14,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -714,182 +784,6 @@ class HomeScreen extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  // ============================================================
-  // Khutba card
-  // ============================================================
-
-  Widget _buildKhutbaCard(NextKhutba? khutba) {
-    return _buildGlassCard(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            _buildSmallIcon(
-              Icons.mic_external_on_rounded,
-              teal,
-            ),
-
-            const SizedBox(width: 13),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'خطبة الجمعة القادمة',
-                    style: TextStyle(
-                      color: teal,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  Text(
-                    khutba?.title ??
-                        'لم يتم تحديد العنوان',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-
-                  const SizedBox(height: 2),
-
-                  Text(
-                    'الخطيب: ${khutba?.imam ?? 'غير محدد'}',
-                    style: const TextStyle(
-                      color: Colors.black54,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: Colors.black26,
-              size: 14,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ============================================================
-  // Event card
-  // ============================================================
-
-  Widget _buildEventCard(
-    Map<String, dynamic> event,
-  ) {
-    final title = event['title'] ?? 'فعالية';
-    final location = event['location'] ?? '';
-
-    String? timeStr = event['time'] as String?;
-
-    if (timeStr == null || timeStr.isEmpty) {
-      timeStr = event['date'] as String?;
-    }
-
-    String dateStr = '';
-
-    if (timeStr != null && timeStr.isNotEmpty) {
-      dateStr = _formatLectureTime(timeStr);
-    } else {
-      final lastUpdated =
-          event['lastUpdated'] as Timestamp?;
-
-      if (lastUpdated != null) {
-        final dt = lastUpdated.toDate();
-
-        dateStr =
-            '${dt.year}/'
-            '${dt.month.toString().padLeft(2, '0')}/'
-            '${dt.day.toString().padLeft(2, '0')}';
-      }
-    }
-
-    return _buildGlassCard(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            _buildSmallIcon(
-              Icons.event_rounded,
-              Colors.orange,
-            ),
-
-            const SizedBox(width: 13),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'فعالية قادمة',
-                    style: TextStyle(
-                      color: Colors.orange,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-
-                  if (location.isNotEmpty)
-                    Text(
-                      'المكان: $location',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.black54,
-                        fontSize: 11,
-                      ),
-                    ),
-
-                  if (dateStr.isNotEmpty)
-                    Text(
-                      dateStr,
-                      style: const TextStyle(
-                        color: Colors.black45,
-                        fontSize: 11,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-
-            const Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: Colors.black26,
-              size: 14,
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -1057,7 +951,8 @@ class HomeScreen extends StatelessWidget {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(19),
+                    borderRadius:
+                        BorderRadius.circular(19),
                   ),
                   child: const Icon(
                     Icons.support_agent_rounded,
@@ -1129,7 +1024,8 @@ class HomeScreen extends StatelessWidget {
                       const Expanded(
                         child: Text(
                           '776503890',
-                          textDirection: TextDirection.ltr,
+                          textDirection:
+                              TextDirection.ltr,
                           style: TextStyle(
                             color: Colors.black87,
                             fontSize: 18,
@@ -1565,10 +1461,8 @@ class _AutoPrayerCountdownGlassState
         await Geolocator.isLocationServiceEnabled();
 
     if (!enabled) {
-      if (_timer != null) {
-        _timer?.cancel();
-        _timer = null;
-      }
+      _timer?.cancel();
+      _timer = null;
 
       if (mounted) {
         setState(() {
@@ -1690,7 +1584,6 @@ class _AutoPrayerCountdownGlassState
 
     _locationDialogShowing = false;
 
-    // إعادة الفحص بعد إغلاق النافذة
     await Future.delayed(
       const Duration(milliseconds: 300),
     );
@@ -1946,16 +1839,16 @@ class _AutoPrayerCountdownGlassState
   Widget build(BuildContext context) {
     if (_loading) {
       return Container(
-        height: 145,
+        height: 105,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.97),
           borderRadius:
-              BorderRadius.circular(24),
+              BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.07),
-              blurRadius: 14,
-              offset: const Offset(0, 5),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -1977,22 +1870,23 @@ class _AutoPrayerCountdownGlassState
     }
 
     return Container(
+      // أصغر من البطاقة السابقة
       padding: const EdgeInsets.fromLTRB(
-        18,
-        17,
-        18,
-        18,
+        15,
+        13,
+        15,
+        14,
       ),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.98),
         borderRadius:
-            BorderRadius.circular(24),
+            BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: HomeScreen.teal
-                .withOpacity(0.12),
-            blurRadius: 16,
-            offset: const Offset(0, 5),
+                .withOpacity(0.10),
+            blurRadius: 13,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -2004,7 +1898,7 @@ class _AutoPrayerCountdownGlassState
             children: [
               Container(
                 padding:
-                    const EdgeInsets.all(7),
+                    const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: HomeScreen.teal
                       .withOpacity(0.10),
@@ -2013,24 +1907,24 @@ class _AutoPrayerCountdownGlassState
                 child: const Icon(
                   Icons.access_time_rounded,
                   color: HomeScreen.teal,
-                  size: 19,
+                  size: 17,
                 ),
               ),
 
-              const SizedBox(width: 8),
+              const SizedBox(width: 7),
 
               Text(
                 'المتبقي لصلاة $_nextPrayerName',
                 style: const TextStyle(
                   color: Colors.black54,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 15),
+          const SizedBox(height: 9),
 
           Row(
             mainAxisAlignment:
@@ -2063,11 +1957,11 @@ class _AutoPrayerCountdownGlassState
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           Container(
-            height: 4,
-            width: 90,
+            height: 3,
+            width: 65,
             decoration: BoxDecoration(
               gradient:
                   const LinearGradient(
@@ -2091,24 +1985,24 @@ class _AutoPrayerCountdownGlassState
 
   Widget _buildLocationRequiredCard() {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.98),
         borderRadius:
-            BorderRadius.circular(24),
+            BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.orange
                 .withOpacity(0.10),
-            blurRadius: 16,
-            offset: const Offset(0, 5),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(9),
             decoration: BoxDecoration(
               color: Colors.orange
                   .withOpacity(0.10),
@@ -2117,22 +2011,22 @@ class _AutoPrayerCountdownGlassState
             child: const Icon(
               Icons.location_off_rounded,
               color: Colors.orange,
-              size: 27,
+              size: 25,
             ),
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
 
           const Text(
             'الموقع غير مفعل',
             style: TextStyle(
               color: Colors.black87,
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w900,
             ),
           ),
 
-          const SizedBox(height: 5),
+          const SizedBox(height: 4),
 
           const Text(
             'فعّل الموقع لحساب أوقات الصلاة حسب موقعك الحالي',
@@ -2140,11 +2034,11 @@ class _AutoPrayerCountdownGlassState
             style: TextStyle(
               color: Colors.black54,
               fontSize: 11,
-              height: 1.5,
+              height: 1.4,
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
           ElevatedButton.icon(
             onPressed: () async {
@@ -2152,7 +2046,7 @@ class _AutoPrayerCountdownGlassState
             },
             icon: const Icon(
               Icons.location_on_rounded,
-              size: 18,
+              size: 17,
             ),
             label: const Text(
               'تفعيل الموقع',
@@ -2164,13 +2058,13 @@ class _AutoPrayerCountdownGlassState
               elevation: 0,
               padding:
                   const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 11,
+                horizontal: 18,
+                vertical: 9,
               ),
               shape:
                   RoundedRectangleBorder(
                 borderRadius:
-                    BorderRadius.circular(14),
+                    BorderRadius.circular(13),
               ),
             ),
           ),
@@ -2193,18 +2087,18 @@ class _AutoPrayerCountdownGlassState
           value,
           style: const TextStyle(
             color: Colors.black87,
-            fontSize: 31,
+            fontSize: 26,
             fontWeight: FontWeight.w900,
           ),
         ),
 
-        const SizedBox(height: 1),
+        const SizedBox(height: 0),
 
         Text(
           label,
           style: const TextStyle(
             color: HomeScreen.teal,
-            fontSize: 10,
+            fontSize: 9,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -2220,13 +2114,13 @@ class _AutoPrayerCountdownGlassState
     return Padding(
       padding:
           const EdgeInsets.symmetric(
-        horizontal: 10,
-      ).copyWith(bottom: 15),
+        horizontal: 8,
+      ).copyWith(bottom: 12),
       child: const Text(
         ':',
         style: TextStyle(
           color: HomeScreen.teal,
-          fontSize: 24,
+          fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
       ),
