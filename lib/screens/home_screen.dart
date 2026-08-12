@@ -1,4 +1,3 @@
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -30,73 +29,74 @@ static const Color teal = Color(0xFF00897B);
 Widget build(BuildContext context) {
 final service = FirebaseService();
 
-return Scaffold(  
-  backgroundColor: lightBg,  
-  body: Container(  
-    decoration: const BoxDecoration(  
-      gradient: LinearGradient(  
-        begin: Alignment.topCenter,  
-        end: Alignment.bottomCenter,  
-        colors: [  
-          darkGreen,  
-          blue,  
-          lightBg,  
-        ],  
-        stops: [0.0, 0.38, 0.72],  
-      ),  
-    ),  
-    child: SafeArea(  
-      child: SingleChildScrollView(  
-        physics: const BouncingScrollPhysics(),  
-        padding: const EdgeInsets.fromLTRB(  
-          18,  
-          12,  
-          18,  
-          30,  
-        ),  
-        child: Column(  
-          crossAxisAlignment: CrossAxisAlignment.start,  
-          children: [  
-            _buildHeader(context),  
+return Scaffold(
+backgroundColor: lightBg,
+body: Container(
+decoration: const BoxDecoration(
+gradient: LinearGradient(
+begin: Alignment.topCenter,
+end: Alignment.bottomCenter,
+colors: [
+darkGreen,
+blue,
+lightBg,
+],
+stops: [0.0, 0.38, 0.72],
+),
+),
+child: SafeArea(
+child: SingleChildScrollView(
+physics: const BouncingScrollPhysics(),
+padding: const EdgeInsets.fromLTRB(
+18,
+12,
+18,
+30,
+),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+_buildHeader(context),
 
-            const SizedBox(height: 18),  
+const SizedBox(height: 18),    
 
-            const AutoPrayerCountdownGlass(),  
+        const AutoPrayerCountdownGlass(),    
 
-            const SizedBox(height: 14),  
+        const SizedBox(height: 14),    
 
-            const RemembranceCarousel(),  
+        const RemembranceCarousel(),    
 
-            const SizedBox(height: 18),  
+        const SizedBox(height: 18),    
 
-            _buildInfoRow(service),  
+        _buildInfoRow(service),    
 
-            const SizedBox(height: 12),  
+        const SizedBox(height: 12),    
 
-            _buildUpcomingLecture(),  
+        _buildUpcomingLecture(),    
 
-            const SizedBox(height: 28),  
+        const SizedBox(height: 28),    
 
-            _buildSectionTitle(  
-              'خدمات المسجد',  
-              'كل ما تحتاجه في مكان واحد',  
-              Icons.apps_rounded,  
-            ),  
+        _buildSectionTitle(    
+          'خدمات المسجد',    
+          'كل ما تحتاجه في مكان واحد',    
+          Icons.apps_rounded,    
+        ),    
 
-            const SizedBox(height: 14),  
+        const SizedBox(height: 14),    
 
-            _buildServicesGrid(context),  
+        _buildServicesGrid(context),    
 
-            const SizedBox(height: 25),  
+        const SizedBox(height: 25),    
 
-            _buildLogoutButton(context),  
+        _buildLogoutButton(context),    
 
-            const SizedBox(height: 10),  
-          ],  
-        ),  
-      ),  
-    ),  
-  ),  
+        const SizedBox(height: 10),    
+      ],    
+    ),    
+  ),    
+),
+
+),
 );
 
 }
@@ -154,47 +154,48 @@ size: 29,
 ),
 ),
 
-const SizedBox(width: 14),  
+const SizedBox(width: 14),
 
-      const Expanded(  
-        child: Column(  
-          crossAxisAlignment: CrossAxisAlignment.start,  
-          children: [  
-            Text(  
-              'مرحباً بك 👋',  
-              style: TextStyle(  
-                color: Colors.black54,  
-                fontSize: 13,  
-                fontWeight: FontWeight.w500,  
-              ),  
-            ),  
-            SizedBox(height: 3),  
-            Text(  
-              'في مسجدنا',  
-              style: TextStyle(  
-                color: darkGreen,  
-                fontSize: 21,  
-                fontWeight: FontWeight.w900,  
-              ),  
-            ),  
-          ],  
-        ),  
-      ),  
+const Expanded(    
+    child: Column(    
+      crossAxisAlignment: CrossAxisAlignment.start,    
+      children: [    
+        Text(    
+          'مرحباً بك 👋',    
+          style: TextStyle(    
+            color: Colors.black54,    
+            fontSize: 13,    
+            fontWeight: FontWeight.w500,    
+          ),    
+        ),    
+        SizedBox(height: 3),    
+        Text(    
+          'في مسجدنا',    
+          style: TextStyle(    
+            color: darkGreen,    
+            fontSize: 21,    
+            fontWeight: FontWeight.w900,    
+          ),    
+        ),    
+      ],    
+    ),    
+  ),    
 
-      Container(  
-        padding: const EdgeInsets.all(11),  
-        decoration: BoxDecoration(  
-          color: blue.withOpacity(0.10),  
-          shape: BoxShape.circle,  
-        ),  
-        child: const Icon(  
-          Icons.notifications_none_rounded,  
-          color: darkGreen,  
-          size: 25,  
-        ),  
-      ),  
-    ],  
-  ),  
+  Container(    
+    padding: const EdgeInsets.all(11),    
+    decoration: BoxDecoration(    
+      color: blue.withOpacity(0.10),    
+      shape: BoxShape.circle,    
+    ),    
+    child: const Icon(    
+      Icons.notifications_none_rounded,    
+      color: darkGreen,    
+      size: 25,    
+    ),    
+  ),    
+],
+
+),
 );
 
 }
@@ -229,32 +230,33 @@ size: 23,
 ),
 ),
 
-const SizedBox(width: 11),  
+const SizedBox(width: 11),
 
-    Expanded(  
-      child: Column(  
-        crossAxisAlignment: CrossAxisAlignment.start,  
-        children: [  
-          Text(  
-            title,  
-            style: const TextStyle(  
-              color: Colors.black87,  
-              fontSize: 19,  
-              fontWeight: FontWeight.w900,  
-            ),  
-          ),  
-          const SizedBox(height: 2),  
-          Text(  
-            subtitle,  
-            style: const TextStyle(  
-              color: Colors.black54,  
-              fontSize: 12,  
-            ),  
-          ),  
-        ],  
-      ),  
-    ),  
-  ],  
+Expanded(    
+  child: Column(    
+    crossAxisAlignment: CrossAxisAlignment.start,    
+    children: [    
+      Text(    
+        title,    
+        style: const TextStyle(    
+          color: Colors.black87,    
+          fontSize: 19,    
+          fontWeight: FontWeight.w900,    
+        ),    
+      ),    
+      const SizedBox(height: 2),    
+      Text(    
+        subtitle,    
+        style: const TextStyle(    
+          color: Colors.black54,    
+          fontSize: 12,    
+        ),    
+      ),    
+    ],    
+  ),    
+),
+
+],
 );
 
 }
@@ -288,109 +290,110 @@ builder: () => const LeaderboardScreen(),
 },
 ),
 
-StreamBuilder<User?>(  
-      stream: FirebaseAuth.instance.authStateChanges(),  
-      builder: (context, snapshot) {  
-        if (snapshot.hasData) {  
-          return _buildGridItem(  
-            context,  
-            'أبنائي',  
-            'متابعة الإنجاز',  
-            Icons.family_restroom_rounded,  
-            teal,  
-            () {  
-              Navigator.push(  
-                context,  
-                MaterialPageRoute(  
-                  builder: (_) => const MyChildrenScreen(),  
-                ),  
-              );  
-            },  
-          );  
-        }  
+StreamBuilder<User?>(
+stream: FirebaseAuth.instance.authStateChanges(),
+builder: (context, snapshot) {
+if (snapshot.hasData) {
+return buildGridItem(
+context,
+'أبنائي',
+'متابعة الإنجاز',
+Icons.family_restroom_rounded,
+teal,
+() {
+Navigator.push(
+context,
+MaterialPageRoute(
+builder: () => const MyChildrenScreen(),
+),
+);
+},
+);
+}
 
-        return _buildGridItem(  
-          context,  
-          'دخول الآباء',  
-          'متابعة الأبناء',  
-          Icons.lock_outline_rounded,  
-          blue,  
-          () {  
-            Navigator.push(  
-              context,  
-              MaterialPageRoute(  
-                builder: (_) => const LoginScreen(),  
-              ),  
-            );  
-          },  
-        );  
-      },  
-    ),  
+return _buildGridItem(    
+      context,    
+      'دخول الآباء',    
+      'متابعة الأبناء',    
+      Icons.lock_outline_rounded,    
+      blue,    
+      () {    
+        Navigator.push(    
+          context,    
+          MaterialPageRoute(    
+            builder: (_) => const LoginScreen(),    
+          ),    
+        );    
+      },    
+    );    
+  },    
+),    
 
-    _buildGridItem(  
-      context,  
-      'تبرع للمسجد',  
-      'ساهم في الخير',  
-      Icons.favorite_rounded,  
-      const Color(0xFFE91E63),  
-      () {  
-        Navigator.push(  
-          context,  
-          MaterialPageRoute(  
-            builder: (_) => const DonateScreen(),  
-          ),  
-        );  
-      },  
-    ),  
+_buildGridItem(    
+  context,    
+  'تبرع للمسجد',    
+  'ساهم في الخير',    
+  Icons.favorite_rounded,    
+  const Color(0xFFE91E63),    
+  () {    
+    Navigator.push(    
+      context,    
+      MaterialPageRoute(    
+        builder: (_) => const DonateScreen(),    
+      ),    
+    );    
+  },    
+),    
 
-    _buildGridItem(  
-      context,  
-      'القبلة',  
-      'حدد اتجاه القبلة',  
-      Icons.explore_rounded,  
-      const Color(0xFFEF5350),  
-      () {  
-        Navigator.push(  
-          context,  
-          MaterialPageRoute(  
-            builder: (_) => const QiblaScreen(),  
-          ),  
-        );  
-      },  
-    ),  
+_buildGridItem(    
+  context,    
+  'القبلة',    
+  'حدد اتجاه القبلة',    
+  Icons.explore_rounded,    
+  const Color(0xFFEF5350),    
+  () {    
+    Navigator.push(    
+      context,    
+      MaterialPageRoute(    
+        builder: (_) => const QiblaScreen(),    
+      ),    
+    );    
+  },    
+),    
 
-    _buildGridItem(  
-      context,  
-      'القرآن الكريم',  
-      'استمع وتدبر',  
-      Icons.menu_book_rounded,  
-      darkGreen,  
-      () {  
-        Navigator.push(  
-          context,  
-          MaterialPageRoute(  
-            builder: (_) => const YasserDossariQuranPage(),  
-          ),  
-        );  
-      },  
-    ),  
+_buildGridItem(    
+  context,    
+  'القرآن الكريم',    
+  'استمع وتدبر',    
+  Icons.menu_book_rounded,    
+  darkGreen,    
+  () {    
+    Navigator.push(    
+      context,    
+      MaterialPageRoute(    
+        builder: (_) => const YasserDossariQuranPage(),    
+      ),    
+    );    
+  },    
+),    
 
-    _buildGridItem(  
-      context,  
-      'الأذكار',  
-      'حصن المسلم',  
-      Icons.auto_awesome_rounded,  
-      teal,  
-      () {  
-        Navigator.push(  
-          context,  
-          MaterialPageRoute(  
-            builder: (_) => const HisnElMuslimPage(),  
-          ),  
-        );  
-      },  
-    ),  
-  ],  
+_buildGridItem(    
+  context,    
+  'الأذكار',    
+  'حصن المسلم',    
+  Icons.auto_awesome_rounded,    
+  teal,    
+  () {    
+    Navigator.push(    
+      context,    
+      MaterialPageRoute(    
+        builder: (_) => const HisnElMuslimPage(),    
+      ),    
+    );    
+  },    
+),
+
+],
 );
 
 }
@@ -443,70 +446,71 @@ shape: BoxShape.circle,
 ),
 ),
 
-Padding(  
-            padding: const EdgeInsets.all(15),  
-            child: Column(  
-              crossAxisAlignment:  
-                  CrossAxisAlignment.start,  
-              children: [  
-                Container(  
-                  width: 52,  
-                  height: 52,  
-                  decoration: BoxDecoration(  
-                    gradient: LinearGradient(  
-                      colors: [  
-                        color.withOpacity(0.18),  
-                        color.withOpacity(0.07),  
-                      ],  
-                    ),  
-                    borderRadius:  
-                        BorderRadius.circular(17),  
-                  ),  
-                  child: Icon(  
-                    icon,  
-                    color: color,  
-                    size: 28,  
-                  ),  
-                ),  
+Padding(
+padding: const EdgeInsets.all(15),
+child: Column(
+crossAxisAlignment:
+CrossAxisAlignment.start,
+children: [
+Container(
+width: 52,
+height: 52,
+decoration: BoxDecoration(
+gradient: LinearGradient(
+colors: [
+color.withOpacity(0.18),
+color.withOpacity(0.07),
+],
+),
+borderRadius:
+BorderRadius.circular(17),
+),
+child: Icon(
+icon,
+color: color,
+size: 28,
+),
+),
 
-                const Spacer(),  
+const Spacer(),    
 
-                Text(  
-                  title,  
-                  style: const TextStyle(  
-                    color: Colors.black87,  
-                    fontSize: 16,  
-                    fontWeight: FontWeight.w900,  
-                  ),  
-                ),  
+            Text(    
+              title,    
+              style: const TextStyle(    
+                color: Colors.black87,    
+                fontSize: 16,    
+                fontWeight: FontWeight.w900,    
+              ),    
+            ),    
 
-                const SizedBox(height: 3),  
+            const SizedBox(height: 3),    
 
-                Text(  
-                  subtitle,  
-                  style: const TextStyle(  
-                    color: Colors.black45,  
-                    fontSize: 11,  
-                    fontWeight: FontWeight.w500,  
-                  ),  
-                ),  
-              ],  
-            ),  
-          ),  
+            Text(    
+              subtitle,    
+              style: const TextStyle(    
+                color: Colors.black45,    
+                fontSize: 11,    
+                fontWeight: FontWeight.w500,    
+              ),    
+            ),    
+          ],    
+        ),    
+      ),    
 
-          Positioned(  
-            left: 12,  
-            bottom: 13,  
-            child: Icon(  
-              Icons.arrow_forward_ios_rounded,  
-              color: color.withOpacity(0.45),  
-              size: 13,  
-            ),  
-          ),  
-        ],  
-      ),  
-    ),  
-  ),  
+      Positioned(    
+        left: 12,    
+        bottom: 13,    
+        child: Icon(    
+          Icons.arrow_forward_ios_rounded,    
+          color: color.withOpacity(0.45),    
+          size: 13,    
+        ),    
+      ),    
+    ],    
+  ),    
+),
+
+),
 );
 
 }
@@ -543,45 +547,46 @@ color: Colors.black54,
 );
 }
 
-final khutba = khutbaSnapshot.data;  
+final khutba = khutbaSnapshot.data;
 
-    return StreamBuilder<DocumentSnapshot>(  
-      stream: FirebaseFirestore.instance  
-          .collection('settings')  
-          .doc('next_event')  
-          .snapshots(),  
-      builder: (context, eventSnapshot) {  
-        if (eventSnapshot.connectionState ==  
-            ConnectionState.waiting) {  
-          return _buildKhutbaCard(khutba);  
-        }  
+return StreamBuilder<DocumentSnapshot>(    
+  stream: FirebaseFirestore.instance    
+      .collection('settings')    
+      .doc('next_event')    
+      .snapshots(),    
+  builder: (context, eventSnapshot) {    
+    if (eventSnapshot.connectionState ==    
+        ConnectionState.waiting) {    
+      return _buildKhutbaCard(khutba);    
+    }    
 
-        if (eventSnapshot.hasError ||  
-            !eventSnapshot.hasData ||  
-            !eventSnapshot.data!.exists) {  
-          return _buildKhutbaCard(khutba);  
-        }  
+    if (eventSnapshot.hasError ||    
+        !eventSnapshot.hasData ||    
+        !eventSnapshot.data!.exists) {    
+      return _buildKhutbaCard(khutba);    
+    }    
 
-        final eventData =  
-            eventSnapshot.data!.data()  
-                as Map<String, dynamic>?;  
+    final eventData =    
+        eventSnapshot.data!.data()    
+            as Map<String, dynamic>?;    
 
-        if (eventData == null ||  
-            (eventData['title'] as String? ?? '')  
-                .isEmpty) {  
-          return _buildKhutbaCard(khutba);  
-        }  
+    if (eventData == null ||    
+        (eventData['title'] as String? ?? '')    
+            .isEmpty) {    
+      return _buildKhutbaCard(khutba);    
+    }    
 
-        return Column(  
-          children: [  
-            _buildKhutbaCard(khutba),  
-            const SizedBox(height: 10),  
-            _buildEventCard(eventData),  
-          ],  
-        );  
-      },  
-    );  
-  },  
+    return Column(    
+      children: [    
+        _buildKhutbaCard(khutba),    
+        const SizedBox(height: 10),    
+        _buildEventCard(eventData),    
+      ],    
+    );    
+  },    
+);
+
+},
 );
 
 }
@@ -603,121 +608,122 @@ snapshot.data!.docs.isEmpty) {
 return const SizedBox.shrink();
 }
 
-final now = DateTime.now();  
+final now = DateTime.now();
 
-    final List<Map<String, dynamic>> upcoming = [];  
+final List<Map<String, dynamic>> upcoming = [];    
 
-    for (final doc in snapshot.data!.docs) {  
-      final data =  
-          doc.data() as Map<String, dynamic>;  
+for (final doc in snapshot.data!.docs) {    
+  final data =    
+      doc.data() as Map<String, dynamic>;    
 
-      final timeStr = data['time'] as String?;  
+  final timeStr = data['time'] as String?;    
 
-      if (timeStr != null) {  
-        final time = DateTime.tryParse(timeStr);  
+  if (timeStr != null) {    
+    final time = DateTime.tryParse(timeStr);    
 
-        if (time != null && time.isAfter(now)) {  
-          final copy =  
-              Map<String, dynamic>.from(data);  
+    if (time != null && time.isAfter(now)) {    
+      final copy =    
+          Map<String, dynamic>.from(data);    
 
-          copy['id'] = doc.id;  
-          upcoming.add(copy);  
-        }  
-      }  
-    }  
+      copy['id'] = doc.id;    
+      upcoming.add(copy);    
+    }    
+  }    
+}    
 
-    if (upcoming.isEmpty) {  
-      return const SizedBox.shrink();  
-    }  
+if (upcoming.isEmpty) {    
+  return const SizedBox.shrink();    
+}    
 
-    upcoming.sort(  
-      (a, b) => DateTime.parse(a['time'])  
-          .compareTo(  
-            DateTime.parse(b['time']),  
-          ),  
-    );  
+upcoming.sort(    
+  (a, b) => DateTime.parse(a['time'])    
+      .compareTo(    
+        DateTime.parse(b['time']),    
+      ),    
+);    
 
-    final lecture = upcoming.first;  
+final lecture = upcoming.first;    
 
-    return _buildGlassCard(  
-      child: Padding(  
-        padding: const EdgeInsets.all(16),  
-        child: Row(  
-          children: [  
-            _buildSmallIcon(  
-              Icons.menu_book_rounded,  
-              const Color(0xFF7E57C2),  
-            ),  
+return _buildGlassCard(    
+  child: Padding(    
+    padding: const EdgeInsets.all(16),    
+    child: Row(    
+      children: [    
+        _buildSmallIcon(    
+          Icons.menu_book_rounded,    
+          const Color(0xFF7E57C2),    
+        ),    
 
-            const SizedBox(width: 13),  
+        const SizedBox(width: 13),    
 
-            Expanded(  
-              child: Column(  
-                crossAxisAlignment:  
-                    CrossAxisAlignment.start,  
-                children: [  
-                  const Text(  
-                    'محاضرة قادمة',  
-                    style: TextStyle(  
-                      color: Color(0xFF7E57C2),  
-                      fontSize: 11,  
-                      fontWeight: FontWeight.bold,  
-                    ),  
-                  ),  
+        Expanded(    
+          child: Column(    
+            crossAxisAlignment:    
+                CrossAxisAlignment.start,    
+            children: [    
+              const Text(    
+                'محاضرة قادمة',    
+                style: TextStyle(    
+                  color: Color(0xFF7E57C2),    
+                  fontSize: 11,    
+                  fontWeight: FontWeight.bold,    
+                ),    
+              ),    
 
-                  const SizedBox(height: 4),  
+              const SizedBox(height: 4),    
 
-                  Text(  
-                    lecture['title'] ?? 'محاضرة',  
-                    maxLines: 1,  
-                    overflow:  
-                        TextOverflow.ellipsis,  
-                    style: const TextStyle(  
-                      color: Colors.black87,  
-                      fontSize: 16,  
-                      fontWeight: FontWeight.w900,  
-                    ),  
-                  ),  
+              Text(    
+                lecture['title'] ?? 'محاضرة',    
+                maxLines: 1,    
+                overflow:    
+                    TextOverflow.ellipsis,    
+                style: const TextStyle(    
+                  color: Colors.black87,    
+                  fontSize: 16,    
+                  fontWeight: FontWeight.w900,    
+                ),    
+              ),    
 
-                  if (lecture['speaker'] != null &&  
-                      (lecture['speaker'] as String)  
-                          .isNotEmpty)  
-                    Text(  
-                      'المحاضر: ${lecture['speaker']}',  
-                      maxLines: 1,  
-                      overflow:  
-                          TextOverflow.ellipsis,  
-                      style: const TextStyle(  
-                        color: Colors.black54,  
-                        fontSize: 11,  
-                      ),  
-                    ),  
+              if (lecture['speaker'] != null &&    
+                  (lecture['speaker'] as String)    
+                      .isNotEmpty)    
+                Text(    
+                  'المحاضر: ${lecture['speaker']}',    
+                  maxLines: 1,    
+                  overflow:    
+                      TextOverflow.ellipsis,    
+                  style: const TextStyle(    
+                    color: Colors.black54,    
+                    fontSize: 11,    
+                  ),    
+                ),    
 
-                  const SizedBox(height: 3),  
+              const SizedBox(height: 3),    
 
-                  Text(  
-                    _formatLectureTime(  
-                      lecture['time'],  
-                    ),  
-                    style: const TextStyle(  
-                      color: Colors.black45,  
-                      fontSize: 11,  
-                    ),  
-                  ),  
-                ],  
-              ),  
-            ),  
+              Text(    
+                _formatLectureTime(    
+                  lecture['time'],    
+                ),    
+                style: const TextStyle(    
+                  color: Colors.black45,    
+                  fontSize: 11,    
+                ),    
+              ),    
+            ],    
+          ),    
+        ),    
 
-            const Icon(  
-              Icons.arrow_forward_ios_rounded,  
-              color: Colors.black26,  
-              size: 14,  
-            ),  
-          ],  
-        ),  
-      ),  
-    );  
-  },  
+        const Icon(    
+          Icons.arrow_forward_ios_rounded,    
+          color: Colors.black26,    
+          size: 14,    
+        ),    
+      ],    
+    ),    
+  ),    
+);
+
+},
 );
 
 }
@@ -737,58 +743,59 @@ Icons.mic_external_on_rounded,
 teal,
 ),
 
-const SizedBox(width: 13),  
+const SizedBox(width: 13),
 
-        Expanded(  
-          child: Column(  
-            crossAxisAlignment:  
-                CrossAxisAlignment.start,  
-            children: [  
-              const Text(  
-                'خطبة الجمعة القادمة',  
-                style: TextStyle(  
-                  color: teal,  
-                  fontSize: 11,  
-                  fontWeight: FontWeight.bold,  
-                ),  
-              ),  
+Expanded(    
+      child: Column(    
+        crossAxisAlignment:    
+            CrossAxisAlignment.start,    
+        children: [    
+          const Text(    
+            'خطبة الجمعة القادمة',    
+            style: TextStyle(    
+              color: teal,    
+              fontSize: 11,    
+              fontWeight: FontWeight.bold,    
+            ),    
+          ),    
 
-              const SizedBox(height: 4),  
+          const SizedBox(height: 4),    
 
-              Text(  
-                khutba?.title ??  
-                    'لم يتم تحديد العنوان',  
-                maxLines: 1,  
-                overflow:  
-                    TextOverflow.ellipsis,  
-                style: const TextStyle(  
-                  color: Colors.black87,  
-                  fontSize: 16,  
-                  fontWeight: FontWeight.w900,  
-                ),  
-              ),  
+          Text(    
+            khutba?.title ??    
+                'لم يتم تحديد العنوان',    
+            maxLines: 1,    
+            overflow:    
+                TextOverflow.ellipsis,    
+            style: const TextStyle(    
+              color: Colors.black87,    
+              fontSize: 16,    
+              fontWeight: FontWeight.w900,    
+            ),    
+          ),    
 
-              const SizedBox(height: 2),  
+          const SizedBox(height: 2),    
 
-              Text(  
-                'الخطيب: ${khutba?.imam ?? 'غير محدد'}',  
-                style: const TextStyle(  
-                  color: Colors.black54,  
-                  fontSize: 11,  
-                ),  
-              ),  
-            ],  
-          ),  
-        ),  
+          Text(    
+            'الخطيب: ${khutba?.imam ?? 'غير محدد'}',    
+            style: const TextStyle(    
+              color: Colors.black54,    
+              fontSize: 11,    
+            ),    
+          ),    
+        ],    
+      ),    
+    ),    
 
-        const Icon(  
-          Icons.arrow_forward_ios_rounded,  
-          color: Colors.black26,  
-          size: 14,  
-        ),  
-      ],  
-    ),  
-  ),  
+    const Icon(    
+      Icons.arrow_forward_ios_rounded,    
+      color: Colors.black26,    
+      size: 14,    
+    ),    
+  ],    
+),
+
+),
 );
 
 }
@@ -803,100 +810,102 @@ Map<String, dynamic> event,
 final title = event['title'] ?? 'فعالية';
 final location = event['location'] ?? '';
 
-String? timeStr = event['time'] as String?;  
+String? timeStr = event['time'] as String?;
 
-if (timeStr == null || timeStr.isEmpty) {  
-  timeStr = event['date'] as String?;  
-}  
+if (timeStr == null || timeStr.isEmpty) {
+timeStr = event['date'] as String?;
+}
 
-String dateStr = '';  
+String dateStr = '';
 
-if (timeStr != null && timeStr.isNotEmpty) {  
-  dateStr = _formatLectureTime(timeStr);  
-} else {  
-  final lastUpdated =  
-      event['lastUpdated'] as Timestamp?;  
+if (timeStr != null && timeStr.isNotEmpty) {
+dateStr = _formatLectureTime(timeStr);
+} else {
+final lastUpdated =
+event['lastUpdated'] as Timestamp?;
 
-  if (lastUpdated != null) {  
-    final dt = lastUpdated.toDate();  
+if (lastUpdated != null) {
+final dt = lastUpdated.toDate();
 
-    dateStr =  
-        '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';  
-  }  
-}  
+dateStr =    
+    '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';
 
-return _buildGlassCard(  
-  child: Padding(  
-    padding: const EdgeInsets.all(16),  
-    child: Row(  
-      children: [  
-        _buildSmallIcon(  
-          Icons.event_rounded,  
-          Colors.orange,  
-        ),  
+}
+}
 
-        const SizedBox(width: 13),  
+return _buildGlassCard(
+child: Padding(
+padding: const EdgeInsets.all(16),
+child: Row(
+children: [
+_buildSmallIcon(
+Icons.event_rounded,
+Colors.orange,
+),
 
-        Expanded(  
-          child: Column(  
-            crossAxisAlignment:  
-                CrossAxisAlignment.start,  
-            children: [  
-              const Text(  
-                'فعالية قادمة',  
-                style: TextStyle(  
-                  color: Colors.orange,  
-                  fontSize: 11,  
-                  fontWeight: FontWeight.bold,  
-                ),  
-              ),  
+const SizedBox(width: 13),    
 
-              const SizedBox(height: 4),  
+    Expanded(    
+      child: Column(    
+        crossAxisAlignment:    
+            CrossAxisAlignment.start,    
+        children: [    
+          const Text(    
+            'فعالية قادمة',    
+            style: TextStyle(    
+              color: Colors.orange,    
+              fontSize: 11,    
+              fontWeight: FontWeight.bold,    
+            ),    
+          ),    
 
-              Text(  
-                title,  
-                maxLines: 1,  
-                overflow:  
-                    TextOverflow.ellipsis,  
-                style: const TextStyle(  
-                  color: Colors.black87,  
-                  fontSize: 16,  
-                  fontWeight: FontWeight.w900,  
-                ),  
-              ),  
+          const SizedBox(height: 4),    
 
-              if (location.isNotEmpty)  
-                Text(  
-                  'المكان: $location',  
-                  maxLines: 1,  
-                  overflow:  
-                      TextOverflow.ellipsis,  
-                  style: const TextStyle(  
-                    color: Colors.black54,  
-                    fontSize: 11,  
-                  ),  
-                ),  
+          Text(    
+            title,    
+            maxLines: 1,    
+            overflow:    
+                TextOverflow.ellipsis,    
+            style: const TextStyle(    
+              color: Colors.black87,    
+              fontSize: 16,    
+              fontWeight: FontWeight.w900,    
+            ),    
+          ),    
 
-              if (dateStr.isNotEmpty)  
-                Text(  
-                  dateStr,  
-                  style: const TextStyle(  
-                    color: Colors.black45,  
-                    fontSize: 11,  
-                  ),  
-                ),  
-            ],  
-          ),  
-        ),  
+          if (location.isNotEmpty)    
+            Text(    
+              'المكان: $location',    
+              maxLines: 1,    
+              overflow:    
+                  TextOverflow.ellipsis,    
+              style: const TextStyle(    
+                color: Colors.black54,    
+                fontSize: 11,    
+              ),    
+            ),    
 
-        const Icon(  
-          Icons.arrow_forward_ios_rounded,  
-          color: Colors.black26,  
-          size: 14,  
-        ),  
-      ],  
-    ),  
-  ),  
+          if (dateStr.isNotEmpty)    
+            Text(    
+              dateStr,    
+              style: const TextStyle(    
+                color: Colors.black45,    
+                fontSize: 11,    
+              ),    
+            ),    
+        ],    
+      ),    
+    ),    
+
+    const Icon(    
+      Icons.arrow_forward_ios_rounded,    
+      color: Colors.black26,    
+      size: 14,    
+    ),    
+  ],    
+),
+
+),
 );
 
 }
@@ -972,56 +981,57 @@ if (!snapshot.hasData) {
 return const SizedBox.shrink();
 }
 
-return Center(  
-          child: TextButton.icon(  
-            onPressed: () async {  
-              await FirebaseAuth.instance.signOut();  
-            },  
-            icon: const Icon(  
-              Icons.logout_rounded,  
-              color: Colors.black45,  
-              size: 19,  
-            ),  
-            label: const Text(  
-              'تسجيل الخروج',  
-              style: TextStyle(  
-                color: Colors.black54,  
-                fontWeight: FontWeight.w600,  
-              ),  
-            ),  
-          ),  
-        );  
-      },  
-    ),  
+return Center(
+child: TextButton.icon(
+onPressed: () async {
+await FirebaseAuth.instance.signOut();
+},
+icon: const Icon(
+Icons.logout_rounded,
+color: Colors.black45,
+size: 19,
+),
+label: const Text(
+'تسجيل الخروج',
+style: TextStyle(
+color: Colors.black54,
+fontWeight: FontWeight.w600,
+),
+),
+),
+);
+},
+),
 
-    const SizedBox(height: 8),  
+const SizedBox(height: 8),    
 
-    // ======================================================  
-    // طلب نسخة للمسجد / التواصل مع المطور  
-    // ======================================================  
+// ======================================================    
+// طلب نسخة للمسجد / التواصل مع المطور    
+// ======================================================    
 
-    Center(  
-      child: TextButton.icon(  
-        onPressed: () {  
-          _showDeveloperContactDialog(context);  
-        },  
-        icon: const Icon(  
-          Icons.support_agent_rounded,  
-          color: darkGreen,  
-          size: 21,  
-        ),  
-        label: const Text(  
-          'انقر هنا لطلب نسخة لمسجدك أو للتواصل مع المطور',  
-          textAlign: TextAlign.center,  
-          style: TextStyle(  
-            color: darkGreen,  
-            fontSize: 12,  
-            fontWeight: FontWeight.w700,  
-          ),  
-        ),  
-      ),  
-    ),  
-  ],  
+Center(    
+  child: TextButton.icon(    
+    onPressed: () {    
+      _showDeveloperContactDialog(context);    
+    },    
+    icon: const Icon(    
+      Icons.support_agent_rounded,    
+      color: darkGreen,    
+      size: 21,    
+    ),    
+    label: const Text(    
+      'انقر هنا لطلب نسخة لمسجدك أو للتواصل مع المطور',    
+      textAlign: TextAlign.center,    
+      style: TextStyle(    
+        color: darkGreen,    
+        fontSize: 12,    
+        fontWeight: FontWeight.w700,    
+      ),    
+    ),    
+  ),    
+),
+
+],
 );
 
 }
@@ -1084,179 +1094,180 @@ size: 32,
 ),
 ),
 
-const SizedBox(height: 15),  
+const SizedBox(height: 15),
 
-            const Text(  
-              'طلب نسخة لمسجدك',  
-              style: TextStyle(  
-                color: Colors.black87,  
-                fontSize: 19,  
-                fontWeight: FontWeight.w900,  
-              ),  
-            ),  
+const Text(    
+          'طلب نسخة لمسجدك',    
+          style: TextStyle(    
+            color: Colors.black87,    
+            fontSize: 19,    
+            fontWeight: FontWeight.w900,    
+          ),    
+        ),    
 
-            const SizedBox(height: 7),  
+        const SizedBox(height: 7),    
 
-            const Text(  
-              'للتواصل مع المطور أو طلب نسخة خاصة لمسجدك',  
-              textAlign: TextAlign.center,  
-              style: TextStyle(  
-                color: Colors.black54,  
-                fontSize: 12,  
-                height: 1.5,  
-              ),  
-            ),  
+        const Text(    
+          'للتواصل مع المطور أو طلب نسخة خاصة لمسجدك',    
+          textAlign: TextAlign.center,    
+          style: TextStyle(    
+            color: Colors.black54,    
+            fontSize: 12,    
+            height: 1.5,    
+          ),    
+        ),    
 
-            const SizedBox(height: 18),  
+        const SizedBox(height: 18),    
 
-            // ==================================================  
-            // رقم التواصل  
-            // ==================================================  
+        // ==================================================    
+        // رقم التواصل    
+        // ==================================================    
 
-            Container(  
-              width: double.infinity,  
-              padding:  
-                  const EdgeInsets.symmetric(  
-                horizontal: 14,  
-                vertical: 13,  
-              ),  
-              decoration: BoxDecoration(  
-                color:  
-                    const Color(0xFFF5F7FA),  
-                borderRadius:  
-                    BorderRadius.circular(16),  
-                border: Border.all(  
-                  color:  
-                      darkGreen.withOpacity(0.12),  
-                ),  
-              ),  
-              child: Row(  
-                children: [  
-                  Container(  
-                    padding:  
-                        const EdgeInsets.all(9),  
-                    decoration: BoxDecoration(  
-                      color:  
-                          darkGreen.withOpacity(  
-                        0.10,  
-                      ),  
-                      borderRadius:  
-                          BorderRadius.circular(  
-                        12,  
-                      ),  
-                    ),  
-                    child: const Icon(  
-                      Icons.phone_rounded,  
-                      color: darkGreen,  
-                      size: 21,  
-                    ),  
-                  ),  
+        Container(    
+          width: double.infinity,    
+          padding:    
+              const EdgeInsets.symmetric(    
+            horizontal: 14,    
+            vertical: 13,    
+          ),    
+          decoration: BoxDecoration(    
+            color:    
+                const Color(0xFFF5F7FA),    
+            borderRadius:    
+                BorderRadius.circular(16),    
+            border: Border.all(    
+              color:    
+                  darkGreen.withOpacity(0.12),    
+            ),    
+          ),    
+          child: Row(    
+            children: [    
+              Container(    
+                padding:    
+                    const EdgeInsets.all(9),    
+                decoration: BoxDecoration(    
+                  color:    
+                      darkGreen.withOpacity(    
+                    0.10,    
+                  ),    
+                  borderRadius:    
+                      BorderRadius.circular(    
+                    12,    
+                  ),    
+                ),    
+                child: const Icon(    
+                  Icons.phone_rounded,    
+                  color: darkGreen,    
+                  size: 21,    
+                ),    
+              ),    
 
-                  const SizedBox(width: 11),  
+              const SizedBox(width: 11),    
 
-                  const Expanded(  
-                    child: Text(  
-                      '776503890',  
-                      textDirection:  
-                          TextDirection.ltr,  
-                      style: TextStyle(  
-                        color: Colors.black87,  
-                        fontSize: 18,  
-                        fontWeight:  
-                            FontWeight.w900,  
-                        letterSpacing: 1,  
-                      ),  
-                    ),  
-                  ),  
+              const Expanded(    
+                child: Text(    
+                  '776503890',    
+                  textDirection:    
+                      TextDirection.ltr,    
+                  style: TextStyle(    
+                    color: Colors.black87,    
+                    fontSize: 18,    
+                    fontWeight:    
+                        FontWeight.w900,    
+                    letterSpacing: 1,    
+                  ),    
+                ),    
+              ),    
 
-                  IconButton(  
-                    tooltip: 'نسخ الرقم',  
-                    onPressed: () async {  
-                      await Clipboard.setData(  
-                        const ClipboardData(  
-                          text: '776503890',  
-                        ),  
-                      );  
+              IconButton(    
+                tooltip: 'نسخ الرقم',    
+                onPressed: () async {    
+                  await Clipboard.setData(    
+                    const ClipboardData(    
+                      text: '776503890',    
+                    ),    
+                  );    
 
-                      if (dialogContext  
-                          .mounted) {  
-                        ScaffoldMessenger.of(  
-                          dialogContext,  
-                        ).showSnackBar(  
-                          const SnackBar(  
-                            content: Text(  
-                              'تم نسخ رقم التواصل',  
-                              textAlign:  
-                                  TextAlign.center,  
-                            ),  
-                            behavior:  
-                                SnackBarBehavior  
-                                    .floating,  
-                            duration:  
-                                Duration(  
-                              seconds: 2,  
-                            ),  
-                          ),  
-                        );  
-                      }  
-                    },  
-                    icon: const Icon(  
-                      Icons.copy_rounded,  
-                      color: darkGreen,  
-                      size: 21,  
-                    ),  
-                  ),  
-                ],  
-              ),  
-            ),  
+                  if (dialogContext    
+                      .mounted) {    
+                    ScaffoldMessenger.of(    
+                      dialogContext,    
+                    ).showSnackBar(    
+                      const SnackBar(    
+                        content: Text(    
+                          'تم نسخ رقم التواصل',    
+                          textAlign:    
+                              TextAlign.center,    
+                        ),    
+                        behavior:    
+                            SnackBarBehavior    
+                                .floating,    
+                        duration:    
+                            Duration(    
+                          seconds: 2,    
+                        ),    
+                      ),    
+                    );    
+                  }    
+                },    
+                icon: const Icon(    
+                  Icons.copy_rounded,    
+                  color: darkGreen,    
+                  size: 21,    
+                ),    
+              ),    
+            ],    
+          ),    
+        ),    
 
-            const SizedBox(height: 18),  
+        const SizedBox(height: 18),    
 
-            // ==================================================  
-            // زر إغلاق  
-            // ==================================================  
+        // ==================================================    
+        // زر إغلاق    
+        // ==================================================    
 
-            SizedBox(  
-              width: double.infinity,  
-              child: ElevatedButton(  
-                onPressed: () {  
-                  Navigator.pop(  
-                    dialogContext,  
-                  );  
-                },  
-                style:  
-                    ElevatedButton.styleFrom(  
-                  backgroundColor: darkGreen,  
-                  foregroundColor:  
-                      Colors.white,  
-                  elevation: 0,  
-                  padding:  
-                      const EdgeInsets.symmetric(  
-                    vertical: 13,  
-                  ),  
-                  shape:  
-                      RoundedRectangleBorder(  
-                    borderRadius:  
-                        BorderRadius.circular(  
-                      15,  
-                    ),  
-                  ),  
-                ),  
-                child: const Text(  
-                  'إغلاق',  
-                  style: TextStyle(  
-                    fontSize: 14,  
-                    fontWeight:  
-                        FontWeight.w800,  
-                  ),  
-                ),  
-              ),  
-            ),  
-          ],  
-        ),  
-      ),  
-    );  
-  },  
+        SizedBox(    
+          width: double.infinity,    
+          child: ElevatedButton(    
+            onPressed: () {    
+              Navigator.pop(    
+                dialogContext,    
+              );    
+            },    
+            style:    
+                ElevatedButton.styleFrom(    
+              backgroundColor: darkGreen,    
+              foregroundColor:    
+                  Colors.white,    
+              elevation: 0,    
+              padding:    
+                  const EdgeInsets.symmetric(    
+                vertical: 13,    
+              ),    
+              shape:    
+                  RoundedRectangleBorder(    
+                borderRadius:    
+                    BorderRadius.circular(    
+                  15,    
+                ),    
+              ),    
+            ),    
+            child: const Text(    
+              'إغلاق',    
+              style: TextStyle(    
+                fontSize: 14,    
+                fontWeight:    
+                    FontWeight.w800,    
+              ),    
+            ),    
+          ),    
+        ),    
+      ],    
+    ),    
+  ),    
+);
+
+},
 );
 
 }
@@ -1324,17 +1335,18 @@ final List<String> _remembrances = [
 void initState() {
 super.initState();
 
-_timer = Timer.periodic(  
-  const Duration(seconds: 5),  
-  (_) {  
-    if (!mounted) return;  
+timer = Timer.periodic(
+const Duration(seconds: 5),
+() {
+if (!mounted) return;
 
-    setState(() {  
-      _currentIndex =  
-          (_currentIndex + 1) %  
-              _remembrances.length;  
-    });  
-  },  
+setState(() {    
+  _currentIndex =    
+      (_currentIndex + 1) %    
+          _remembrances.length;    
+});
+
+},
 );
 
 }
@@ -1367,38 +1379,39 @@ child: Row(
 children: [
 _quoteIcon(),
 
-const SizedBox(width: 10),  
+const SizedBox(width: 10),
 
-      Expanded(  
-        child: AnimatedSwitcher(  
-          duration:  
-              const Duration(milliseconds: 700),  
-          transitionBuilder:  
-              (child, animation) {  
-            return FadeTransition(  
-              opacity: animation,  
-              child: child,  
-            );  
-          },  
-          child: Text(  
-            _remembrances[_currentIndex],  
-            key: ValueKey(_currentIndex),  
-            textAlign: TextAlign.center,  
-            style: const TextStyle(  
-              color: Colors.black87,  
-              fontSize: 14,  
-              height: 1.55,  
-              fontWeight: FontWeight.w600,  
-            ),  
-          ),  
-        ),  
-      ),  
+Expanded(    
+    child: AnimatedSwitcher(    
+      duration:    
+          const Duration(milliseconds: 700),    
+      transitionBuilder:    
+          (child, animation) {    
+        return FadeTransition(    
+          opacity: animation,    
+          child: child,    
+        );    
+      },    
+      child: Text(    
+        _remembrances[_currentIndex],    
+        key: ValueKey(_currentIndex),    
+        textAlign: TextAlign.center,    
+        style: const TextStyle(    
+          color: Colors.black87,    
+          fontSize: 14,    
+          height: 1.55,    
+          fontWeight: FontWeight.w600,    
+        ),    
+      ),    
+    ),    
+  ),    
 
-      const SizedBox(width: 10),  
+  const SizedBox(width: 10),    
 
-      _quoteIcon(),  
-    ],  
-  ),  
+  _quoteIcon(),    
+],
+
+),
 );
 
 }
@@ -1456,60 +1469,61 @@ try {
 LocationPermission permission =
 await Geolocator.requestPermission();
 
-if (permission ==  
-          LocationPermission.denied ||  
-      permission ==  
-          LocationPermission.deniedForever) {  
-    if (mounted) {  
-      setState(() {  
-        _loading = false;  
-        _nextPrayerName =  
-            "تعذر تحديد الموقع";  
-      });  
-    }  
+if (permission ==
+LocationPermission.denied ||
+permission ==
+LocationPermission.deniedForever) {
+if (mounted) {
+setState(() {
+_loading = false;
+_nextPrayerName =
+"تعذر تحديد الموقع";
+});
+}
 
-    return;  
-  }  
+return;
 
-  final position =  
-      await Geolocator.getCurrentPosition(  
-    desiredAccuracy:  
-        LocationAccuracy.high,  
-  );  
+}
 
-  final coordinates = Coordinates(  
-    position.latitude,  
-    position.longitude,  
-  );  
+final position =
+await Geolocator.getCurrentPosition(
+desiredAccuracy:
+LocationAccuracy.high,
+);
 
-  final params =  
-      CalculationMethod.umm_al_qura  
-          .getParameters();  
+final coordinates = Coordinates(
+position.latitude,
+position.longitude,
+);
 
-  params.madhab = Madhab.shafi;  
+final params =
+CalculationMethod.umm_al_qura
+.getParameters();
 
-  _updatePrayer(  
-    coordinates,  
-    params,  
-  );  
+params.madhab = Madhab.shafi;
 
-  _timer = Timer.periodic(  
-    const Duration(seconds: 1),  
-    (_) {  
-      _updatePrayer(  
-        coordinates,  
-        params,  
-      );  
-    },  
-  );  
-} catch (e) {  
-  if (mounted) {  
-    setState(() {  
-      _loading = false;  
-      _nextPrayerName =  
-          "تعذر تحديد الموقع";  
-    });  
-  }  
+_updatePrayer(
+coordinates,
+params,
+);
+
+timer = Timer.periodic(
+const Duration(seconds: 1),
+() {
+_updatePrayer(
+coordinates,
+params,
+);
+},
+);
+} catch (e) {
+if (mounted) {
+setState(() {
+_loading = false;
+_nextPrayerName =
+"تعذر تحديد الموقع";
+});
+}
 }
 
 }
@@ -1523,62 +1537,64 @@ coordinates,
 params,
 );
 
-final next = prayerTimes.nextPrayer();  
+final next = prayerTimes.nextPrayer();
 
-if (!mounted) return;  
+if (!mounted) return;
 
-if (next != Prayer.none) {  
-  final prayerTime =  
-      prayerTimes.timeForPrayer(next);  
+if (next != Prayer.none) {
+final prayerTime =
+prayerTimes.timeForPrayer(next);
 
-  if (prayerTime == null) {  
-    return;  
-  }  
+if (prayerTime == null) {
+return;
+}
 
-  final difference =  
-      prayerTime.difference(  
-    DateTime.now(),  
-  );  
+final difference =
+prayerTime.difference(
+DateTime.now(),
+);
 
-  setState(() {  
-    _nextPrayerName =  
-        _translatePrayer(next);  
+setState(() {
+_nextPrayerName =
+_translatePrayer(next);
 
-    _timeLeft = difference.isNegative  
-        ? Duration.zero  
-        : difference;  
+_timeLeft = difference.isNegative    
+    ? Duration.zero    
+    : difference;    
 
-    _loading = false;  
-  });  
-} else {  
-  final tomorrow =  
-      DateTime.now().add(  
-    const Duration(days: 1),  
-  );  
+_loading = false;
 
-  final tomorrowDate =  
-      DateComponents.from(tomorrow);  
+});
+} else {
+final tomorrow =
+DateTime.now().add(
+const Duration(days: 1),
+);
 
-  final tomorrowTimes = PrayerTimes(  
-    coordinates,  
-    tomorrowDate,  
-    params,  
-  );  
+final tomorrowDate =
+DateComponents.from(tomorrow);
 
-  final difference =  
-      tomorrowTimes.fajr.difference(  
-    DateTime.now(),  
-  );  
+final tomorrowTimes = PrayerTimes(
+coordinates,
+tomorrowDate,
+params,
+);
 
-  setState(() {  
-    _nextPrayerName = "الفجر";  
+final difference =
+tomorrowTimes.fajr.difference(
+DateTime.now(),
+);
 
-    _timeLeft = difference.isNegative  
-        ? Duration.zero  
-        : difference;  
+setState(() {
+_nextPrayerName = "الفجر";
 
-    _loading = false;  
-  });  
+_timeLeft = difference.isNegative    
+    ? Duration.zero    
+    : difference;    
+
+_loading = false;
+
+});
 }
 
 }
@@ -1590,20 +1606,20 @@ switch (prayer) {
 case Prayer.fajr:
 return "الفجر";
 
-case Prayer.dhuhr:  
-    return "الظهر";  
+case Prayer.dhuhr:
+return "الظهر";
 
-  case Prayer.asr:  
-    return "العصر";  
+case Prayer.asr:
+return "العصر";
 
-  case Prayer.maghrib:  
-    return "المغرب";  
+case Prayer.maghrib:
+return "المغرب";
 
-  case Prayer.isha:  
-    return "العشاء";  
+case Prayer.isha:
+return "العشاء";
 
-  default:  
-    return "الصلاة";  
+default:
+return "الصلاة";
 }
 
 }
@@ -1634,112 +1650,113 @@ color: HomeScreen.teal,
 );
 }
 
-return Container(  
-  padding: const EdgeInsets.fromLTRB(  
-    18,  
-    17,  
-    18,  
-    18,  
-  ),  
-  decoration: BoxDecoration(  
-    color: Colors.white.withOpacity(0.98),  
-    borderRadius:  
-        BorderRadius.circular(24),  
-    boxShadow: [  
-      BoxShadow(  
-        color: HomeScreen.teal  
-            .withOpacity(0.12),  
-        blurRadius: 16,  
-        offset: const Offset(0, 5),  
-      ),  
-    ],  
-  ),  
-  child: Column(  
-    children: [  
-      Row(  
-        mainAxisAlignment:  
-            MainAxisAlignment.center,  
-        children: [  
-          Container(  
-            padding:  
-                const EdgeInsets.all(7),  
-            decoration: BoxDecoration(  
-              color: HomeScreen.teal  
-                  .withOpacity(0.10),  
-              shape: BoxShape.circle,  
-            ),  
-            child: const Icon(  
-              Icons.access_time_rounded,  
-              color: HomeScreen.teal,  
-              size: 19,  
-            ),  
-          ),  
+return Container(
+padding: const EdgeInsets.fromLTRB(
+18,
+17,
+18,
+18,
+),
+decoration: BoxDecoration(
+color: Colors.white.withOpacity(0.98),
+borderRadius:
+BorderRadius.circular(24),
+boxShadow: [
+BoxShadow(
+color: HomeScreen.teal
+.withOpacity(0.12),
+blurRadius: 16,
+offset: const Offset(0, 5),
+),
+],
+),
+child: Column(
+children: [
+Row(
+mainAxisAlignment:
+MainAxisAlignment.center,
+children: [
+Container(
+padding:
+const EdgeInsets.all(7),
+decoration: BoxDecoration(
+color: HomeScreen.teal
+.withOpacity(0.10),
+shape: BoxShape.circle,
+),
+child: const Icon(
+Icons.access_time_rounded,
+color: HomeScreen.teal,
+size: 19,
+),
+),
 
-          const SizedBox(width: 8),  
+const SizedBox(width: 8),    
 
-          Text(  
-            'المتبقي لصلاة $_nextPrayerName',  
-            style: const TextStyle(  
-              color: Colors.black54,  
-              fontSize: 13,  
-              fontWeight: FontWeight.w600,  
-            ),  
-          ),  
-        ],  
-      ),  
+      Text(    
+        'المتبقي لصلاة $_nextPrayerName',    
+        style: const TextStyle(    
+          color: Colors.black54,    
+          fontSize: 13,    
+          fontWeight: FontWeight.w600,    
+        ),    
+      ),    
+    ],    
+  ),    
 
-      const SizedBox(height: 15),  
+  const SizedBox(height: 15),    
 
-      Row(  
-        mainAxisAlignment:  
-            MainAxisAlignment.center,  
-        children: [  
-          _timePart(  
-            _timeLeft.inHours  
-                .toString()  
-                .padLeft(2, '0'),  
-            "ساعة",  
-          ),  
+  Row(    
+    mainAxisAlignment:    
+        MainAxisAlignment.center,    
+    children: [    
+      _timePart(    
+        _timeLeft.inHours    
+            .toString()    
+            .padLeft(2, '0'),    
+        "ساعة",    
+      ),    
 
-          _buildDivider(),  
+      _buildDivider(),    
 
-          _timePart(  
-            (_timeLeft.inMinutes % 60)  
-                .toString()  
-                .padLeft(2, '0'),  
-            "دقيقة",  
-          ),  
+      _timePart(    
+        (_timeLeft.inMinutes % 60)    
+            .toString()    
+            .padLeft(2, '0'),    
+        "دقيقة",    
+      ),    
 
-          _buildDivider(),  
+      _buildDivider(),    
 
-          _timePart(  
-            (_timeLeft.inSeconds % 60)  
-                .toString()  
-                .padLeft(2, '0'),  
-            "ثانية",  
-          ),  
-        ],  
-      ),  
+      _timePart(    
+        (_timeLeft.inSeconds % 60)    
+            .toString()    
+            .padLeft(2, '0'),    
+        "ثانية",    
+      ),    
+    ],    
+  ),    
 
-      const SizedBox(height: 12),  
+  const SizedBox(height: 12),    
 
-      Container(  
-        height: 4,  
-        width: 90,  
-        decoration: BoxDecoration(  
-          gradient:  
-              const LinearGradient(  
-            colors: [  
-              HomeScreen.darkGreen,  
-              HomeScreen.blue,  
-            ],  
-          ),  
-          borderRadius:  
-              BorderRadius.circular(10),  
-        ),  
-      ),  
-    ],  
-  ),  
+  Container(    
+    height: 4,    
+    width: 90,    
+    decoration: BoxDecoration(    
+      gradient:    
+          const LinearGradient(    
+        colors: [    
+          HomeScreen.darkGreen,    
+          HomeScreen.blue,    
+        ],    
+      ),    
+      borderRadius:    
+          BorderRadius.circular(10),    
+    ),    
+  ),    
+],
+
+),
 );
 
 }
@@ -1759,17 +1776,18 @@ fontWeight: FontWeight.w900,
 ),
 ),
 
-const SizedBox(height: 1),  
+const SizedBox(height: 1),
 
-    Text(  
-      label,  
-      style: const TextStyle(  
-        color: HomeScreen.teal,  
-        fontSize: 10,  
-        fontWeight: FontWeight.bold,  
-      ),  
-    ),  
-  ],  
+Text(    
+  label,    
+  style: const TextStyle(    
+    color: HomeScreen.teal,    
+    fontSize: 10,    
+    fontWeight: FontWeight.bold,    
+  ),    
+),
+
+],
 );
 
 }
