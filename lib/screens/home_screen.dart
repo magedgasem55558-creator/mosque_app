@@ -6,8 +6,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:adhan/adhan.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/firebase_service.dart';
+import '../models/mosque_models.dart';
 import 'login_screen.dart';
 import 'my_children_screen.dart';
 import 'leaderboard_screen.dart';
@@ -26,6 +27,8 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final service = FirebaseService();
+
     return Scaffold(
       backgroundColor: lightBg,
       body: Container(
@@ -65,7 +68,7 @@ class HomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 18),
 
-                _buildUpcomingEvent(),
+                _buildInfoRow(service),
 
                 const SizedBox(height: 12),
 
@@ -438,7 +441,8 @@ class HomeScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(15),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
                   children: [
                     Container(
                       width: 52,
@@ -450,7 +454,8 @@ class HomeScreen extends StatelessWidget {
                             color.withOpacity(0.07),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(17),
+                        borderRadius:
+                            BorderRadius.circular(17),
                       ),
                       child: Icon(
                         icon,
@@ -501,148 +506,76 @@ class HomeScreen extends StatelessWidget {
   }
 
   // ============================================================
-  // Upcoming Event
+  // Info row
   // ============================================================
 
-  Widget _buildUpcomingEvent() {
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('settings')
-          .doc('next_event')
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox.shrink();
-        }
-
-        if (snapshot.hasError ||
-            !snapshot.hasData ||
-            !snapshot.data!.exists) {
-          return const SizedBox.shrink();
-        }
-
-        final data =
-            snapshot.data!.data() as Map<String, dynamic>?;
-
-        if (data == null) {
-          return const SizedBox.shrink();
-        }
-
-        final title = data['title'] as String? ?? '';
-
-        if (title.trim().isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        return _buildEventCard(data);
-      },
-    );
-  }
-
-  // ============================================================
-  // Event card
-  // ============================================================
-
-  Widget _buildEventCard(
-    Map<String, dynamic> event,
-  ) {
-    final title = event['title'] ?? 'فعالية';
-    final location = event['location'] ?? '';
-
-    String? timeStr = event['time'] as String?;
-
-    if (timeStr == null || timeStr.isEmpty) {
-      timeStr = event['date'] as String?;
-    }
-
-    String dateStr = '';
-
-    if (timeStr != null && timeStr.isNotEmpty) {
-      dateStr = _formatLectureTime(timeStr);
-    } else {
-      final lastUpdated =
-          event['lastUpdated'] as Timestamp?;
-
-      if (lastUpdated != null) {
-        final dt = lastUpdated.toDate();
-
-        dateStr =
-            '${dt.year}/'
-            '${dt.month.toString().padLeft(2, '0')}/'
-            '${dt.day.toString().padLeft(2, '0')}';
-      }
-    }
-
-    return _buildGlassCard(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            _buildSmallIcon(
-              Icons.event_rounded,
-              Colors.orange,
-            ),
-
-            const SizedBox(width: 13),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+  Widget _buildInfoRow(FirebaseService service) {
+    return StreamBuilder<NextKhutba>(
+      stream: service.streamNextKhutba(),
+      builder: (context, khutbaSnapshot) {
+        if (khutbaSnapshot.connectionState ==
+            ConnectionState.waiting) {
+          return _buildGlassCard(
+            child: const Padding(
+              padding: EdgeInsets.all(20),
+              child: Row(
                 children: [
-                  const Text(
-                    'فعالية قادمة',
-                    style: TextStyle(
-                      color: Colors.orange,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: teal,
                   ),
-
-                  const SizedBox(height: 4),
-
+                  SizedBox(width: 14),
                   Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
+                    'جاري جلب بيانات الخطبة...',
+                    style: TextStyle(
+                      color: Colors.black54,
                     ),
                   ),
-
-                  if (location.isNotEmpty)
-                    Text(
-                      'المكان: $location',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.black54,
-                        fontSize: 11,
-                      ),
-                    ),
-
-                  if (dateStr.isNotEmpty)
-                    Text(
-                      dateStr,
-                      style: const TextStyle(
-                        color: Colors.black45,
-                        fontSize: 11,
-                      ),
-                    ),
                 ],
               ),
             ),
+          );
+        }
 
-            const Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: Colors.black26,
-              size: 14,
-            ),
-          ],
-        ),
-      ),
+        final khutba = khutbaSnapshot.data;
+
+        return StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('settings')
+              .doc('next_event')
+              .snapshots(),
+          builder: (context, eventSnapshot) {
+            if (eventSnapshot.connectionState ==
+                ConnectionState.waiting) {
+              return _buildKhutbaCard(khutba);
+            }
+
+            if (eventSnapshot.hasError ||
+                !eventSnapshot.hasData ||
+                !eventSnapshot.data!.exists) {
+              return _buildKhutbaCard(khutba);
+            }
+
+            final eventData =
+                eventSnapshot.data!.data()
+                    as Map<String, dynamic>?;
+
+            if (eventData == null ||
+                (eventData['title'] as String? ?? '')
+                    .isEmpty) {
+              return _buildKhutbaCard(khutba);
+            }
+
+            return Column(
+              children: [
+                _buildKhutbaCard(khutba),
+                const SizedBox(height: 10),
+                _buildEventCard(eventData),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -660,13 +593,6 @@ class HomeScreen extends StatelessWidget {
                 ConnectionState.waiting ||
             !snapshot.hasData ||
             snapshot.data!.docs.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        if (snapshot.hasError) {
-          debugPrint(
-            'خطأ في جلب المحاضرات: ${snapshot.error}',
-          );
           return const SizedBox.shrink();
         }
 
@@ -737,7 +663,8 @@ class HomeScreen extends StatelessWidget {
                       Text(
                         lecture['title'] ?? 'محاضرة',
                         maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        overflow:
+                            TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Colors.black87,
                           fontSize: 16,
@@ -751,7 +678,8 @@ class HomeScreen extends StatelessWidget {
                         Text(
                           'المحاضر: ${lecture['speaker']}',
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          overflow:
+                              TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: Colors.black54,
                             fontSize: 11,
@@ -783,6 +711,183 @@ class HomeScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  // ============================================================
+  // Khutba card
+  // ============================================================
+
+  Widget _buildKhutbaCard(NextKhutba? khutba) {
+    return _buildGlassCard(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            _buildSmallIcon(
+              Icons.mic_external_on_rounded,
+              teal,
+            ),
+
+            const SizedBox(width: 13),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'خطبة الجمعة القادمة',
+                    style: TextStyle(
+                      color: teal,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  Text(
+                    khutba?.title ??
+                        'لم يتم تحديد العنوان',
+                    maxLines: 1,
+                    overflow:
+                        TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+
+                  const SizedBox(height: 2),
+
+                  Text(
+                    'الخطيب: ${khutba?.imam ?? 'غير محدد'}',
+                    style: const TextStyle(
+                      color: Colors.black54,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Colors.black26,
+              size: 14,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // Event card
+  // ============================================================
+
+  Widget _buildEventCard(
+    Map<String, dynamic> event,
+  ) {
+    final title = event['title'] ?? 'فعالية';
+    final location = event['location'] ?? '';
+
+    String? timeStr = event['time'] as String?;
+
+    if (timeStr == null || timeStr.isEmpty) {
+      timeStr = event['date'] as String?;
+    }
+
+    String dateStr = '';
+
+    if (timeStr != null && timeStr.isNotEmpty) {
+      dateStr = _formatLectureTime(timeStr);
+    } else {
+      final lastUpdated =
+          event['lastUpdated'] as Timestamp?;
+
+      if (lastUpdated != null) {
+        final dt = lastUpdated.toDate();
+
+        dateStr =
+            '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';
+      }
+    }
+
+    return _buildGlassCard(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            _buildSmallIcon(
+              Icons.event_rounded,
+              Colors.orange,
+            ),
+
+            const SizedBox(width: 13),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'فعالية قادمة',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow:
+                        TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+
+                  if (location.isNotEmpty)
+                    Text(
+                      'المكان: $location',
+                      maxLines: 1,
+                      overflow:
+                          TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 11,
+                      ),
+                    ),
+
+                  if (dateStr.isNotEmpty)
+                    Text(
+                      dateStr,
+                      style: const TextStyle(
+                        color: Colors.black45,
+                        fontSize: 11,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Colors.black26,
+              size: 14,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -843,12 +948,10 @@ class HomeScreen extends StatelessWidget {
   }
 
   // ============================================================
-  // Logout
+  // Logout + Developer Contact
   // ============================================================
 
-  Widget _buildLogoutButton(
-    BuildContext context,
-  ) {
+  Widget _buildLogoutButton(BuildContext context) {
     return Column(
       children: [
         StreamBuilder<User?>(
@@ -882,6 +985,10 @@ class HomeScreen extends StatelessWidget {
         ),
 
         const SizedBox(height: 8),
+
+        // ======================================================
+        // طلب نسخة للمسجد / التواصل مع المطور
+        // ======================================================
 
         Center(
           child: TextButton.icon(
@@ -921,15 +1028,19 @@ class HomeScreen extends StatelessWidget {
         return Dialog(
           backgroundColor: Colors.transparent,
           insetPadding:
-              const EdgeInsets.symmetric(horizontal: 28),
+              const EdgeInsets.symmetric(
+            horizontal: 28,
+          ),
           child: Container(
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(25),
+              borderRadius:
+                  BorderRadius.circular(25),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color:
+                      Colors.black.withOpacity(0.15),
                   blurRadius: 25,
                   offset: const Offset(0, 8),
                 ),
@@ -938,11 +1049,13 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // الأيقونة
                 Container(
                   width: 62,
                   height: 62,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
+                    gradient:
+                        const LinearGradient(
                       colors: [
                         darkGreen,
                         teal,
@@ -985,6 +1098,10 @@ class HomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 18),
 
+                // ==================================================
+                // رقم التواصل
+                // ==================================================
+
                 Container(
                   width: double.infinity,
                   padding:
@@ -993,11 +1110,13 @@ class HomeScreen extends StatelessWidget {
                     vertical: 13,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5F7FA),
+                    color:
+                        const Color(0xFFF5F7FA),
                     borderRadius:
                         BorderRadius.circular(16),
                     border: Border.all(
-                      color: darkGreen.withOpacity(0.12),
+                      color:
+                          darkGreen.withOpacity(0.12),
                     ),
                   ),
                   child: Row(
@@ -1007,9 +1126,13 @@ class HomeScreen extends StatelessWidget {
                             const EdgeInsets.all(9),
                         decoration: BoxDecoration(
                           color:
-                              darkGreen.withOpacity(0.10),
+                              darkGreen.withOpacity(
+                            0.10,
+                          ),
                           borderRadius:
-                              BorderRadius.circular(12),
+                              BorderRadius.circular(
+                            12,
+                          ),
                         ),
                         child: const Icon(
                           Icons.phone_rounded,
@@ -1028,7 +1151,8 @@ class HomeScreen extends StatelessWidget {
                           style: TextStyle(
                             color: Colors.black87,
                             fontSize: 18,
-                            fontWeight: FontWeight.w900,
+                            fontWeight:
+                                FontWeight.w900,
                             letterSpacing: 1,
                           ),
                         ),
@@ -1043,7 +1167,8 @@ class HomeScreen extends StatelessWidget {
                             ),
                           );
 
-                          if (dialogContext.mounted) {
+                          if (dialogContext
+                              .mounted) {
                             ScaffoldMessenger.of(
                               dialogContext,
                             ).showSnackBar(
@@ -1054,9 +1179,12 @@ class HomeScreen extends StatelessWidget {
                                       TextAlign.center,
                                 ),
                                 behavior:
-                                    SnackBarBehavior.floating,
+                                    SnackBarBehavior
+                                        .floating,
                                 duration:
-                                    Duration(seconds: 2),
+                                    Duration(
+                                  seconds: 2,
+                                ),
                               ),
                             );
                           }
@@ -1073,15 +1201,23 @@ class HomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 18),
 
+                // ==================================================
+                // زر إغلاق
+                // ==================================================
+
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(dialogContext);
+                      Navigator.pop(
+                        dialogContext,
+                      );
                     },
-                    style: ElevatedButton.styleFrom(
+                    style:
+                        ElevatedButton.styleFrom(
                       backgroundColor: darkGreen,
-                      foregroundColor: Colors.white,
+                      foregroundColor:
+                          Colors.white,
                       elevation: 0,
                       padding:
                           const EdgeInsets.symmetric(
@@ -1090,14 +1226,17 @@ class HomeScreen extends StatelessWidget {
                       shape:
                           RoundedRectangleBorder(
                         borderRadius:
-                            BorderRadius.circular(15),
+                            BorderRadius.circular(
+                          15,
+                        ),
                       ),
                     ),
                     child: const Text(
                       'إغلاق',
                       style: TextStyle(
                         fontSize: 14,
-                        fontWeight: FontWeight.w800,
+                        fontWeight:
+                            FontWeight.w800,
                       ),
                     ),
                   ),
@@ -1109,28 +1248,28 @@ class HomeScreen extends StatelessWidget {
       },
     );
   }
+}
 
-  // ============================================================
-  // Format lecture time
-  // ============================================================
+// ================================================================
+// Format lecture time
+// ================================================================
 
-  String _formatLectureTime(String? isoTime) {
-    if (isoTime == null) {
-      return '';
-    }
-
-    final dt = DateTime.tryParse(isoTime);
-
-    if (dt == null) {
-      return isoTime;
-    }
-
-    return '${dt.year}/'
-        '${dt.month.toString().padLeft(2, '0')}/'
-        '${dt.day.toString().padLeft(2, '0')}  '
-        '${dt.hour.toString().padLeft(2, '0')}:'
-        '${dt.minute.toString().padLeft(2, '0')}';
+String _formatLectureTime(String? isoTime) {
+  if (isoTime == null) {
+    return '';
   }
+
+  final dt = DateTime.tryParse(isoTime);
+
+  if (dt == null) {
+    return isoTime;
+  }
+
+  return '${dt.year}/'
+      '${dt.month.toString().padLeft(2, '0')}/'
+      '${dt.day.toString().padLeft(2, '0')}  '
+      '${dt.hour.toString().padLeft(2, '0')}:'
+      '${dt.minute.toString().padLeft(2, '0')}';
 }
 
 // ================================================================
@@ -1281,12 +1420,7 @@ class AutoPrayerCountdownGlass
 }
 
 class _AutoPrayerCountdownGlassState
-    extends State<AutoPrayerCountdownGlass>
-    with WidgetsBindingObserver {
-
-  static const String _locationRequestKey =
-      'location_request_already_shown';
-
+    extends State<AutoPrayerCountdownGlass> {
   String _nextPrayerName = "جاري الحساب...";
 
   Duration _timeLeft = Duration.zero;
@@ -1295,227 +1429,65 @@ class _AutoPrayerCountdownGlassState
 
   bool _loading = true;
 
-  bool _locationDialogShowing = false;
-
-  Coordinates? _coordinates;
-
-  CalculationParameters? _params;
-
-  // ------------------------------------------------------------
-  // هل تم طلب الموقع من قبل؟
-  // ------------------------------------------------------------
-
-  Future<bool> _wasLocationRequestShown() async {
-    final prefs =
-        await SharedPreferences.getInstance();
-
-    return prefs.getBool(_locationRequestKey) ?? false;
-  }
-
-  // ------------------------------------------------------------
-  // حفظ أن طلب الموقع ظهر للمستخدم
-  // ------------------------------------------------------------
-
-  Future<void> _markLocationRequestShown() async {
-    final prefs =
-        await SharedPreferences.getInstance();
-
-    await prefs.setBool(
-      _locationRequestKey,
-      true,
-    );
-  }
-
   @override
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addObserver(this);
-
     _initPrayerLogic();
   }
 
-  // ============================================================
-  // عند العودة للتطبيق
-  // ============================================================
-
-  @override
-  void didChangeAppLifecycleState(
-    AppLifecycleState state,
-  ) {
-    if (state == AppLifecycleState.resumed) {
-      _checkLocationAgain();
-    }
-  }
-
-  // ============================================================
-  // بدء النظام
-  // ============================================================
-
   Future<void> _initPrayerLogic() async {
-    await _checkLocationAndStart(
-      allowRequestDialog: true,
-    );
-  }
-
-  // ============================================================
-  // فحص الموقع
-  // ============================================================
-
-  Future<void> _checkLocationAndStart({
-    bool allowRequestDialog = false,
-  }) async {
     try {
-      // --------------------------------------------------------
-      // 1. هل خدمة الموقع مفعلة؟
-      // --------------------------------------------------------
-
-      final serviceEnabled =
-          await Geolocator.isLocationServiceEnabled();
-
-      if (!serviceEnabled) {
-        if (mounted) {
-          setState(() {
-            _loading = false;
-            _nextPrayerName =
-                "يجب تفعيل الموقع";
-          });
-        }
-
-        // ======================================================
-        // مهم:
-        // نعرض نافذة التفعيل مرة واحدة فقط.
-        // ======================================================
-
-        if (allowRequestDialog) {
-          final alreadyShown =
-              await _wasLocationRequestShown();
-
-          if (!alreadyShown) {
-            await _markLocationRequestShown();
-
-            await _showEnableLocationDialog();
-          }
-        }
-
-        return;
-      }
-
-      // --------------------------------------------------------
-      // 2. فحص الصلاحية
-      // --------------------------------------------------------
-
       LocationPermission permission =
-          await Geolocator.checkPermission();
-
-      // --------------------------------------------------------
-      // طلب إذن الموقع من النظام مرة واحدة فقط
-      // --------------------------------------------------------
-
-      if (permission == LocationPermission.denied) {
-        final alreadyShown =
-            await _wasLocationRequestShown();
-
-        if (!alreadyShown) {
-          await _markLocationRequestShown();
-
-          permission =
-              await Geolocator.requestPermission();
-        }
-      }
-
-      // --------------------------------------------------------
-      // المستخدم رفض
-      // --------------------------------------------------------
-
-      if (permission == LocationPermission.denied) {
-        if (mounted) {
-          setState(() {
-            _loading = false;
-            _nextPrayerName =
-                "تم رفض إذن الموقع";
-          });
-        }
-
-        return;
-      }
-
-      // --------------------------------------------------------
-      // المستخدم منع نهائياً
-      // --------------------------------------------------------
+          await Geolocator.requestPermission();
 
       if (permission ==
-          LocationPermission.deniedForever) {
+              LocationPermission.denied ||
+          permission ==
+              LocationPermission.deniedForever) {
         if (mounted) {
           setState(() {
             _loading = false;
             _nextPrayerName =
-                "السماح بالموقع مطلوب";
+                "تعذر تحديد الموقع";
           });
-        }
-
-        // نعرض إعدادات التطبيق مرة واحدة فقط
-        if (allowRequestDialog) {
-          final alreadyShown =
-              await _wasLocationRequestShown();
-
-          if (!alreadyShown) {
-            await _markLocationRequestShown();
-
-            await _showPermissionSettingsDialog();
-          }
         }
 
         return;
       }
-
-      // --------------------------------------------------------
-      // 3. الحصول على الموقع
-      // --------------------------------------------------------
 
       final position =
           await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        desiredAccuracy:
+            LocationAccuracy.high,
       );
 
-      _coordinates = Coordinates(
+      final coordinates = Coordinates(
         position.latitude,
         position.longitude,
       );
 
-      _params =
+      final params =
           CalculationMethod.umm_al_qura
               .getParameters();
 
-      _params!.madhab = Madhab.shafi;
+      params.madhab = Madhab.shafi;
 
-      // --------------------------------------------------------
-      // تحديث مباشر
-      // --------------------------------------------------------
-
-      _updatePrayer();
-
-      // --------------------------------------------------------
-      // منع وجود Timer قديم
-      // --------------------------------------------------------
-
-      _timer?.cancel();
-
-      // --------------------------------------------------------
-      // تحديث العداد كل ثانية
-      // --------------------------------------------------------
+      _updatePrayer(
+        coordinates,
+        params,
+      );
 
       _timer = Timer.periodic(
         const Duration(seconds: 1),
         (_) {
-          _updatePrayer();
+          _updatePrayer(
+            coordinates,
+            params,
+          );
         },
       );
     } catch (e) {
-      debugPrint(
-        'خطأ في تحديد الموقع: $e',
-      );
-
       if (mounted) {
         setState(() {
           _loading = false;
@@ -1526,346 +1498,43 @@ class _AutoPrayerCountdownGlassState
     }
   }
 
-  // ============================================================
-  // إعادة فحص الموقع عند العودة
-  //
-  // هنا لا نطلب الموقع مرة أخرى.
-  // فقط نفحص هل أصبح متاحاً أم لا.
-  // ============================================================
+  void _updatePrayer(
+    Coordinates coordinates,
+    CalculationParameters params,
+  ) {
+    final prayerTimes = PrayerTimes.today(
+      coordinates,
+      params,
+    );
 
-  Future<void> _checkLocationAgain() async {
+    final next = prayerTimes.nextPrayer();
+
     if (!mounted) return;
 
-    try {
-      final enabled =
-          await Geolocator.isLocationServiceEnabled();
+    if (next != Prayer.none) {
+      final prayerTime =
+          prayerTimes.timeForPrayer(next);
 
-      if (!enabled) {
-        _timer?.cancel();
-        _timer = null;
-
-        if (mounted) {
-          setState(() {
-            _loading = false;
-            _nextPrayerName =
-                "يجب تفعيل الموقع";
-          });
-        }
-
-        // ======================================================
-        // لا يوجد Dialog هنا أبداً
-        // لأن الطلب تم التعامل معه سابقاً.
-        // ======================================================
-
+      if (prayerTime == null) {
         return;
       }
 
-      final permission =
-          await Geolocator.checkPermission();
-
-      if (permission == LocationPermission.denied ||
-          permission ==
-              LocationPermission.deniedForever) {
-
-        if (mounted) {
-          setState(() {
-            _loading = false;
-            _nextPrayerName =
-                permission ==
-                        LocationPermission.deniedForever
-                    ? "السماح بالموقع مطلوب"
-                    : "تم رفض إذن الموقع";
-          });
-        }
-
-        // لا نعيد requestPermission
-        return;
-      }
-
-      // ======================================================
-      // الموقع متاح والصلاحية موجودة
-      // ======================================================
-
-      if (_coordinates == null) {
-        await _checkLocationAndStart(
-          allowRequestDialog: false,
-        );
-      }
-    } catch (e) {
-      debugPrint(
-        'خطأ في إعادة فحص الموقع: $e',
-      );
-    }
-  }
-
-  // ============================================================
-  // Dialog تفعيل الموقع
-  // يظهر مرة واحدة فقط
-  // ============================================================
-
-  Future<void> _showEnableLocationDialog() async {
-    if (!mounted || _locationDialogShowing) {
-      return;
-    }
-
-    _locationDialogShowing = true;
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          title: const Row(
-            children: [
-              Icon(
-                Icons.location_on_rounded,
-                color: HomeScreen.teal,
-              ),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'تفعيل الموقع',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: const Text(
-            'يحتاج التطبيق إلى تشغيل خدمة الموقع لحساب أوقات الصلاة حسب موقعك الحالي.',
-            style: TextStyle(
-              color: Colors.black54,
-              height: 1.5,
-            ),
-          ),
-          actionsPadding:
-              const EdgeInsets.fromLTRB(
-            16,
-            0,
-            16,
-            16,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-              },
-              child: const Text(
-                'لاحقاً',
-                style: TextStyle(
-                  color: Colors.black54,
-                ),
-              ),
-            ),
-            ElevatedButton.icon(
-              onPressed: () async {
-                Navigator.pop(dialogContext);
-
-                await Geolocator.openLocationSettings();
-              },
-              icon: const Icon(
-                Icons.settings_rounded,
-                size: 19,
-              ),
-              label: const Text(
-                'تفعيل الموقع',
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    HomeScreen.darkGreen,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape:
-                    RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(14),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    _locationDialogShowing = false;
-
-    // ==========================================================
-    // لا نستدعي _checkLocationAndStart مع Dialog
-    //
-    // فقط نفحص هل المستخدم فعّل الموقع.
-    // ==========================================================
-
-    await Future.delayed(
-      const Duration(milliseconds: 300),
-    );
-
-    if (mounted) {
-      await _checkLocationAgain();
-    }
-  }
-
-  // ============================================================
-  // Dialog الصلاحية المرفوضة نهائياً
-  // يظهر مرة واحدة فقط
-  // ============================================================
-
-  Future<void> _showPermissionSettingsDialog() async {
-    if (!mounted || _locationDialogShowing) {
-      return;
-    }
-
-    _locationDialogShowing = true;
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          title: const Row(
-            children: [
-              Icon(
-                Icons.location_disabled_rounded,
-                color: Colors.orange,
-              ),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'السماح بالموقع',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: const Text(
-            'تم منع إذن الموقع. افتح إعدادات التطبيق واسمح للتطبيق باستخدام الموقع حتى تعمل أوقات الصلاة بشكل صحيح.',
-            style: TextStyle(
-              color: Colors.black54,
-              height: 1.5,
-            ),
-          ),
-          actionsPadding:
-              const EdgeInsets.fromLTRB(
-            16,
-            0,
-            16,
-            16,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-              },
-              child: const Text(
-                'لاحقاً',
-                style: TextStyle(
-                  color: Colors.black54,
-                ),
-              ),
-            ),
-            ElevatedButton.icon(
-              onPressed: () async {
-                Navigator.pop(dialogContext);
-
-                await Geolocator.openAppSettings();
-              },
-              icon: const Icon(
-                Icons.settings_rounded,
-                size: 19,
-              ),
-              label: const Text(
-                'فتح الإعدادات',
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    HomeScreen.darkGreen,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape:
-                    RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(14),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    _locationDialogShowing = false;
-
-    // ==========================================================
-    // فقط فحص جديد بدون أي طلب أو Dialog
-    // ==========================================================
-
-    await Future.delayed(
-      const Duration(milliseconds: 300),
-    );
-
-    if (mounted) {
-      await _checkLocationAgain();
-    }
-  }
-
-  // ============================================================
-  // تحديث الصلاة
-  // ============================================================
-
-  void _updatePrayer() {
-    if (!mounted ||
-        _coordinates == null ||
-        _params == null) {
-      return;
-    }
-
-    try {
-      final prayerTimes = PrayerTimes.today(
-        _coordinates!,
-        _params!,
+      final difference =
+          prayerTime.difference(
+        DateTime.now(),
       );
 
-      final next = prayerTimes.nextPrayer();
+      setState(() {
+        _nextPrayerName =
+            _translatePrayer(next);
 
-      if (next != Prayer.none) {
-        final prayerTime =
-            prayerTimes.timeForPrayer(next);
+        _timeLeft = difference.isNegative
+            ? Duration.zero
+            : difference;
 
-        if (prayerTime == null) {
-          return;
-        }
-
-        final difference =
-            prayerTime.difference(
-          DateTime.now(),
-        );
-
-        setState(() {
-          _nextPrayerName =
-              _translatePrayer(next);
-
-          _timeLeft = difference.isNegative
-              ? Duration.zero
-              : difference;
-
-          _loading = false;
-        });
-
-        return;
-      }
-
-      // ========================================================
-      // انتهت صلوات اليوم → الفجر غداً
-      // ========================================================
-
+        _loading = false;
+      });
+    } else {
       final tomorrow =
           DateTime.now().add(
         const Duration(days: 1),
@@ -1875,9 +1544,9 @@ class _AutoPrayerCountdownGlassState
           DateComponents.from(tomorrow);
 
       final tomorrowTimes = PrayerTimes(
-        _coordinates!,
+        coordinates,
         tomorrowDate,
-        _params!,
+        params,
       );
 
       final difference =
@@ -1894,24 +1563,8 @@ class _AutoPrayerCountdownGlassState
 
         _loading = false;
       });
-    } catch (e) {
-      debugPrint(
-        'خطأ أثناء حساب الصلاة: $e',
-      );
-
-      if (mounted) {
-        setState(() {
-          _loading = false;
-          _nextPrayerName =
-              "تعذر حساب الصلاة";
-        });
-      }
     }
   }
-
-  // ============================================================
-  // ترجمة الصلاة
-  // ============================================================
 
   String _translatePrayer(
     Prayer prayer,
@@ -1937,40 +1590,22 @@ class _AutoPrayerCountdownGlassState
     }
   }
 
-  // ============================================================
-  // Dispose
-  // ============================================================
-
   @override
   void dispose() {
-    WidgetsBinding.instance
-        .removeObserver(this);
-
     _timer?.cancel();
 
     super.dispose();
   }
 
-  // ============================================================
-  // Build
-  // ============================================================
-
   @override
   Widget build(BuildContext context) {
     if (_loading) {
       return Container(
-        height: 105,
+        height: 145,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.97),
           borderRadius:
-              BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.07),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+              BorderRadius.circular(24),
         ),
         child: const Center(
           child: CircularProgressIndicator(
@@ -1980,36 +1615,23 @@ class _AutoPrayerCountdownGlassState
       );
     }
 
-    // ==========================================================
-    // الموقع غير مفعل
-    // ==========================================================
-
-    if (_nextPrayerName ==
-            "يجب تفعيل الموقع" ||
-        _nextPrayerName ==
-            "تم رفض إذن الموقع" ||
-        _nextPrayerName ==
-            "السماح بالموقع مطلوب") {
-      return _buildLocationRequiredCard();
-    }
-
     return Container(
       padding: const EdgeInsets.fromLTRB(
-        15,
-        13,
-        15,
-        14,
+        18,
+        17,
+        18,
+        18,
       ),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.98),
         borderRadius:
-            BorderRadius.circular(20),
+            BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: HomeScreen.teal
-                .withOpacity(0.10),
-            blurRadius: 13,
-            offset: const Offset(0, 4),
+                .withOpacity(0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -2021,7 +1643,7 @@ class _AutoPrayerCountdownGlassState
             children: [
               Container(
                 padding:
-                    const EdgeInsets.all(6),
+                    const EdgeInsets.all(7),
                 decoration: BoxDecoration(
                   color: HomeScreen.teal
                       .withOpacity(0.10),
@@ -2030,24 +1652,24 @@ class _AutoPrayerCountdownGlassState
                 child: const Icon(
                   Icons.access_time_rounded,
                   color: HomeScreen.teal,
-                  size: 17,
+                  size: 19,
                 ),
               ),
 
-              const SizedBox(width: 7),
+              const SizedBox(width: 8),
 
               Text(
                 'المتبقي لصلاة $_nextPrayerName',
                 style: const TextStyle(
                   color: Colors.black54,
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 9),
+          const SizedBox(height: 15),
 
           Row(
             mainAxisAlignment:
@@ -2080,11 +1702,11 @@ class _AutoPrayerCountdownGlassState
             ],
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
 
           Container(
-            height: 3,
-            width: 65,
+            height: 4,
+            width: 90,
             decoration: BoxDecoration(
               gradient:
                   const LinearGradient(
@@ -2102,123 +1724,6 @@ class _AutoPrayerCountdownGlassState
     );
   }
 
-  // ============================================================
-  // بطاقة الموقع
-  // ============================================================
-
-  Widget _buildLocationRequiredCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.98),
-        borderRadius:
-            BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.orange
-                .withOpacity(0.10),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(
-              color: Colors.orange
-                  .withOpacity(0.10),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.location_off_rounded,
-              color: Colors.orange,
-              size: 25,
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          Text(
-            _nextPrayerName ==
-                    "السماح بالموقع مطلوب"
-                ? 'السماح بالموقع مطلوب'
-                : _nextPrayerName ==
-                        "تم رفض إذن الموقع"
-                    ? 'تم رفض إذن الموقع'
-                    : 'الموقع غير مفعل',
-            style: const TextStyle(
-              color: Colors.black87,
-              fontSize: 15,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-
-          const SizedBox(height: 4),
-
-          const Text(
-            'فعّل الموقع لحساب أوقات الصلاة حسب موقعك الحالي',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.black54,
-              fontSize: 11,
-              height: 1.4,
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          ElevatedButton.icon(
-            onPressed: () async {
-              if (_nextPrayerName ==
-                  "السماح بالموقع مطلوب") {
-                await Geolocator.openAppSettings();
-              } else {
-                await Geolocator.openLocationSettings();
-              }
-
-              await Future.delayed(
-                const Duration(milliseconds: 300),
-              );
-
-              if (mounted) {
-                await _checkLocationAgain();
-              }
-            },
-            icon: const Icon(
-              Icons.location_on_rounded,
-              size: 17,
-            ),
-            label: const Text(
-              'تفعيل الموقع',
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  HomeScreen.darkGreen,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding:
-                  const EdgeInsets.symmetric(
-                horizontal: 18,
-                vertical: 9,
-              ),
-              shape:
-                  RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(13),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // Time part
-  // ============================================================
-
   Widget _timePart(
     String value,
     String label,
@@ -2229,18 +1734,18 @@ class _AutoPrayerCountdownGlassState
           value,
           style: const TextStyle(
             color: Colors.black87,
-            fontSize: 26,
+            fontSize: 31,
             fontWeight: FontWeight.w900,
           ),
         ),
 
-        const SizedBox(height: 0),
+        const SizedBox(height: 1),
 
         Text(
           label,
           style: const TextStyle(
             color: HomeScreen.teal,
-            fontSize: 9,
+            fontSize: 10,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -2248,21 +1753,16 @@ class _AutoPrayerCountdownGlassState
     );
   }
 
-  // ============================================================
-  // Divider
-  // ============================================================
-
   Widget _buildDivider() {
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(
-        horizontal: 8,
-      ).copyWith(bottom: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+      ).copyWith(bottom: 15),
       child: const Text(
         ':',
         style: TextStyle(
           color: HomeScreen.teal,
-          fontSize: 20,
+          fontSize: 24,
           fontWeight: FontWeight.bold,
         ),
       ),
