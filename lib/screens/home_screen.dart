@@ -1,153 +1,97 @@
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:hijri_date/hijri.dart';
+import 'package:adhan/adhan.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:flutter/services.dart';
 
-class ChildDetailsScreen extends StatefulWidget {
-final Map<String, dynamic> child;
+import '../services/firebase_service.dart';
+import '../models/mosque_models.dart';
+import 'login_screen.dart';
+import 'my_children_screen.dart';
+import 'leaderboard_screen.dart';
+import 'donate_screen.dart';
+import 'qibla_screen.dart';
+import 'yasser_dossari_quran_page.dart';
+import 'hisn_el_muslim_page.dart';
 
-const ChildDetailsScreen({
-super.key,
-required this.child,
-});
+class HomeScreen extends StatelessWidget {
+const HomeScreen({super.key});
 
-@override
-State<ChildDetailsScreen> createState() =>
-_ChildDetailsScreenState();
-}
-
-class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
-// ============================================================
-// الألوان الرسمية
-// ============================================================
-
-static const Color primaryGreen = Color(0xFF2E7D32);
-static const Color primaryBlue = Color(0xFF42A5F5);
-static const Color background = Color(0xFFF5F7FA);
-
-final TextEditingController _parentMessageController =
-TextEditingController();
-
-bool _sendingMessage = false;
-
-String? _adminId;
-bool _loadingAdmin = false;
-
-@override
-void initState() {
-super.initState();
-
-_loadAdmin();
-
-}
-
-@override
-void dispose() {
-_parentMessageController.dispose();
-super.dispose();
-}
-
-// ============================================================
-// جلب المدير
-// ============================================================
-
-Future<void> _loadAdmin() async {
-if (_loadingAdmin) return;
-
-setState(() {  
-  _loadingAdmin = true;  
-});  
-
-try {  
-  final snapshot = await FirebaseFirestore.instance  
-      .collection('users')  
-      .where(  
-        'role',  
-        isEqualTo: 'admin',  
-      )  
-      .limit(1)  
-      .get();  
-
-  if (snapshot.docs.isNotEmpty) {  
-    _adminId = snapshot.docs.first.id;  
-  }  
-} catch (e) {  
-  debugPrint('Load Admin Error: $e');  
-} finally {  
-  if (mounted) {  
-    setState(() {  
-      _loadingAdmin = false;  
-    });  
-  }  
-}
-
-}
-
-// ============================================================
-// Build
-// ============================================================
+static const Color darkGreen = Color(0xFF2E7D32);
+static const Color blue = Color(0xFF42A5F5);
+static const Color lightBg = Color(0xFFF5F7FA);
+static const Color teal = Color(0xFF00897B);
 
 @override
 Widget build(BuildContext context) {
-final String studentId =
-widget.child['id']?.toString() ?? '';
+final service = FirebaseService();
 
-final String studentName =  
-    widget.child['name']?.toString().trim().isNotEmpty == true  
-        ? widget.child['name'].toString().trim()  
-        : 'الطالب';  
-
-return DefaultTabController(  
-  length: 2,  
-  child: Scaffold(  
-    backgroundColor: background,  
-    body: Container(  
-      decoration: const BoxDecoration(  
-        gradient: LinearGradient(  
-          begin: Alignment.topCenter,  
-          end: Alignment.bottomCenter,  
-          colors: [  
-            primaryGreen,  
-            primaryBlue,  
-            background,  
-          ],  
-          stops: [  
-            0.0,  
-            0.30,  
-            0.65,  
-          ],  
-        ),  
+return Scaffold(  
+  backgroundColor: lightBg,  
+  body: Container(  
+    decoration: const BoxDecoration(  
+      gradient: LinearGradient(  
+        begin: Alignment.topCenter,  
+        end: Alignment.bottomCenter,  
+        colors: [  
+          darkGreen,  
+          blue,  
+          lightBg,  
+        ],  
+        stops: [0.0, 0.38, 0.72],  
       ),  
-      child: SafeArea(  
+    ),  
+    child: SafeArea(  
+      child: SingleChildScrollView(  
+        physics: const BouncingScrollPhysics(),  
+        padding: const EdgeInsets.fromLTRB(  
+          18,  
+          12,  
+          18,  
+          30,  
+        ),  
         child: Column(  
+          crossAxisAlignment: CrossAxisAlignment.start,  
           children: [  
-            _buildTopHeader(  
-              context,  
-              studentName,  
-            ),  
+            _buildHeader(context),  
+
+            const SizedBox(height: 18),  
+
+            const AutoPrayerCountdownGlass(),  
+
+            const SizedBox(height: 14),  
+
+            const RemembranceCarousel(),  
+
+            const SizedBox(height: 18),  
+
+            _buildInfoRow(service),  
 
             const SizedBox(height: 12),  
 
-            _buildStudentCard(  
-              studentName,  
+            _buildUpcomingLecture(),  
+
+            const SizedBox(height: 28),  
+
+            _buildSectionTitle(  
+              'خدمات المسجد',  
+              'كل ما تحتاجه في مكان واحد',  
+              Icons.apps_rounded,  
             ),  
 
-            const SizedBox(height: 16),  
+            const SizedBox(height: 14),  
 
-            _buildTabs(),  
+            _buildServicesGrid(context),  
 
-            const SizedBox(height: 8),  
+            const SizedBox(height: 25),  
 
-            Expanded(  
-              child: studentId.isEmpty  
-                  ? _buildErrorState()  
-                  : TabBarView(  
-                      children: [  
-                        _buildDailyReport(studentId),  
-                        _buildMonthlyReport(studentId),  
-                      ],  
-                    ),  
-            ),  
+            _buildLogoutButton(context),  
+
+            const SizedBox(height: 10),  
           ],  
         ),  
       ),  
@@ -161,202 +105,76 @@ return DefaultTabController(
 // Header
 // ============================================================
 
-Widget _buildTopHeader(
-BuildContext context,
-String studentName,
-) {
-return Padding(
+Widget _buildHeader(BuildContext context) {
+return Container(
 padding: const EdgeInsets.fromLTRB(
+18,
 16,
-12,
+18,
 16,
-0,
+),
+decoration: BoxDecoration(
+color: Colors.white.withOpacity(0.97),
+borderRadius: BorderRadius.circular(26),
+boxShadow: [
+BoxShadow(
+color: Colors.black.withOpacity(0.10),
+blurRadius: 18,
+offset: const Offset(0, 6),
+),
+],
 ),
 child: Row(
 children: [
 Container(
-width: 46,
-height: 46,
+width: 52,
+height: 52,
 decoration: BoxDecoration(
-color: Colors.white.withOpacity(0.18),
-borderRadius: BorderRadius.circular(15),
-border: Border.all(
-color: Colors.white.withOpacity(0.25),
+gradient: const LinearGradient(
+colors: [
+darkGreen,
+teal,
+],
+begin: Alignment.topLeft,
+end: Alignment.bottomRight,
 ),
+borderRadius: BorderRadius.circular(17),
+boxShadow: [
+BoxShadow(
+color: darkGreen.withOpacity(0.25),
+blurRadius: 10,
+offset: const Offset(0, 4),
 ),
-child: IconButton(
-onPressed: () {
-Navigator.pop(context);
-},
-icon: const Icon(
-Icons.arrow_back_ios_new_rounded,
+],
+),
+child: const Icon(
+Icons.mosque_rounded,
 color: Colors.white,
-size: 20,
-),
+size: 29,
 ),
 ),
 
 const SizedBox(width: 14),  
 
-      Expanded(  
+      const Expanded(  
         child: Column(  
-          crossAxisAlignment:  
-              CrossAxisAlignment.start,  
+          crossAxisAlignment: CrossAxisAlignment.start,  
           children: [  
-            const Text(  
-              'متابعة الطالب',  
+            Text(  
+              'مرحباً بك 👋',  
               style: TextStyle(  
-                color: Colors.white70,  
+                color: Colors.black54,  
                 fontSize: 13,  
                 fontWeight: FontWeight.w500,  
               ),  
             ),  
-
-            const SizedBox(height: 3),  
-
+            SizedBox(height: 3),  
             Text(  
-              studentName,  
-              maxLines: 1,  
-              overflow: TextOverflow.ellipsis,  
-              style: const TextStyle(  
-                color: Colors.white,  
-                fontSize: 21,  
-                fontWeight: FontWeight.bold,  
-              ),  
-            ),  
-          ],  
-        ),  
-      ),  
-
-      Container(  
-        width: 46,  
-        height: 46,  
-        decoration: BoxDecoration(  
-          color: Colors.white.withOpacity(0.18),  
-          shape: BoxShape.circle,  
-          border: Border.all(  
-            color: Colors.white.withOpacity(0.25),  
-          ),  
-        ),  
-        child: const Icon(  
-          Icons.admin_panel_settings_rounded,  
-          color: Colors.white,  
-          size: 23,  
-        ),  
-      ),  
-    ],  
-  ),  
-);
-
-}
-
-// ============================================================
-// Student Card
-// ============================================================
-
-Widget _buildStudentCard(
-String studentName,
-) {
-return Container(
-margin: const EdgeInsets.symmetric(
-horizontal: 16,
-),
-padding: const EdgeInsets.all(18),
-decoration: BoxDecoration(
-color: Colors.white,
-borderRadius: BorderRadius.circular(24),
-boxShadow: [
-BoxShadow(
-color: Colors.black.withOpacity(0.12),
-blurRadius: 20,
-offset: const Offset(0, 8),
-),
-],
-),
-child: Row(
-children: [
-Container(
-width: 62,
-height: 62,
-decoration: BoxDecoration(
-gradient: const LinearGradient(
-colors: [
-primaryGreen,
-primaryBlue,
-],
-),
-borderRadius:
-BorderRadius.circular(19),
-),
-child: const Icon(
-Icons.person_rounded,
-color: Colors.white,
-size: 34,
-),
-),
-
-const SizedBox(width: 15),  
-
-      Expanded(  
-        child: Column(  
-          crossAxisAlignment:  
-              CrossAxisAlignment.start,  
-          children: [  
-            const Text(  
-              'الطالب',  
+              'في مسجدنا',  
               style: TextStyle(  
-                color: Colors.black45,  
-                fontSize: 12,  
-              ),  
-            ),  
-
-            const SizedBox(height: 4),  
-
-            Text(  
-              studentName,  
-              maxLines: 1,  
-              overflow: TextOverflow.ellipsis,  
-              style: const TextStyle(  
-                color: Colors.black87,  
-                fontSize: 19,  
-                fontWeight: FontWeight.bold,  
-              ),  
-            ),  
-
-            const SizedBox(height: 7),  
-
-            Container(  
-              padding:  
-                  const EdgeInsets.symmetric(  
-                horizontal: 9,  
-                vertical: 5,  
-              ),  
-              decoration: BoxDecoration(  
-                color:  
-                    primaryGreen.withOpacity(0.09),  
-                borderRadius:  
-                    BorderRadius.circular(20),  
-              ),  
-              child: const Row(  
-                mainAxisSize:  
-                    MainAxisSize.min,  
-                children: [  
-                  Icon(  
-                    Icons.auto_stories_rounded,  
-                    color: primaryGreen,  
-                    size: 15,  
-                  ),  
-                  SizedBox(width: 5),  
-                  Text(  
-                    'حلقة القرآن',  
-                    style: TextStyle(  
-                      color: primaryGreen,  
-                      fontSize: 11,  
-                      fontWeight:  
-                          FontWeight.bold,  
-                    ),  
-                  ),  
-                ],  
+                color: darkGreen,  
+                fontSize: 21,  
+                fontWeight: FontWeight.w900,  
               ),  
             ),  
           ],  
@@ -364,15 +182,14 @@ const SizedBox(width: 15),
       ),  
 
       Container(  
-        padding: const EdgeInsets.all(10),  
+        padding: const EdgeInsets.all(11),  
         decoration: BoxDecoration(  
-          color:  
-              primaryBlue.withOpacity(0.08),  
+          color: blue.withOpacity(0.10),  
           shape: BoxShape.circle,  
         ),  
         child: const Icon(  
-          Icons.verified_rounded,  
-          color: primaryBlue,  
+          Icons.notifications_none_rounded,  
+          color: darkGreen,  
           size: 25,  
         ),  
       ),  
@@ -383,301 +200,193 @@ const SizedBox(width: 15),
 }
 
 // ============================================================
-// Tabs
+// Section title
 // ============================================================
 
-Widget _buildTabs() {
-return Container(
-margin: const EdgeInsets.symmetric(
-horizontal: 16,
-),
-height: 64,
+Widget _buildSectionTitle(
+String title,
+String subtitle,
+IconData icon,
+) {
+return Row(
+children: [
+Container(
+padding: const EdgeInsets.all(9),
 decoration: BoxDecoration(
-color: Colors.white.withOpacity(0.96),
-borderRadius: BorderRadius.circular(20),
+color: Colors.white,
+borderRadius: BorderRadius.circular(13),
 boxShadow: [
 BoxShadow(
-color: Colors.black.withOpacity(0.08),
-blurRadius: 15,
-offset: const Offset(0, 5),
+color: Colors.black.withOpacity(0.06),
+blurRadius: 8,
 ),
 ],
 ),
-child: TabBar(
-indicator: BoxDecoration(
-gradient: const LinearGradient(
-colors: [
-primaryGreen,
-primaryBlue,
-],
+child: Icon(
+icon,
+color: darkGreen,
+size: 23,
 ),
-borderRadius:
-BorderRadius.circular(16),
 ),
-indicatorSize:
-TabBarIndicatorSize.tab,
-indicatorPadding:
-const EdgeInsets.all(5),
-dividerColor: Colors.transparent,
-labelColor: Colors.white,
-unselectedLabelColor:
-Colors.grey.shade600,
-tabs: const [
-Tab(
-icon: Icon(
-Icons.today_rounded,
-size: 21,
-),
-text: 'إنجاز اليوم',
-),
-Tab(
-icon: Icon(
-Icons.calendar_month_rounded,
-size: 21,
-),
-text: 'السجل الكامل',
-),
-],
-),
-);
-}
 
-// ============================================================
-// Daily
-// ============================================================
+const SizedBox(width: 11),  
 
-Widget _buildDailyReport(
-String studentId,
-) {
-final String today =
-DateTime.now()
-.toIso8601String()
-.split('T')[0];
-
-return StreamBuilder<QuerySnapshot>(  
-  stream: FirebaseFirestore.instance  
-      .collection('records')  
-      .where(  
-        'studentId',  
-        isEqualTo: studentId,  
-      )  
-      .where(  
-        'date',  
-        isEqualTo: today,  
-      )  
-      .snapshots(),  
-  builder: (context, snapshot) {  
-    if (snapshot.connectionState ==  
-        ConnectionState.waiting) {  
-      return _buildLoading();  
-    }  
-
-    if (snapshot.hasError) {  
-      return _buildEmptyState(  
-        icon:  
-            Icons.error_outline_rounded,  
-        title:  
-            'تعذر تحميل البيانات',  
-        subtitle:  
-            'حدث خطأ أثناء جلب سجل الطالب.',  
-      );  
-    }  
-
-    if (!snapshot.hasData ||  
-        snapshot.data!.docs.isEmpty) {  
-      return _buildEmptyState(  
-        icon:  
-            Icons.event_available_rounded,  
-        title:  
-            'لا يوجد سجل اليوم',  
-        subtitle:  
-            'لم يتم تسجيل أي حالة للطالب بتاريخ\n$today',  
-      );  
-    }  
-
-    final List<DocumentSnapshot> docs =  
-        [...snapshot.data!.docs];  
-
-    _sortRecordsNewestFirst(docs);  
-
-    return _buildRecordList(docs);  
-  },  
-);
-
-}
-
-// ============================================================
-// Monthly
-// ============================================================
-
-Widget _buildMonthlyReport(
-String studentId,
-) {
-return StreamBuilder<QuerySnapshot>(
-stream: FirebaseFirestore.instance
-.collection('records')
-.where(
-'studentId',
-isEqualTo: studentId,
-)
-.snapshots(),
-builder: (context, snapshot) {
-if (snapshot.connectionState ==
-ConnectionState.waiting) {
-return _buildLoading();
-}
-
-if (snapshot.hasError) {  
-      return _buildEmptyState(  
-        icon:  
-            Icons.error_outline_rounded,  
-        title:  
-            'تعذر تحميل السجل',  
-        subtitle:  
-            'حدث خطأ أثناء جلب البيانات.',  
-      );  
-    }  
-
-    if (!snapshot.hasData ||  
-        snapshot.data!.docs.isEmpty) {  
-      return _buildEmptyState(  
-        icon:  
-            Icons.history_rounded,  
-        title:  
-            'لا توجد سجلات سابقة',  
-        subtitle:  
-            'ستظهر هنا جميع حالات وإنجازات الطالب.',  
-      );  
-    }  
-
-    final List<DocumentSnapshot> docs =  
-        [...snapshot.data!.docs];  
-
-    _sortRecordsNewestFirst(docs);  
-
-    return _buildRecordList(docs);  
-  },  
-);
-
-}
-
-// ============================================================
-// ترتيب الرصد
-// ============================================================
-
-void _sortRecordsNewestFirst(
-List<DocumentSnapshot> docs,
-) {
-docs.sort((a, b) {
-final Map<String, dynamic> dataA =
-(a.data()
-as Map<String, dynamic>?) ??
-{};
-
-final Map<String, dynamic> dataB =  
-      (b.data()  
-              as Map<String, dynamic>?) ??  
-          {};  
-
-  final DateTime dateA =  
-      _recordDateTime(dataA);  
-
-  final DateTime dateB =  
-      _recordDateTime(dataB);  
-
-  return dateB.compareTo(dateA);  
-});
-
-}
-
-DateTime _recordDateTime(
-Map<String, dynamic> data,
-) {
-final dynamic createdAt =
-data['createdAt'];
-
-if (createdAt is Timestamp) {  
-  return createdAt.toDate();  
-}  
-
-final String date =  
-    data['date']?.toString() ?? '';  
-
-final DateTime? parsed =  
-    DateTime.tryParse(date);  
-
-return parsed ?? DateTime(1900);
-
-}
-
-// ============================================================
-// Records
-// ============================================================
-
-Widget _buildRecordList(
-List<DocumentSnapshot> docs,
-) {
-if (docs.isEmpty) {
-return const SizedBox.shrink();
-}
-
-// ==========================================================  
-// نأخذ أول سجل فقط للحصول على بيانات الطالب والحلقة  
-// للمحادثة.  
-//  
-// المحادثة تظهر مرة واحدة فقط.  
-// ==========================================================  
-
-final Map<String, dynamic> firstRecord =  
-    (docs.first.data()  
-            as Map<String, dynamic>?) ??  
-        {};  
-
-return ListView(  
-  physics:  
-      const BouncingScrollPhysics(),  
-  padding:  
-      const EdgeInsets.fromLTRB(  
-    16,  
-    12,  
-    16,  
-    40,  
-  ),  
-  children: [  
-    // ======================================================  
-    // 💬 المحادثة  
-    // ======================================================  
-
-    _buildChatSection(  
-      firstRecord,  
+    Expanded(  
+      child: Column(  
+        crossAxisAlignment: CrossAxisAlignment.start,  
+        children: [  
+          Text(  
+            title,  
+            style: const TextStyle(  
+              color: Colors.black87,  
+              fontSize: 19,  
+              fontWeight: FontWeight.w900,  
+            ),  
+          ),  
+          const SizedBox(height: 2),  
+          Text(  
+            subtitle,  
+            style: const TextStyle(  
+              color: Colors.black54,  
+              fontSize: 12,  
+            ),  
+          ),  
+        ],  
+      ),  
     ),  
+  ],  
+);
 
-    const SizedBox(height: 20),  
+}
 
-    // ======================================================  
-    // 📖 عنوان الإنجازات  
-    // ======================================================  
+// ============================================================
+// Services grid
+// ============================================================
 
-    _buildRecordsHeader(  
-      docs.length,  
-    ),  
+Widget _buildServicesGrid(BuildContext context) {
+return GridView.count(
+shrinkWrap: true,
+physics: const NeverScrollableScrollPhysics(),
+crossAxisCount: 2,
+mainAxisSpacing: 13,
+crossAxisSpacing: 13,
+childAspectRatio: 1.18,
+children: [
+buildGridItem(
+context,
+'المتصدرون',
+'أفضل الطلاب',
+Icons.emoji_events_rounded,
+const Color(0xFFFFB300),
+() {
+Navigator.push(
+context,
+MaterialPageRoute(
+builder: () => const LeaderboardScreen(),
+),
+);
+},
+),
 
-    const SizedBox(height: 12),  
+StreamBuilder<User?>(  
+      stream: FirebaseAuth.instance.authStateChanges(),  
+      builder: (context, snapshot) {  
+        if (snapshot.hasData) {  
+          return _buildGridItem(  
+            context,  
+            'أبنائي',  
+            'متابعة الإنجاز',  
+            Icons.family_restroom_rounded,  
+            teal,  
+            () {  
+              Navigator.push(  
+                context,  
+                MaterialPageRoute(  
+                  builder: (_) => const MyChildrenScreen(),  
+                ),  
+              );  
+            },  
+          );  
+        }  
 
-    // ======================================================  
-    // 📚 جميع الإنجازات  
-    // ======================================================  
-
-    ...docs.map(  
-      (doc) {  
-        final Map<String, dynamic> data =  
-            (doc.data()  
-                    as Map<String, dynamic>?) ??  
-                {};  
-
-        return _buildRecordCard(  
+        return _buildGridItem(  
           context,  
-          data,  
+          'دخول الآباء',  
+          'متابعة الأبناء',  
+          Icons.lock_outline_rounded,  
+          blue,  
+          () {  
+            Navigator.push(  
+              context,  
+              MaterialPageRoute(  
+                builder: (_) => const LoginScreen(),  
+              ),  
+            );  
+          },  
+        );  
+      },  
+    ),  
+
+    _buildGridItem(  
+      context,  
+      'تبرع للمسجد',  
+      'ساهم في الخير',  
+      Icons.favorite_rounded,  
+      const Color(0xFFE91E63),  
+      () {  
+        Navigator.push(  
+          context,  
+          MaterialPageRoute(  
+            builder: (_) => const DonateScreen(),  
+          ),  
+        );  
+      },  
+    ),  
+
+    _buildGridItem(  
+      context,  
+      'القبلة',  
+      'حدد اتجاه القبلة',  
+      Icons.explore_rounded,  
+      const Color(0xFFEF5350),  
+      () {  
+        Navigator.push(  
+          context,  
+          MaterialPageRoute(  
+            builder: (_) => const QiblaScreen(),  
+          ),  
+        );  
+      },  
+    ),  
+
+    _buildGridItem(  
+      context,  
+      'القرآن الكريم',  
+      'استمع وتدبر',  
+      Icons.menu_book_rounded,  
+      darkGreen,  
+      () {  
+        Navigator.push(  
+          context,  
+          MaterialPageRoute(  
+            builder: (_) => const YasserDossariQuranPage(),  
+          ),  
+        );  
+      },  
+    ),  
+
+    _buildGridItem(  
+      context,  
+      'الأذكار',  
+      'حصن المسلم',  
+      Icons.auto_awesome_rounded,  
+      teal,  
+      () {  
+        Navigator.push(  
+          context,  
+          MaterialPageRoute(  
+            builder: (_) => const HisnElMuslimPage(),  
+          ),  
         );  
       },  
     ),  
@@ -687,977 +396,325 @@ return ListView(
 }
 
 // ============================================================
-// عنوان الإنجازات
+// Grid item
 // ============================================================
 
-Widget _buildRecordsHeader(
-int count,
+Widget _buildGridItem(
+BuildContext context,
+String title,
+String subtitle,
+IconData icon,
+Color color,
+VoidCallback onTap,
 ) {
-return Container(
-padding:
-const EdgeInsets.symmetric(
-horizontal: 15,
-vertical: 13,
-),
+return Material(
+color: Colors.transparent,
+child: InkWell(
+onTap: onTap,
+borderRadius: BorderRadius.circular(23),
+child: Container(
 decoration: BoxDecoration(
-color:
-Colors.white.withOpacity(0.96),
-borderRadius:
-BorderRadius.circular(17),
+color: Colors.white,
+borderRadius: BorderRadius.circular(23),
+border: Border.all(
+color: Colors.white.withOpacity(0.8),
+width: 1,
+),
 boxShadow: [
 BoxShadow(
-color:
-Colors.black.withOpacity(0.06),
-blurRadius: 12,
-offset:
-const Offset(0, 4),
+color: color.withOpacity(0.13),
+blurRadius: 14,
+offset: const Offset(0, 5),
 ),
 ],
 ),
-child: Row(
+child: Stack(
 children: [
-Container(
-width: 40,
-height: 40,
+Positioned(
+right: -20,
+top: -20,
+child: Container(
+width: 75,
+height: 75,
 decoration: BoxDecoration(
-gradient:
-const LinearGradient(
-colors: [
-primaryGreen,
-primaryBlue,
-],
+color: color.withOpacity(0.055),
+shape: BoxShape.circle,
 ),
-borderRadius:
-BorderRadius.circular(12),
-),
-child: const Icon(
-Icons.auto_stories_rounded,
-color: Colors.white,
-size: 21,
 ),
 ),
 
-const SizedBox(width: 11),  
-
-      const Expanded(  
-        child: Column(  
-          crossAxisAlignment:  
-              CrossAxisAlignment.start,  
-          children: [  
-            Text(  
-              'إنجازات الطالب',  
-              style: TextStyle(  
-                color: Colors.black87,  
-                fontSize: 15,  
-                fontWeight:  
-                    FontWeight.bold,  
-              ),  
-            ),  
-            SizedBox(height: 3),  
-            Text(  
-              'سجل التسميع والتقييم والملاحظات',  
-              style: TextStyle(  
-                color: Colors.black45,  
-                fontSize: 11,  
-              ),  
-            ),  
-          ],  
-        ),  
-      ),  
-
-      Container(  
-        padding:  
-            const EdgeInsets.symmetric(  
-          horizontal: 10,  
-          vertical: 6,  
-        ),  
-        decoration: BoxDecoration(  
-          color:  
-              primaryGreen.withOpacity(0.09),  
-          borderRadius:  
-              BorderRadius.circular(12),  
-        ),  
-        child: Text(  
-          '$count',  
-          style:  
-              const TextStyle(  
-            color: primaryGreen,  
-            fontSize: 12,  
-            fontWeight:  
-                FontWeight.bold,  
-          ),  
-        ),  
-      ),  
-    ],  
-  ),  
-);
-
-}
-
-// ============================================================
-// Record Card
-// ============================================================
-
-Widget _buildRecordCard(
-BuildContext context,
-Map<String, dynamic> data,
-) {
-final String status =
-data['status']?.toString() ??
-'حاضر';
-
-final bool isAbsent =  
-    status == 'غائب';  
-
-final bool isVacation =  
-    status == 'إجازة';  
-
-final bool isExcused =  
-    status == 'مستأذن';  
-
-final bool isReviewStatus =  
-    status == 'مراجعة';  
-
-final bool isSpecialStatus =  
-    isAbsent ||  
-    isVacation ||  
-    isExcused ||  
-    isReviewStatus;  
-
-final String surah =  
-    data['surah']?.toString() ??  
-        'غير محددة';  
-
-final String date =  
-    data['date']?.toString() ?? '';  
-
-final String grade =  
-    data['grade']?.toString() ?? '';  
-
-Color statusColor;  
-IconData statusIcon;  
-
-if (isAbsent) {  
-  statusColor = Colors.red;  
-  statusIcon =  
-      Icons.person_off_rounded;  
-} else if (isVacation) {  
-  statusColor = Colors.orange;  
-  statusIcon =  
-      Icons.beach_access_rounded;  
-} else if (isExcused) {  
-  statusColor =  
-      Colors.deepPurple;  
-  statusIcon =  
-      Icons.event_available_rounded;  
-} else if (isReviewStatus) {  
-  statusColor = Colors.blue;  
-  statusIcon =  
-      Icons.fact_check_rounded;  
-} else {  
-  statusColor = primaryGreen;  
-  statusIcon =  
-      Icons.menu_book_rounded;  
-}  
-
-return Container(  
-  margin:  
-      const EdgeInsets.only(bottom: 16),  
-  decoration: BoxDecoration(  
-    color: isSpecialStatus  
-        ? statusColor.withOpacity(0.035)  
-        : Colors.white,  
-    borderRadius:  
-        BorderRadius.circular(24),  
-    border: Border.all(  
-      color: isSpecialStatus  
-          ? statusColor.withOpacity(0.25)  
-          : Colors.white,  
-    ),  
-    boxShadow: [  
-      BoxShadow(  
-        color:  
-            Colors.black.withOpacity(0.07),  
-        blurRadius: 18,  
-        offset:  
-            const Offset(0, 6),  
-      ),  
-    ],  
-  ),  
-  child: ClipRRect(  
-    borderRadius:  
-        BorderRadius.circular(24),  
-    child: Column(  
-      children: [  
-        // ==================================================  
-        // الشريط العلوي  
-        // ==================================================  
-
-        Container(  
-          height: 5,  
-          decoration:  
-              BoxDecoration(  
-            gradient:  
-                LinearGradient(  
-              colors:  
-                  isSpecialStatus  
-                      ? [  
-                          statusColor,  
-                          statusColor  
-                              .withOpacity(  
-                                  0.5),  
-                        ]  
-                      : const [  
-                          primaryGreen,  
-                          primaryBlue,  
-                        ],  
-            ),  
-          ),  
-        ),  
-
-        Padding(  
-          padding:  
-              const EdgeInsets.all(17),  
-          child: Column(  
-            children: [  
-              // ==========================================  
-              // رأس الإنجاز  
-              // ==========================================  
-
-              Row(  
-                children: [  
-                  Container(  
-                    width: 50,  
-                    height: 50,  
-                    decoration:  
-                        BoxDecoration(  
-                      gradient:  
-                          LinearGradient(  
-                        colors:  
-                            isSpecialStatus  
-                                ? [  
-                                    statusColor,  
-                                    statusColor  
-                                        .withOpacity(  
-                                            0.65),  
-                                  ]  
-                                : const [  
-                                    primaryGreen,  
-                                    primaryBlue,  
-                                  ],  
-                      ),  
-                      borderRadius:  
-                          BorderRadius.circular(  
-                              15),  
-                    ),  
-                    child: Icon(  
-                      statusIcon,  
-                      color:  
-                          Colors.white,  
-                      size: 26,  
-                    ),  
-                  ),  
-
-                  const SizedBox(  
-                      width: 13),  
-
-                  Expanded(  
-                    child: Column(  
-                      crossAxisAlignment:  
-                          CrossAxisAlignment  
-                              .start,  
-                      children: [  
-                        Text(  
-                          isSpecialStatus  
-                              ? 'حالة الطالب'  
-                              : 'إنجاز القرآن الكريم',  
-                          style:  
-                              TextStyle(  
-                            color: Colors  
-                                .grey  
-                                .shade600,  
-                            fontSize: 12,  
-                          ),  
-                        ),  
-
-                        const SizedBox(  
-                            height: 4),  
-
-                        Text(  
-                          isSpecialStatus  
-                              ? status  
-                              : 'سورة $surah',  
-                          maxLines: 1,  
-                          overflow:  
-                              TextOverflow  
-                                  .ellipsis,  
-                          style:  
-                              TextStyle(  
-                            color:  
-                                isSpecialStatus  
-                                    ? statusColor  
-                                    : Colors  
-                                        .black87,  
-                            fontSize: 18,  
-                            fontWeight:  
-                                FontWeight  
-                                    .bold,  
-                          ),  
-                        ),  
+Padding(  
+            padding: const EdgeInsets.all(15),  
+            child: Column(  
+              crossAxisAlignment:  
+                  CrossAxisAlignment.start,  
+              children: [  
+                Container(  
+                  width: 52,  
+                  height: 52,  
+                  decoration: BoxDecoration(  
+                    gradient: LinearGradient(  
+                      colors: [  
+                        color.withOpacity(0.18),  
+                        color.withOpacity(0.07),  
                       ],  
                     ),  
+                    borderRadius:  
+                        BorderRadius.circular(17),  
                   ),  
-
-                  _buildDateBadge(  
-                    date,  
+                  child: Icon(  
+                    icon,  
+                    color: color,  
+                    size: 28,  
                   ),  
-                ],  
-              ),  
+                ),  
 
-              // ==========================================  
-              // حالات الغياب والإجازة والاستئذان  
-              // ==========================================  
+                const Spacer(),  
 
-              if (isSpecialStatus) ...[  
-                const SizedBox(  
-                    height: 18),  
+                Text(  
+                  title,  
+                  style: const TextStyle(  
+                    color: Colors.black87,  
+                    fontSize: 16,  
+                    fontWeight: FontWeight.w900,  
+                  ),  
+                ),  
 
-                _buildStatusDescription(  
-                  status: status,  
-                  color: statusColor,  
-                  icon: statusIcon,  
+                const SizedBox(height: 3),  
+
+                Text(  
+                  subtitle,  
+                  style: const TextStyle(  
+                    color: Colors.black45,  
+                    fontSize: 11,  
+                    fontWeight: FontWeight.w500,  
+                  ),  
                 ),  
               ],  
-
-              // ==========================================  
-              // إنجاز الحفظ  
-              // ==========================================  
-
-              if (!isSpecialStatus) ...[  
-                const SizedBox(  
-                    height: 18),  
-
-                _buildHighlightCard(  
-                  icon: Icons  
-                      .format_list_numbered_rounded,  
-                  iconColor:  
-                      primaryGreen,  
-                  label:  
-                      'نطاق التسميع',  
-                  value:  
-                      'من الآية ${data['fromAyah'] ?? '0'} إلى الآية ${data['toAyah'] ?? '0'}',  
-                ),  
-
-                const SizedBox(  
-                    height: 17),  
-
-                _buildEvaluationSection(  
-                  grade,  
-                ),  
-              ],  
-
-              // ==========================================  
-              // 📚 المطلوب غداً  
-              // ==========================================  
-
-              if (_hasText(  
-                data['tomorrowRequirement'],  
-              )) ...[  
-                const SizedBox(  
-                    height: 15),  
-
-                _buildHighlightCard(  
-                  icon: Icons  
-                      .auto_stories_rounded,  
-                  iconColor:  
-                      primaryBlue,  
-                  label:  
-                      'المطلوب غداً',  
-                  value:  
-                      data[  
-                              'tomorrowRequirement']  
-                          .toString(),  
-                ),  
-              ],  
-
-              // ==========================================  
-              // 📝 ملاحظة المدرس  
-              // ==========================================  
-
-              if (_hasText(  
-                data['notes'],  
-              )) ...[  
-                const SizedBox(  
-                    height: 11),  
-
-                _buildHighlightCard(  
-                  icon: Icons  
-                      .edit_note_rounded,  
-                  iconColor:  
-                      primaryGreen,  
-                  label:  
-                      'ملاحظة المدرس',  
-                  value:  
-                      data['notes']  
-                          .toString(),  
-                ),  
-              ],  
-
-              const SizedBox(  
-                  height: 4),  
-            ],  
+            ),  
           ),  
-        ),  
-      ],  
-    ),  
-  ),  
-);
 
-}
-
-// ============================================================
-// التاريخ
-// ============================================================
-
-Widget _buildDateBadge(
-String date,
-) {
-final DateTime? gregorianDate =
-DateTime.tryParse(date);
-
-if (gregorianDate == null) {  
-  return Container(  
-    padding:  
-        const EdgeInsets.symmetric(  
-      horizontal: 9,  
-      vertical: 7,  
-    ),  
-    decoration: BoxDecoration(  
-      color:  
-          Colors.grey.shade100,  
-      borderRadius:  
-          BorderRadius.circular(10),  
-    ),  
-    child: Text(  
-      date,  
-      style: TextStyle(  
-        color:  
-            Colors.grey.shade600,  
-        fontSize: 10,  
-        fontWeight:  
-            FontWeight.bold,  
-      ),  
-    ),  
-  );  
-}  
-
-final HijriDate hijri =  
-    HijriDate.fromDate(  
-  DateTime(  
-    gregorianDate.year,  
-    gregorianDate.month,  
-    gregorianDate.day,  
-  ),  
-);  
-
-final String hijriText =  
-    '${_toArabicNumber(hijri.hDay)} '  
-    '${_getHijriMonthName(hijri.hMonth)} '  
-    '${_toArabicNumber(hijri.hYear)} هـ';  
-
-final String gregorianText =  
-    '${_toArabicNumber(gregorianDate.day)}/'  
-    '${_toArabicNumber(gregorianDate.month)}/'  
-    '${_toArabicNumber(gregorianDate.year)} م';  
-
-return Container(  
-  constraints:  
-      const BoxConstraints(  
-    minWidth: 96,  
-  ),  
-  padding:  
-      const EdgeInsets.symmetric(  
-    horizontal: 9,  
-    vertical: 7,  
-  ),  
-  decoration: BoxDecoration(  
-    color:  
-        primaryGreen.withOpacity(0.07),  
-    borderRadius:  
-        BorderRadius.circular(12),  
-    border: Border.all(  
-      color:  
-          primaryGreen.withOpacity(0.12),  
-    ),  
-  ),  
-  child: Column(  
-    crossAxisAlignment:  
-        CrossAxisAlignment.center,  
-    children: [  
-      Text(  
-        hijriText,  
-        textAlign:  
-            TextAlign.center,  
-        style: const TextStyle(  
-          color: primaryGreen,  
-          fontSize: 10,  
-          fontWeight:  
-              FontWeight.bold,  
-        ),  
-      ),  
-
-      const SizedBox(height: 3),  
-
-      Text(  
-        gregorianText,  
-        textAlign:  
-            TextAlign.center,  
-        style: TextStyle(  
-          color:  
-              Colors.grey.shade600,  
-          fontSize: 9,  
-          fontWeight:  
-              FontWeight.w500,  
-        ),  
-      ),  
-    ],  
-  ),  
-);
-
-}
-
-String _getHijriMonthName(
-int month,
-) {
-const months = [
-'محرم',
-'صفر',
-'ربيع الأول',
-'ربيع الآخر',
-'جمادى الأولى',
-'جمادى الآخرة',
-'رجب',
-'شعبان',
-'رمضان',
-'شوال',
-'ذو القعدة',
-'ذو الحجة',
-];
-
-if (month < 1 || month > 12) {  
-  return '';  
-}  
-
-return months[month - 1];
-
-}
-
-String _toArabicNumber(
-dynamic value,
-) {
-return value
-.toString()
-.replaceAll('0', '٠')
-.replaceAll('1', '١')
-.replaceAll('2', '٢')
-.replaceAll('3', '٣')
-.replaceAll('4', '٤')
-.replaceAll('5', '٥')
-.replaceAll('6', '٦')
-.replaceAll('7', '٧')
-.replaceAll('8', '٨')
-.replaceAll('9', '٩');
-}
-
-// ============================================================
-// Evaluation
-// ============================================================
-
-Widget _buildEvaluationSection(
-String grade,
-) {
-final bool memorization =
-_gradeContains(
-grade,
-'حفظ',
-);
-
-final bool mastery =  
-    _gradeContains(  
-  grade,  
-  'إتقان',  
-);  
-
-final bool tajweed =  
-    _gradeContains(  
-  grade,  
-  'تجويد',  
-);  
-
-final bool review =  
-    _gradeContains(  
-  grade,  
-  'مراجعة',  
-);  
-
-return Column(  
-  crossAxisAlignment:  
-      CrossAxisAlignment.start,  
-  children: [  
-    _buildSectionTitle(  
-      icon: Icons.star_rounded,  
-      title: 'التقييم',  
-    ),  
-
-    const SizedBox(height: 10),  
-
-    Container(  
-      padding:  
-          const EdgeInsets.symmetric(  
-        horizontal: 8,  
-        vertical: 14,  
-      ),  
-      decoration:  
-          BoxDecoration(  
-        color:  
-            Colors.grey.shade50,  
-        borderRadius:  
-            BorderRadius.circular(17),  
-        border: Border.all(  
-          color:  
-              Colors.grey.shade200,  
-        ),  
-      ),  
-      child: Row(  
-        children: [  
-          _buildEvaluationTag(  
-            'حفظ',  
-            memorization,  
-            Icons.menu_book_rounded,  
-          ),  
-          _buildEvaluationTag(  
-            'إتقان',  
-            mastery,  
-            Icons.verified_rounded,  
-          ),  
-          _buildEvaluationTag(  
-            'تجويد',  
-            tajweed,  
-            Icons.record_voice_over_rounded,  
-          ),  
-          _buildEvaluationTag(  
-            'مراجعة',  
-            review,  
-            Icons.replay_rounded,  
+          Positioned(  
+            left: 12,  
+            bottom: 13,  
+            child: Icon(  
+              Icons.arrow_forward_ios_rounded,  
+              color: color.withOpacity(0.45),  
+              size: 13,  
+            ),  
           ),  
         ],  
       ),  
     ),  
-  ],  
-);
-
-}
-
-bool _gradeContains(
-String grade,
-String value,
-) {
-return grade
-.split('-')
-.map(
-(e) => e.trim(),
-)
-.contains(value);
-}
-
-// ============================================================
-// 💬 محادثة ولي الأمر مع المدير
-// تظهر مرة واحدة فقط أعلى الإنجازات
-// ============================================================
-
-Widget _buildChatSection(
-Map<String, dynamic> record,
-) {
-final String studentId =
-widget.child['id']?.toString() ?? '';
-
-final String parentId =  
-    widget.child['parentId']?.toString() ??  
-    widget.child['parentUid']?.toString() ??  
-    widget.child['guardianId']?.toString() ??  
-    record['parentId']?.toString() ??  
-    '';  
-
-final String halaqaId =  
-    widget.child['halaqaId']?.toString() ??  
-    record['halaqaId']?.toString() ??  
-    '';  
-
-if (studentId.isEmpty ||  
-    parentId.isEmpty) {  
-  return _buildParentMessageFallback(  
-    record,  
-  );  
-}  
-
-if (_adminId == null) {  
-  return _buildAdminLoading();  
-}  
-
-return _buildMessagesSection(  
-  studentId: studentId,  
-  parentId: parentId,  
-  halaqaId: halaqaId,  
+  ),  
 );
 
 }
 
 // ============================================================
-// Messages
+// Info row
 // ============================================================
 
-Widget _buildMessagesSection({
-required String studentId,
-required String parentId,
-required String halaqaId,
-}) {
-final Stream<QuerySnapshot> stream =
-FirebaseFirestore.instance
-.collection('messages')
-.where(
-'adminId',
-isEqualTo: _adminId,
-)
-.where(
-'parentId',
-isEqualTo: parentId,
-)
-.where(
-'studentId',
-isEqualTo: studentId,
-)
-.snapshots();
+Widget _buildInfoRow(FirebaseService service) {
+return StreamBuilder<NextKhutba>(
+stream: service.streamNextKhutba(),
+builder: (context, khutbaSnapshot) {
+if (khutbaSnapshot.connectionState ==
+ConnectionState.waiting) {
+return _buildGlassCard(
+child: const Padding(
+padding: EdgeInsets.all(20),
+child: Row(
+children: [
+CircularProgressIndicator(
+strokeWidth: 2,
+color: teal,
+),
+SizedBox(width: 14),
+Text(
+'جاري جلب بيانات الخطبة...',
+style: TextStyle(
+color: Colors.black54,
+),
+),
+],
+),
+),
+);
+}
 
-return StreamBuilder<QuerySnapshot>(  
-  stream: stream,  
-  builder: (context, snapshot) {  
-    if (snapshot.hasError) {  
-      return _buildChatError();  
+final khutba = khutbaSnapshot.data;  
+
+    return StreamBuilder<DocumentSnapshot>(  
+      stream: FirebaseFirestore.instance  
+          .collection('settings')  
+          .doc('next_event')  
+          .snapshots(),  
+      builder: (context, eventSnapshot) {  
+        if (eventSnapshot.connectionState ==  
+            ConnectionState.waiting) {  
+          return _buildKhutbaCard(khutba);  
+        }  
+
+        if (eventSnapshot.hasError ||  
+            !eventSnapshot.hasData ||  
+            !eventSnapshot.data!.exists) {  
+          return _buildKhutbaCard(khutba);  
+        }  
+
+        final eventData =  
+            eventSnapshot.data!.data()  
+                as Map<String, dynamic>?;  
+
+        if (eventData == null ||  
+            (eventData['title'] as String? ?? '')  
+                .isEmpty) {  
+          return _buildKhutbaCard(khutba);  
+        }  
+
+        return Column(  
+          children: [  
+            _buildKhutbaCard(khutba),  
+            const SizedBox(height: 10),  
+            _buildEventCard(eventData),  
+          ],  
+        );  
+      },  
+    );  
+  },  
+);
+
+}
+
+// ============================================================
+// Upcoming lecture
+// ============================================================
+
+Widget _buildUpcomingLecture() {
+return StreamBuilder<QuerySnapshot>(
+stream: FirebaseFirestore.instance
+.collection('lectures')
+.snapshots(),
+builder: (context, snapshot) {
+if (snapshot.connectionState ==
+ConnectionState.waiting ||
+!snapshot.hasData ||
+snapshot.data!.docs.isEmpty) {
+return const SizedBox.shrink();
+}
+
+final now = DateTime.now();  
+
+    final List<Map<String, dynamic>> upcoming = [];  
+
+    for (final doc in snapshot.data!.docs) {  
+      final data =  
+          doc.data() as Map<String, dynamic>;  
+
+      final timeStr = data['time'] as String?;  
+
+      if (timeStr != null) {  
+        final time = DateTime.tryParse(timeStr);  
+
+        if (time != null && time.isAfter(now)) {  
+          final copy =  
+              Map<String, dynamic>.from(data);  
+
+          copy['id'] = doc.id;  
+          upcoming.add(copy);  
+        }  
+      }  
     }  
 
-    if (snapshot.connectionState ==  
-            ConnectionState.waiting &&  
-        !snapshot.hasData) {  
-      return _buildChatLoading();  
+    if (upcoming.isEmpty) {  
+      return const SizedBox.shrink();  
     }  
 
-    final List<DocumentSnapshot> docs =  
-        snapshot.data?.docs.toList() ?? [];  
-
-    docs.sort((a, b) {  
-      final Map<String, dynamic> dataA =  
-          (a.data()  
-                  as Map<String, dynamic>?) ??  
-              {};  
-
-      final Map<String, dynamic> dataB =  
-          (b.data()  
-                  as Map<String, dynamic>?) ??  
-              {};  
-
-      final Timestamp? timeA =  
-          dataA['createdAt']  
-              as Timestamp?;  
-
-      final Timestamp? timeB =  
-          dataB['createdAt']  
-              as Timestamp?;  
-
-      if (timeA == null &&  
-          timeB == null) {  
-        return 0;  
-      }  
-
-      if (timeA == null) {  
-        return -1;  
-      }  
-
-      if (timeB == null) {  
-        return 1;  
-      }  
-
-      return timeA.compareTo(timeB);  
-    });  
-
-    return Container(  
-      width: double.infinity,  
-      padding:  
-          const EdgeInsets.all(16),  
-      decoration: BoxDecoration(  
-        color: Colors.white,  
-        borderRadius:  
-            BorderRadius.circular(22),  
-        boxShadow: [  
-          BoxShadow(  
-            color:  
-                Colors.black.withOpacity(0.07),  
-            blurRadius: 18,  
-            offset:  
-                const Offset(0, 6),  
+    upcoming.sort(  
+      (a, b) => DateTime.parse(a['time'])  
+          .compareTo(  
+            DateTime.parse(b['time']),  
           ),  
-        ],  
-      ),  
-      child: Column(  
-        crossAxisAlignment:  
-            CrossAxisAlignment.start,  
-        children: [  
-          // ==================================================  
-          // عنوان المحادثة  
-          // ==================================================  
+    );  
 
-          Row(  
-            children: [  
-              Container(  
-                width: 44,  
-                height: 44,  
-                decoration:  
-                    BoxDecoration(  
-                  color: primaryBlue  
-                      .withOpacity(0.10),  
-                  borderRadius:  
-                      BorderRadius.circular(  
-                          13),  
-                ),  
-                child: const Icon(  
-                  Icons  
-                      .admin_panel_settings_rounded,  
-                  color:  
-                      primaryBlue,  
-                  size: 23,  
-                ),  
-              ),  
+    final lecture = upcoming.first;  
 
-              const SizedBox(  
-                  width: 10),  
+    return _buildGlassCard(  
+      child: Padding(  
+        padding: const EdgeInsets.all(16),  
+        child: Row(  
+          children: [  
+            _buildSmallIcon(  
+              Icons.menu_book_rounded,  
+              const Color(0xFF7E57C2),  
+            ),  
 
-              const Expanded(  
-                child: Column(  
-                  crossAxisAlignment:  
-                      CrossAxisAlignment  
-                          .start,  
-                  children: [  
-                    Text(  
-                      'التواصل مع الإدارة',  
-                      style:  
-                          TextStyle(  
-                        color:  
-                            Colors.black87,  
-                        fontSize: 15,  
-                        fontWeight:  
-                            FontWeight.bold,  
-                      ),  
+            const SizedBox(width: 13),  
+
+            Expanded(  
+              child: Column(  
+                crossAxisAlignment:  
+                    CrossAxisAlignment.start,  
+                children: [  
+                  const Text(  
+                    'محاضرة قادمة',  
+                    style: TextStyle(  
+                      color: Color(0xFF7E57C2),  
+                      fontSize: 11,  
+                      fontWeight: FontWeight.bold,  
                     ),  
-                    SizedBox(  
-                        height: 3),  
+                  ),  
+
+                  const SizedBox(height: 4),  
+
+                  Text(  
+                    lecture['title'] ?? 'محاضرة',  
+                    maxLines: 1,  
+                    overflow:  
+                        TextOverflow.ellipsis,  
+                    style: const TextStyle(  
+                      color: Colors.black87,  
+                      fontSize: 16,  
+                      fontWeight: FontWeight.w900,  
+                    ),  
+                  ),  
+
+                  if (lecture['speaker'] != null &&  
+                      (lecture['speaker'] as String)  
+                          .isNotEmpty)  
                     Text(  
-                      'رسائل ولي الأمر والمدير',  
-                      style:  
-                          TextStyle(  
-                        color:  
-                            Colors.black45,  
+                      'المحاضر: ${lecture['speaker']}',  
+                      maxLines: 1,  
+                      overflow:  
+                          TextOverflow.ellipsis,  
+                      style: const TextStyle(  
+                        color: Colors.black54,  
                         fontSize: 11,  
                       ),  
                     ),  
-                  ],  
-                ),  
-              ),  
 
-              if (docs.isNotEmpty)  
-                Container(  
-                  padding:  
-                      const EdgeInsets  
-                          .symmetric(  
-                    horizontal: 9,  
-                    vertical: 6,  
-                  ),  
-                  decoration:  
-                      BoxDecoration(  
-                    color: primaryGreen  
-                        .withOpacity(  
-                            0.09),  
-                    borderRadius:  
-                        BorderRadius  
-                            .circular(  
-                                10),  
-                  ),  
-                  child: Text(  
-                    '${docs.length}',  
-                    style:  
-                        const TextStyle(  
-                      color:  
-                          primaryGreen,  
+                  const SizedBox(height: 3),  
+
+                  Text(  
+                    _formatLectureTime(  
+                      lecture['time'],  
+                    ),  
+                    style: const TextStyle(  
+                      color: Colors.black45,  
                       fontSize: 11,  
-                      fontWeight:  
-                          FontWeight.bold,  
                     ),  
                   ),  
-                ),  
-            ],  
-          ),  
-
-          const SizedBox(  
-              height: 14),  
-
-          // ==================================================  
-          // الرسائل  
-          // ==================================================  
-
-          if (docs.isEmpty)  
-            _buildNoMessages()  
-          else  
-            Container(  
-              constraints:  
-                  const BoxConstraints(  
-                maxHeight: 360,  
-              ),  
-              child:  
-                  ListView.builder(  
-                shrinkWrap: true,  
-                physics:  
-                    const BouncingScrollPhysics(),  
-                itemCount:  
-                    docs.length,  
-                itemBuilder:  
-                    (context, index) {  
-                  final Map<String,  
-                          dynamic>  
-                      data =  
-                      (docs[index]  
-                              .data()  
-                          as Map<String,  
-                              dynamic>?) ??  
-                          {};  
-
-                  return _buildMessageBubble(  
-                    data,  
-                  );  
-                },  
+                ],  
               ),  
             ),  
 
-          const SizedBox(  
-              height: 13),  
-
-          // ==================================================  
-          // إرسال رسالة  
-          // ==================================================  
-
-          _buildSendMessageBox(  
-            studentId: studentId,  
-            parentId: parentId,  
-            halaqaId: halaqaId,  
-          ),  
-        ],  
+            const Icon(  
+              Icons.arrow_forward_ios_rounded,  
+              color: Colors.black26,  
+              size: 14,  
+            ),  
+          ],  
+        ),  
       ),  
     );  
   },  
@@ -1666,137 +723,69 @@ return StreamBuilder<QuerySnapshot>(
 }
 
 // ============================================================
-// Message Bubble
+// Khutba card
 // ============================================================
 
-Widget _buildMessageBubble(
-Map<String, dynamic> data,
-) {
-final String role =
-data['senderRole']
-?.toString() ??
-'parent';
+Widget _buildKhutbaCard(NextKhutba? khutba) {
+return _buildGlassCard(
+child: Padding(
+padding: const EdgeInsets.all(16),
+child: Row(
+children: [
+_buildSmallIcon(
+Icons.mic_external_on_rounded,
+teal,
+),
 
-final bool isAdmin =  
-    role == 'admin';  
+const SizedBox(width: 13),  
 
-final String text =  
-    data['text']?.toString() ?? '';  
-
-final Timestamp? createdAt =  
-    data['createdAt']  
-        as Timestamp?;  
-
-String timeText = '';  
-
-if (createdAt != null) {  
-  final date =  
-      createdAt.toDate();  
-
-  timeText =  
-      '${date.hour.toString().padLeft(2, '0')}:'  
-      '${date.minute.toString().padLeft(2, '0')}';  
-}  
-
-return Align(  
-  alignment: isAdmin  
-      ? Alignment.centerLeft  
-      : Alignment.centerRight,  
-  child: Container(  
-    constraints:  
-        const BoxConstraints(  
-      maxWidth: 310,  
-    ),  
-    margin:  
-        const EdgeInsets.only(  
-      bottom: 9,  
-    ),  
-    padding:  
-        const EdgeInsets.all(12),  
-    decoration: BoxDecoration(  
-      color: isAdmin  
-          ? primaryGreen  
-              .withOpacity(0.09)  
-          : primaryBlue  
-              .withOpacity(0.09),  
-      borderRadius:  
-          BorderRadius.circular(16),  
-      border: Border.all(  
-        color: isAdmin  
-            ? primaryGreen  
-                .withOpacity(0.16)  
-            : primaryBlue  
-                .withOpacity(0.16),  
-      ),  
-    ),  
-    child: Column(  
-      crossAxisAlignment:  
-          CrossAxisAlignment.start,  
-      children: [  
-        Row(  
-          mainAxisSize:  
-              MainAxisSize.min,  
-          children: [  
-            Icon(  
-              isAdmin  
-                  ? Icons  
-                      .admin_panel_settings_rounded  
-                  : Icons.person_rounded,  
-              color: isAdmin  
-                  ? primaryGreen  
-                  : primaryBlue,  
-              size: 15,  
-            ),  
-
-            const SizedBox(  
-                width: 5),  
-
-            Text(  
-              isAdmin  
-                  ? 'المدير'  
-                  : 'ولي الأمر',  
-              style: TextStyle(  
-                color: isAdmin  
-                    ? primaryGreen  
-                    : primaryBlue,  
-                fontSize: 10,  
-                fontWeight:  
-                    FontWeight.bold,  
+        Expanded(  
+          child: Column(  
+            crossAxisAlignment:  
+                CrossAxisAlignment.start,  
+            children: [  
+              const Text(  
+                'خطبة الجمعة القادمة',  
+                style: TextStyle(  
+                  color: teal,  
+                  fontSize: 11,  
+                  fontWeight: FontWeight.bold,  
+                ),  
               ),  
-            ),  
-          ],  
-        ),  
 
-        const SizedBox(  
-            height: 6),  
+              const SizedBox(height: 4),  
 
-        Text(  
-          text,  
-          textDirection:  
-              TextDirection.rtl,  
-          textAlign:  
-              TextAlign.right,  
-          style:  
-              const TextStyle(  
-            color:  
-                Colors.black87,  
-            fontSize: 13,  
-            height: 1.5,  
+              Text(  
+                khutba?.title ??  
+                    'لم يتم تحديد العنوان',  
+                maxLines: 1,  
+                overflow:  
+                    TextOverflow.ellipsis,  
+                style: const TextStyle(  
+                  color: Colors.black87,  
+                  fontSize: 16,  
+                  fontWeight: FontWeight.w900,  
+                ),  
+              ),  
+
+              const SizedBox(height: 2),  
+
+              Text(  
+                'الخطيب: ${khutba?.imam ?? 'غير محدد'}',  
+                style: const TextStyle(  
+                  color: Colors.black54,  
+                  fontSize: 11,  
+                ),  
+              ),  
+            ],  
           ),  
         ),  
 
-        if (timeText.isNotEmpty) ...[  
-          const SizedBox(  
-              height: 5),  
-          Text(  
-            timeText,  
-            style: TextStyle(  
-              color:  
-                  Colors.grey.shade500,  
-              fontSize: 9,  
-            ),  
-          ),  
-        ],  
+        const Icon(  
+          Icons.arrow_forward_ios_rounded,  
+          color: Colors.black26,  
+          size: 14,  
+        ),  
       ],  
     ),  
   ),  
@@ -1805,966 +794,999 @@ return Align(
 }
 
 // ============================================================
-// Send Message Box
+// Event card
 // ============================================================
 
-Widget _buildSendMessageBox({
-required String studentId,
-required String parentId,
-required String halaqaId,
-}) {
-return Container(
-padding:
-const EdgeInsets.all(11),
-decoration: BoxDecoration(
-color: Colors.grey.shade50,
-borderRadius:
-BorderRadius.circular(16),
-border: Border.all(
-color: Colors.grey.shade200,
-),
-),
-child: Row(
-crossAxisAlignment:
-CrossAxisAlignment.end,
-children: [
-Expanded(
-child: TextField(
-controller:
-_parentMessageController,
+Widget _buildEventCard(
+Map<String, dynamic> event,
+) {
+final title = event['title'] ?? 'فعالية';
+final location = event['location'] ?? '';
 
-maxLines: 3,  
-          minLines: 1,  
+String? timeStr = event['time'] as String?;  
 
-          textDirection:  
-              TextDirection.rtl,  
-          textAlign:  
-              TextAlign.right,  
+if (timeStr == null || timeStr.isEmpty) {  
+  timeStr = event['date'] as String?;  
+}  
 
-          style: const TextStyle(  
-            color: Colors.black87,  
-            fontSize: 14,  
-            fontWeight:  
-                FontWeight.w500,  
-            height: 1.5,  
-          ),  
+String dateStr = '';  
 
-          decoration:  
-              InputDecoration(  
-            hintText:  
-                'اكتب رسالة للإدارة...',  
-            hintStyle:  
-                TextStyle(  
-              color:  
-                  Colors.grey.shade400,  
-              fontSize: 12,  
-            ),  
-            border:  
-                InputBorder.none,  
-            enabledBorder:  
-                InputBorder.none,  
-            focusedBorder:  
-                InputBorder.none,  
-          ),  
+if (timeStr != null && timeStr.isNotEmpty) {  
+  dateStr = _formatLectureTime(timeStr);  
+} else {  
+  final lastUpdated =  
+      event['lastUpdated'] as Timestamp?;  
+
+  if (lastUpdated != null) {  
+    final dt = lastUpdated.toDate();  
+
+    dateStr =  
+        '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';  
+  }  
+}  
+
+return _buildGlassCard(  
+  child: Padding(  
+    padding: const EdgeInsets.all(16),  
+    child: Row(  
+      children: [  
+        _buildSmallIcon(  
+          Icons.event_rounded,  
+          Colors.orange,  
         ),  
-      ),  
 
-      const SizedBox(width: 8),  
+        const SizedBox(width: 13),  
 
-      Container(  
-        width: 45,  
-        height: 45,  
-        decoration:  
-            const BoxDecoration(  
-          gradient:  
-              LinearGradient(  
-            colors: [  
-              primaryGreen,  
-              primaryBlue,  
+        Expanded(  
+          child: Column(  
+            crossAxisAlignment:  
+                CrossAxisAlignment.start,  
+            children: [  
+              const Text(  
+                'فعالية قادمة',  
+                style: TextStyle(  
+                  color: Colors.orange,  
+                  fontSize: 11,  
+                  fontWeight: FontWeight.bold,  
+                ),  
+              ),  
+
+              const SizedBox(height: 4),  
+
+              Text(  
+                title,  
+                maxLines: 1,  
+                overflow:  
+                    TextOverflow.ellipsis,  
+                style: const TextStyle(  
+                  color: Colors.black87,  
+                  fontSize: 16,  
+                  fontWeight: FontWeight.w900,  
+                ),  
+              ),  
+
+              if (location.isNotEmpty)  
+                Text(  
+                  'المكان: $location',  
+                  maxLines: 1,  
+                  overflow:  
+                      TextOverflow.ellipsis,  
+                  style: const TextStyle(  
+                    color: Colors.black54,  
+                    fontSize: 11,  
+                  ),  
+                ),  
+
+              if (dateStr.isNotEmpty)  
+                Text(  
+                  dateStr,  
+                  style: const TextStyle(  
+                    color: Colors.black45,  
+                    fontSize: 11,  
+                  ),  
+                ),  
             ],  
           ),  
-          shape:  
-              BoxShape.circle,  
         ),  
-        child: IconButton(  
-          onPressed:  
-              _sendingMessage  
-                  ? null  
-                  : () {  
-                      _sendMessage(  
-                        studentId:  
-                            studentId,  
-                        parentId:  
-                            parentId,  
-                        halaqaId:  
-                            halaqaId,  
-                      );  
-                    },  
-          icon:  
-              _sendingMessage  
-                  ? const SizedBox(  
-                      width: 18,  
-                      height: 18,  
-                      child:  
-                          CircularProgressIndicator(  
-                        strokeWidth:  
-                            2,  
-                        color:  
-                            Colors.white,  
-                      ),  
-                    )  
-                  : const Icon(  
-                      Icons  
-                          .send_rounded,  
-                      color:  
-                          Colors.white,  
-                      size: 20,  
-                    ),  
+
+        const Icon(  
+          Icons.arrow_forward_ios_rounded,  
+          color: Colors.black26,  
+          size: 14,  
         ),  
-      ),  
-    ],  
+      ],  
+    ),  
   ),  
 );
 
 }
 
 // ============================================================
-// إرسال ولي الأمر -> المدير
+// Small icon
 // ============================================================
 
-Future<void> _sendMessage({
-required String studentId,
-required String parentId,
-required String halaqaId,
-}) async {
-final String text =
-_parentMessageController
-.text
-.trim();
-
-if (text.isEmpty) {  
-  return;  
-}  
-
-if (_adminId == null) {  
-  await _loadAdmin();  
-
-  if (_adminId == null) {  
-    if (!mounted) return;  
-
-    ScaffoldMessenger.of(context)  
-        .showSnackBar(  
-      const SnackBar(  
-        content: Text(  
-          'تعذر العثور على حساب المدير.',  
-        ),  
-        backgroundColor:  
-            Colors.redAccent,  
-      ),  
-    );  
-
-    return;  
-  }  
-}  
-
-setState(() {  
-  _sendingMessage = true;  
-});  
-
-try {  
-  final String studentName =  
-      widget.child['name']  
-              ?.toString() ??  
-          'الطالب';  
-
-  final String parentName =  
-      widget.child['parentName']  
-              ?.toString() ??  
-          widget.child['guardianName']  
-              ?.toString() ??  
-          'ولي الأمر';  
-
-  final String halaqaName =  
-      widget.child['halaqaName']  
-              ?.toString() ??  
-          '';  
-
-  final String currentParentId =  
-      parentId;  
-
-  final String conversationId =  
-      '${currentParentId}_$studentId';  
-
-  await FirebaseFirestore  
-      .instance  
-      .collection('messages')  
-      .add({  
-    // =====================================================  
-    // المحادثة  
-    // =====================================================  
-
-    'conversationId':  
-        conversationId,  
-
-    // =====================================================  
-    // الطالب  
-    // =====================================================  
-
-    'studentId':  
-        studentId,  
-
-    'studentName':  
-        studentName,  
-
-    // =====================================================  
-    // ولي الأمر  
-    // =====================================================  
-
-    'parentId':  
-        currentParentId,  
-
-    'parentName':  
-        parentName,  
-
-    // =====================================================  
-    // الحلقة  
-    // =====================================================  
-
-    'halaqaId':  
-        halaqaId,  
-
-    'halaqaName':  
-        halaqaName,  
-
-    // =====================================================  
-    // المدير  
-    // =====================================================  
-
-    'adminId':  
-        _adminId,  
-
-    // =====================================================  
-    // المرسل والمستقبل  
-    // =====================================================  
-
-    'senderId':  
-        currentParentId,  
-
-    'senderRole':  
-        'parent',  
-
-    'receiverId':  
-        _adminId,  
-
-    'receiverRole':  
-        'admin',  
-
-    // =====================================================  
-    // الرسالة  
-    // =====================================================  
-
-    'text':  
-        text,  
-
-    // =====================================================  
-    // الوقت  
-    // =====================================================  
-
-    'createdAt':  
-        FieldValue.serverTimestamp(),  
-
-    'updatedAt':  
-        FieldValue.serverTimestamp(),  
-  });  
-
-  _parentMessageController.clear();  
-
-  if (!mounted) return;  
-
-  ScaffoldMessenger.of(context)  
-      .showSnackBar(  
-    const SnackBar(  
-      content: Text(  
-        'تم إرسال الرسالة إلى الإدارة.',  
-      ),  
-      backgroundColor:  
-          primaryGreen,  
-      behavior:  
-          SnackBarBehavior.floating,  
-    ),  
-  );  
-} catch (e) {  
-  if (!mounted) return;  
-
-  ScaffoldMessenger.of(context)  
-      .showSnackBar(  
-    SnackBar(  
-      content: Text(  
-        'تعذر إرسال الرسالة: $e',  
-      ),  
-      backgroundColor:  
-          Colors.redAccent,  
-      behavior:  
-          SnackBarBehavior.floating,  
-    ),  
-  );  
-} finally {  
-  if (mounted) {  
-    setState(() {  
-      _sendingMessage = false;  
-    });  
-  }  
-}
-
-}
-
-// ============================================================
-// Fallback
-// ============================================================
-
-Widget _buildParentMessageFallback(
-Map<String, dynamic> record,
+Widget _buildSmallIcon(
+IconData icon,
+Color color,
 ) {
 return Container(
-width: double.infinity,
-padding:
-const EdgeInsets.all(16),
+width: 51,
+height: 51,
 decoration: BoxDecoration(
-color:
-Colors.white.withOpacity(0.95),
-borderRadius:
-BorderRadius.circular(18),
-boxShadow: [
-BoxShadow(
-color:
-Colors.black.withOpacity(0.05),
-blurRadius: 12,
-),
+gradient: LinearGradient(
+colors: [
+color.withOpacity(0.18),
+color.withOpacity(0.06),
 ],
 ),
-child: const Column(
-children: [
-Icon(
-Icons.chat_bubble_outline_rounded,
-color: Colors.grey,
-size: 30,
-),
-SizedBox(height: 7),
-Text(
-'التواصل مع الإدارة غير متاح حالياً',
-textAlign:
-TextAlign.center,
-style: TextStyle(
-color: Colors.black54,
-fontSize: 12,
-fontWeight:
-FontWeight.bold,
-),
-),
-SizedBox(height: 4),
-Text(
-'لم يتم ربط الطالب بحساب ولي الأمر.',
-textAlign:
-TextAlign.center,
-style: TextStyle(
-color: Colors.black38,
-fontSize: 10,
-),
-),
-],
-),
-);
-}
-
-Widget _buildNoMessages() {
-return Container(
-width: double.infinity,
-padding:
-const EdgeInsets.all(18),
-decoration: BoxDecoration(
-color:
-Colors.grey.shade50,
-borderRadius:
-BorderRadius.circular(15),
-),
-child: const Column(
-children: [
-Icon(
-Icons.chat_bubble_outline_rounded,
-color: Colors.grey,
-size: 30,
-),
-SizedBox(height: 7),
-Text(
-'لا توجد رسائل بعد',
-style: TextStyle(
-color: Colors.black54,
-fontSize: 12,
-fontWeight:
-FontWeight.bold,
-),
-),
-SizedBox(height: 3),
-Text(
-'يمكنك إرسال رسالة للإدارة من هنا.',
-style: TextStyle(
-color: Colors.black38,
-fontSize: 10,
-),
-),
-],
-),
-);
-}
-
-Widget _buildChatLoading() {
-return Container(
-width: double.infinity,
-padding:
-const EdgeInsets.all(20),
-decoration: BoxDecoration(
-color: Colors.white,
-borderRadius:
-BorderRadius.circular(20),
-),
-child: const Center(
-child: SizedBox(
-width: 22,
-height: 22,
-child:
-CircularProgressIndicator(
-strokeWidth: 2,
-color: primaryBlue,
-),
-),
-),
-);
-}
-
-Widget _buildAdminLoading() {
-return Container(
-width: double.infinity,
-padding:
-const EdgeInsets.all(17),
-decoration: BoxDecoration(
-color: Colors.white,
-borderRadius:
-BorderRadius.circular(18),
-boxShadow: [
-BoxShadow(
-color:
-Colors.black.withOpacity(0.05),
-blurRadius: 12,
-),
-],
-),
-child: const Row(
-mainAxisAlignment:
-MainAxisAlignment.center,
-children: [
-SizedBox(
-width: 18,
-height: 18,
-child:
-CircularProgressIndicator(
-strokeWidth: 2,
-color:
-primaryBlue,
-),
-),
-SizedBox(width: 10),
-Text(
-'جاري الاتصال بالإدارة...',
-style: TextStyle(
-fontSize: 12,
-color:
-Colors.black54,
-),
-),
-],
-),
-);
-}
-
-Widget _buildChatError() {
-return Container(
-width: double.infinity,
-padding:
-const EdgeInsets.all(15),
-decoration: BoxDecoration(
-color:
-Colors.white,
-borderRadius:
-BorderRadius.circular(18),
-border: Border.all(
-color:
-Colors.red.withOpacity(0.15),
-),
-),
-child: const Text(
-'تعذر تحميل المحادثة.',
-textAlign:
-TextAlign.center,
-style: TextStyle(
-color: Colors.red,
-fontSize: 12,
-),
-),
-);
-}
-
-// ============================================================
-// Status
-// ============================================================
-
-Widget _buildStatusDescription({
-required String status,
-required Color color,
-required IconData icon,
-}) {
-String description;
-
-switch (status) {  
-  case 'غائب':  
-    description =  
-        'لم يحضر الطالب إلى الحلقة في هذا اليوم.';  
-    break;  
-
-  case 'إجازة':  
-    description =  
-        'الطالب في إجازة ولا يوجد إنجاز مسجل لهذا اليوم.';  
-    break;  
-
-  case 'مستأذن':  
-    description =  
-        'الطالب مستأذن لهذا اليوم بعذر مسجل.';  
-    break;  
-
-  case 'مراجعة':  
-    description =  
-        'تم تخصيص هذا اليوم لمراجعة المحفوظ السابق.';  
-    break;  
-
-  default:  
-    description =  
-        'تم تسجيل حالة خاصة للطالب.';  
-}  
-
-return Container(  
-  width: double.infinity,  
-  padding:  
-      const EdgeInsets.all(15),  
-  decoration: BoxDecoration(  
-    color:  
-        color.withOpacity(0.07),  
-    borderRadius:  
-        BorderRadius.circular(17),  
-    border: Border.all(  
-      color:  
-          color.withOpacity(0.16),  
-    ),  
-  ),  
-  child: Row(  
-    crossAxisAlignment:  
-        CrossAxisAlignment.start,  
-    children: [  
-      Container(  
-        width: 42,  
-        height: 42,  
-        decoration:  
-            BoxDecoration(  
-          color:  
-              color.withOpacity(0.12),  
-          shape:  
-              BoxShape.circle,  
-        ),  
-        child: Icon(  
-          icon,  
-          color: color,  
-          size: 22,  
-        ),  
-      ),  
-
-      const SizedBox(width: 11),  
-
-      Expanded(  
-        child: Column(  
-          crossAxisAlignment:  
-              CrossAxisAlignment.start,  
-          children: [  
-            Text(  
-              status,  
-              style: TextStyle(  
-                color: color,  
-                fontSize: 14,  
-                fontWeight:  
-                    FontWeight.bold,  
-              ),  
-            ),  
-
-            const SizedBox(  
-                height: 5),  
-
-            Text(  
-              description,  
-              style:  
-                  const TextStyle(  
-                color:  
-                    Colors.black87,  
-                fontSize: 13,  
-                height: 1.5,  
-              ),  
-            ),  
-          ],  
-        ),  
-      ),  
-    ],  
-  ),  
-);
-
-}
-
-// ============================================================
-// Section Title
-// ============================================================
-
-Widget _buildSectionTitle({
-required IconData icon,
-required String title,
-}) {
-return Row(
-children: [
-Icon(
-icon,
-color: primaryGreen,
-size: 20,
-),
-const SizedBox(width: 7),
-Text(
-title,
-style:
-const TextStyle(
-color: Colors.black87,
-fontSize: 14,
-fontWeight:
-FontWeight.bold,
-),
-),
-],
-);
-}
-
-// ============================================================
-// Highlight
-// ============================================================
-
-Widget _buildHighlightCard({
-required IconData icon,
-required Color iconColor,
-required String label,
-required String value,
-}) {
-return Container(
-width: double.infinity,
-padding:
-const EdgeInsets.all(13),
-decoration: BoxDecoration(
-color:
-iconColor.withOpacity(0.07),
-borderRadius:
-BorderRadius.circular(16),
-border: Border.all(
-color:
-iconColor.withOpacity(0.18),
-),
-),
-child: Row(
-crossAxisAlignment:
-CrossAxisAlignment.start,
-children: [
-Container(
-width: 40,
-height: 40,
-decoration:
-BoxDecoration(
-color:
-iconColor.withOpacity(
-0.13),
-borderRadius:
-BorderRadius.circular(12),
+borderRadius: BorderRadius.circular(16),
 ),
 child: Icon(
 icon,
-color: iconColor,
-size: 21,
-),
-),
-
-const SizedBox(width: 11),  
-
-      Expanded(  
-        child: Column(  
-          crossAxisAlignment:  
-              CrossAxisAlignment.start,  
-          children: [  
-            Text(  
-              label,  
-              style: TextStyle(  
-                color: iconColor,  
-                fontSize: 12,  
-                fontWeight:  
-                    FontWeight.bold,  
-              ),  
-            ),  
-
-            const SizedBox(  
-                height: 5),  
-
-            Text(  
-              value,  
-              textDirection:  
-                  TextDirection.rtl,  
-              textAlign:  
-                  TextAlign.right,  
-              style:  
-                  const TextStyle(  
-                color:  
-                    Colors.black87,  
-                fontSize: 14,  
-                height: 1.55,  
-              ),  
-            ),  
-          ],  
-        ),  
-      ),  
-    ],  
-  ),  
-);
-
-}
-
-// ============================================================
-// Evaluation Tag
-// ============================================================
-
-Widget _buildEvaluationTag(
-String title,
-bool isDone,
-IconData icon,
-) {
-final Color color =
-isDone
-? primaryGreen
-: Colors.grey;
-
-return Expanded(  
-  child: Column(  
-    children: [  
-      Container(  
-        width: 38,  
-        height: 38,  
-        decoration:  
-            BoxDecoration(  
-          color: isDone  
-              ? primaryGreen  
-                  .withOpacity(0.10)  
-              : Colors.grey  
-                  .withOpacity(0.08),  
-          shape:  
-              BoxShape.circle,  
-        ),  
-        child: Icon(  
-          isDone  
-              ? icon  
-              : Icons.remove_rounded,  
-          color: color,  
-          size: 19,  
-        ),  
-      ),  
-
-      const SizedBox(  
-          height: 6),  
-
-      Text(  
-        title,  
-        textAlign:  
-            TextAlign.center,  
-        style: TextStyle(  
-          color: isDone  
-              ? Colors.black87  
-              : Colors.grey,  
-          fontSize: 11,  
-          fontWeight: isDone  
-              ? FontWeight.bold  
-              : FontWeight.normal,  
-        ),  
-      ),  
-
-      const SizedBox(  
-          height: 2),  
-
-      Text(  
-        isDone  
-            ? 'ممتاز'  
-            : 'لم يسجل',  
-        style: TextStyle(  
-          color: isDone  
-              ? primaryGreen  
-              : Colors.grey.shade400,  
-          fontSize: 8,  
-        ),  
-      ),  
-    ],  
-  ),  
-);
-
-}
-
-// ============================================================
-// Loading
-// ============================================================
-
-Widget _buildLoading() {
-return const Center(
-child:
-CircularProgressIndicator(
-color: Colors.white,
-strokeWidth: 3,
+color: color,
+size: 27,
 ),
 );
 }
 
 // ============================================================
-// Empty
+// Glass card
 // ============================================================
 
-Widget _buildEmptyState({
-required IconData icon,
-required String title,
-required String subtitle,
+Widget _buildGlassCard({
+required Widget child,
 }) {
-return Center(
-child: Padding(
-padding:
-const EdgeInsets.all(30),
-child: Container(
+return Container(
 width: double.infinity,
-padding:
-const EdgeInsets.all(25),
+decoration: BoxDecoration(
+color: Colors.white.withOpacity(0.97),
+borderRadius: BorderRadius.circular(22),
+border: Border.all(
+color: Colors.white,
+width: 1,
+),
+boxShadow: [
+BoxShadow(
+color: Colors.black.withOpacity(0.07),
+blurRadius: 14,
+offset: const Offset(0, 5),
+),
+],
+),
+child: child,
+);
+}
+
+// ============================================================
+// Logout + Developer Contact
+// ============================================================
+
+Widget _buildLogoutButton(BuildContext context) {
+return Column(
+children: [
+StreamBuilder<User?>(
+stream:
+FirebaseAuth.instance.authStateChanges(),
+builder: (context, snapshot) {
+if (!snapshot.hasData) {
+return const SizedBox.shrink();
+}
+
+return Center(  
+          child: TextButton.icon(  
+            onPressed: () async {  
+              await FirebaseAuth.instance.signOut();  
+            },  
+            icon: const Icon(  
+              Icons.logout_rounded,  
+              color: Colors.black45,  
+              size: 19,  
+            ),  
+            label: const Text(  
+              'تسجيل الخروج',  
+              style: TextStyle(  
+                color: Colors.black54,  
+                fontWeight: FontWeight.w600,  
+              ),  
+            ),  
+          ),  
+        );  
+      },  
+    ),  
+
+    const SizedBox(height: 8),  
+
+    // ======================================================  
+    // طلب نسخة للمسجد / التواصل مع المطور  
+    // ======================================================  
+
+    Center(  
+      child: TextButton.icon(  
+        onPressed: () {  
+          _showDeveloperContactDialog(context);  
+        },  
+        icon: const Icon(  
+          Icons.support_agent_rounded,  
+          color: darkGreen,  
+          size: 21,  
+        ),  
+        label: const Text(  
+          'انقر هنا لطلب نسخة لمسجدك أو للتواصل مع المطور',  
+          textAlign: TextAlign.center,  
+          style: TextStyle(  
+            color: darkGreen,  
+            fontSize: 12,  
+            fontWeight: FontWeight.w700,  
+          ),  
+        ),  
+      ),  
+    ),  
+  ],  
+);
+
+}
+
+// ============================================================
+// Developer contact dialog
+// ============================================================
+
+void _showDeveloperContactDialog(
+BuildContext context,
+) {
+showDialog(
+context: context,
+builder: (dialogContext) {
+return Dialog(
+backgroundColor: Colors.transparent,
+insetPadding:
+const EdgeInsets.symmetric(
+horizontal: 28,
+),
+child: Container(
+padding: const EdgeInsets.all(22),
 decoration: BoxDecoration(
 color: Colors.white,
 borderRadius:
 BorderRadius.circular(25),
 boxShadow: [
 BoxShadow(
-color: Colors.black
-.withOpacity(0.08),
-blurRadius: 20,
+color:
+Colors.black.withOpacity(0.15),
+blurRadius: 25,
+offset: const Offset(0, 8),
 ),
 ],
 ),
 child: Column(
-mainAxisSize:
-MainAxisSize.min,
+mainAxisSize: MainAxisSize.min,
 children: [
+// الأيقونة
 Container(
-width: 75,
-height: 75,
-decoration:
-BoxDecoration(
+width: 62,
+height: 62,
+decoration: BoxDecoration(
 gradient:
-LinearGradient(
+const LinearGradient(
 colors: [
-primaryGreen
-.withOpacity(
-0.12),
-primaryBlue
-.withOpacity(
-0.12),
+darkGreen,
+teal,
+],
+begin: Alignment.topLeft,
+end: Alignment.bottomRight,
+),
+borderRadius:
+BorderRadius.circular(19),
+),
+child: const Icon(
+Icons.support_agent_rounded,
+color: Colors.white,
+size: 32,
+),
+),
+
+const SizedBox(height: 15),  
+
+            const Text(  
+              'طلب نسخة لمسجدك',  
+              style: TextStyle(  
+                color: Colors.black87,  
+                fontSize: 19,  
+                fontWeight: FontWeight.w900,  
+              ),  
+            ),  
+
+            const SizedBox(height: 7),  
+
+            const Text(  
+              'للتواصل مع المطور أو طلب نسخة خاصة لمسجدك',  
+              textAlign: TextAlign.center,  
+              style: TextStyle(  
+                color: Colors.black54,  
+                fontSize: 12,  
+                height: 1.5,  
+              ),  
+            ),  
+
+            const SizedBox(height: 18),  
+
+            // ==================================================  
+            // رقم التواصل  
+            // ==================================================  
+
+            Container(  
+              width: double.infinity,  
+              padding:  
+                  const EdgeInsets.symmetric(  
+                horizontal: 14,  
+                vertical: 13,  
+              ),  
+              decoration: BoxDecoration(  
+                color:  
+                    const Color(0xFFF5F7FA),  
+                borderRadius:  
+                    BorderRadius.circular(16),  
+                border: Border.all(  
+                  color:  
+                      darkGreen.withOpacity(0.12),  
+                ),  
+              ),  
+              child: Row(  
+                children: [  
+                  Container(  
+                    padding:  
+                        const EdgeInsets.all(9),  
+                    decoration: BoxDecoration(  
+                      color:  
+                          darkGreen.withOpacity(  
+                        0.10,  
+                      ),  
+                      borderRadius:  
+                          BorderRadius.circular(  
+                        12,  
+                      ),  
+                    ),  
+                    child: const Icon(  
+                      Icons.phone_rounded,  
+                      color: darkGreen,  
+                      size: 21,  
+                    ),  
+                  ),  
+
+                  const SizedBox(width: 11),  
+
+                  const Expanded(  
+                    child: Text(  
+                      '776503890',  
+                      textDirection:  
+                          TextDirection.ltr,  
+                      style: TextStyle(  
+                        color: Colors.black87,  
+                        fontSize: 18,  
+                        fontWeight:  
+                            FontWeight.w900,  
+                        letterSpacing: 1,  
+                      ),  
+                    ),  
+                  ),  
+
+                  IconButton(  
+                    tooltip: 'نسخ الرقم',  
+                    onPressed: () async {  
+                      await Clipboard.setData(  
+                        const ClipboardData(  
+                          text: '776503890',  
+                        ),  
+                      );  
+
+                      if (dialogContext  
+                          .mounted) {  
+                        ScaffoldMessenger.of(  
+                          dialogContext,  
+                        ).showSnackBar(  
+                          const SnackBar(  
+                            content: Text(  
+                              'تم نسخ رقم التواصل',  
+                              textAlign:  
+                                  TextAlign.center,  
+                            ),  
+                            behavior:  
+                                SnackBarBehavior  
+                                    .floating,  
+                            duration:  
+                                Duration(  
+                              seconds: 2,  
+                            ),  
+                          ),  
+                        );  
+                      }  
+                    },  
+                    icon: const Icon(  
+                      Icons.copy_rounded,  
+                      color: darkGreen,  
+                      size: 21,  
+                    ),  
+                  ),  
+                ],  
+              ),  
+            ),  
+
+            const SizedBox(height: 18),  
+
+            // ==================================================  
+            // زر إغلاق  
+            // ==================================================  
+
+            SizedBox(  
+              width: double.infinity,  
+              child: ElevatedButton(  
+                onPressed: () {  
+                  Navigator.pop(  
+                    dialogContext,  
+                  );  
+                },  
+                style:  
+                    ElevatedButton.styleFrom(  
+                  backgroundColor: darkGreen,  
+                  foregroundColor:  
+                      Colors.white,  
+                  elevation: 0,  
+                  padding:  
+                      const EdgeInsets.symmetric(  
+                    vertical: 13,  
+                  ),  
+                  shape:  
+                      RoundedRectangleBorder(  
+                    borderRadius:  
+                        BorderRadius.circular(  
+                      15,  
+                    ),  
+                  ),  
+                ),  
+                child: const Text(  
+                  'إغلاق',  
+                  style: TextStyle(  
+                    fontSize: 14,  
+                    fontWeight:  
+                        FontWeight.w800,  
+                  ),  
+                ),  
+              ),  
+            ),  
+          ],  
+        ),  
+      ),  
+    );  
+  },  
+);
+
+}
+}
+
+// ================================================================
+// Format lecture time
+// ================================================================
+
+String _formatLectureTime(String? isoTime) {
+if (isoTime == null) {
+return '';
+}
+
+final dt = DateTime.tryParse(isoTime);
+
+if (dt == null) {
+return isoTime;
+}
+
+return '${dt.year}/'
+'${dt.month.toString().padLeft(2, '0')}/'
+'${dt.day.toString().padLeft(2, '0')}  '
+'${dt.hour.toString().padLeft(2, '0')}:'
+'${dt.minute.toString().padLeft(2, '0')}';
+}
+
+// ================================================================
+// REMEMBRANCE CAROUSEL
+// ================================================================
+
+class RemembranceCarousel extends StatefulWidget {
+const RemembranceCarousel({super.key});
+
+@override
+State<RemembranceCarousel> createState() =>
+_RemembranceCarouselState();
+}
+
+class _RemembranceCarouselState
+extends State<RemembranceCarousel> {
+int _currentIndex = 0;
+
+Timer? _timer;
+
+final List<String> _remembrances = [
+"سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، سُبْحَانَ اللَّهِ الْعَظِيمِ",
+"لاَ إِلَهَ إِلاَّ أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظَّالِمِينَ",
+"سُبْحَانَ اللَّهِ، وَالْحَمْدُ لِلَّهِ، وَلاَ إِلَهَ إِلاَّ اللَّهُ، وَاللَّهُ أَكْبَرُ",
+"أَسْتَغْفِرُ اللَّهَ الَّذِي لاَ إِلَهَ إِلاَّ هُوَ الْحَيُّ الْقَيُّومُ وَأَتُوبُ إِلَيْهِ",
+"اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ",
+"لاَ حَوْلَ وَلاَ قُوَّةَ إِلاَّ بِاللَّهِ",
+"رَبِّ اغْفِرْ لِي وَتُبْ عَلَيَّ إِنَّكَ أَنْتَ التَّوَّابُ الرَّحِيمُ",
+"سُبْحَانَ اللَّهِ وَبِحَمْدِهِ عَدَدَ خَلْقِهِ وَرِضَا نَفْسِهِ وَزِنَةَ عَرْشِهِ وَمِدَادَ كَلِمَاتِهِ",
+"اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا، وَرِزْقًا طَيِّبًا، وَعَمَلاً مُتَقَبَّلاً",
+"اللَّهُمَّ أَجِرْنِي مِنَ النَّارِ",
+"سُبْحَانَ اللَّهِ وَبِحَمْدِهِ (مائة مرة)",
+"الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
+"اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنْ شَرِّ مَا عَمِلْتُ، وَمِنْ شَرِّ مَا لَمْ أَعْمَلْ",
+"رَضِيتُ بِاللَّهِ رَبًّا، وَبِالْإِسْلَامِ دِينًا، وَبِمُحَمَّدٍ نَبِيًّا وَرَسُولاً",
+"يَا حَيُّ يَا قَيُّومُ، بِرَحْمَتِكَ أَسْتَغِيثُ",
+];
+
+@override
+void initState() {
+super.initState();
+
+_timer = Timer.periodic(  
+  const Duration(seconds: 5),  
+  (_) {  
+    if (!mounted) return;  
+
+    setState(() {  
+      _currentIndex =  
+          (_currentIndex + 1) %  
+              _remembrances.length;  
+    });  
+  },  
+);
+
+}
+
+@override
+void dispose() {
+_timer?.cancel();
+super.dispose();
+}
+
+@override
+Widget build(BuildContext context) {
+return Container(
+padding: const EdgeInsets.symmetric(
+horizontal: 15,
+vertical: 14,
+),
+decoration: BoxDecoration(
+color: Colors.white.withOpacity(0.97),
+borderRadius: BorderRadius.circular(22),
+boxShadow: [
+BoxShadow(
+color: Colors.black.withOpacity(0.07),
+blurRadius: 12,
+offset: const Offset(0, 4),
+),
 ],
 ),
-shape:
-BoxShape.circle,
-),
-child: Icon(
-icon,
-color:
-primaryGreen,
-size: 38,
-),
-),
+child: Row(
+children: [
+_quoteIcon(),
 
-const SizedBox(  
-              height: 18),  
+const SizedBox(width: 10),  
 
-          Text(  
-            title,  
-            textAlign:  
-                TextAlign.center,  
-            style:  
-                const TextStyle(  
-              color:  
-                  Colors.black87,  
-              fontSize: 18,  
-              fontWeight:  
-                  FontWeight.bold,  
+      Expanded(  
+        child: AnimatedSwitcher(  
+          duration:  
+              const Duration(milliseconds: 700),  
+          transitionBuilder:  
+              (child, animation) {  
+            return FadeTransition(  
+              opacity: animation,  
+              child: child,  
+            );  
+          },  
+          child: Text(  
+            _remembrances[_currentIndex],  
+            key: ValueKey(_currentIndex),  
+            textAlign: TextAlign.center,  
+            style: const TextStyle(  
+              color: Colors.black87,  
+              fontSize: 14,  
+              height: 1.55,  
+              fontWeight: FontWeight.w600,  
             ),  
           ),  
-
-          const SizedBox(  
-              height: 8),  
-
-          Text(  
-            subtitle,  
-            textAlign:  
-                TextAlign.center,  
-            style: TextStyle(  
-              color:  
-                  Colors.grey.shade600,  
-              fontSize: 13,  
-              height: 1.5,  
-            ),  
-          ),  
-        ],  
+        ),  
       ),  
-    ),  
+
+      const SizedBox(width: 10),  
+
+      _quoteIcon(),  
+    ],  
   ),  
 );
 
 }
 
-Widget _buildErrorState() {
-return _buildEmptyState(
-icon:
-Icons.person_off_rounded,
-title:
-'تعذر العثور على الطالب',
-subtitle:
-'لم يتم العثور على معرف الطالب المطلوب.',
+Widget _quoteIcon() {
+return Container(
+padding: const EdgeInsets.all(7),
+decoration: BoxDecoration(
+color:
+HomeScreen.darkGreen.withOpacity(0.09),
+borderRadius: BorderRadius.circular(11),
+),
+child: const Icon(
+Icons.format_quote_rounded,
+color: HomeScreen.darkGreen,
+size: 19,
+),
+);
+}
+}
+
+// ================================================================
+// PRAYER COUNTDOWN
+// ================================================================
+
+class AutoPrayerCountdownGlass
+extends StatefulWidget {
+const AutoPrayerCountdownGlass({super.key});
+
+@override
+State<AutoPrayerCountdownGlass> createState() =>
+_AutoPrayerCountdownGlassState();
+}
+
+class _AutoPrayerCountdownGlassState
+extends State<AutoPrayerCountdownGlass> {
+String _nextPrayerName = "جاري الحساب...";
+
+Duration _timeLeft = Duration.zero;
+
+Timer? _timer;
+
+bool _loading = true;
+
+@override
+void initState() {
+super.initState();
+
+_initPrayerLogic();
+
+}
+
+Future<void> _initPrayerLogic() async {
+try {
+LocationPermission permission =
+await Geolocator.requestPermission();
+
+if (permission ==  
+          LocationPermission.denied ||  
+      permission ==  
+          LocationPermission.deniedForever) {  
+    if (mounted) {  
+      setState(() {  
+        _loading = false;  
+        _nextPrayerName =  
+            "تعذر تحديد الموقع";  
+      });  
+    }  
+
+    return;  
+  }  
+
+  final position =  
+      await Geolocator.getCurrentPosition(  
+    desiredAccuracy:  
+        LocationAccuracy.high,  
+  );  
+
+  final coordinates = Coordinates(  
+    position.latitude,  
+    position.longitude,  
+  );  
+
+  final params =  
+      CalculationMethod.umm_al_qura  
+          .getParameters();  
+
+  params.madhab = Madhab.shafi;  
+
+  _updatePrayer(  
+    coordinates,  
+    params,  
+  );  
+
+  _timer = Timer.periodic(  
+    const Duration(seconds: 1),  
+    (_) {  
+      _updatePrayer(  
+        coordinates,  
+        params,  
+      );  
+    },  
+  );  
+} catch (e) {  
+  if (mounted) {  
+    setState(() {  
+      _loading = false;  
+      _nextPrayerName =  
+          "تعذر تحديد الموقع";  
+    });  
+  }  
+}
+
+}
+
+void _updatePrayer(
+Coordinates coordinates,
+CalculationParameters params,
+) {
+final prayerTimes = PrayerTimes.today(
+coordinates,
+params,
+);
+
+final next = prayerTimes.nextPrayer();  
+
+if (!mounted) return;  
+
+if (next != Prayer.none) {  
+  final prayerTime =  
+      prayerTimes.timeForPrayer(next);  
+
+  if (prayerTime == null) {  
+    return;  
+  }  
+
+  final difference =  
+      prayerTime.difference(  
+    DateTime.now(),  
+  );  
+
+  setState(() {  
+    _nextPrayerName =  
+        _translatePrayer(next);  
+
+    _timeLeft = difference.isNegative  
+        ? Duration.zero  
+        : difference;  
+
+    _loading = false;  
+  });  
+} else {  
+  final tomorrow =  
+      DateTime.now().add(  
+    const Duration(days: 1),  
+  );  
+
+  final tomorrowDate =  
+      DateComponents.from(tomorrow);  
+
+  final tomorrowTimes = PrayerTimes(  
+    coordinates,  
+    tomorrowDate,  
+    params,  
+  );  
+
+  final difference =  
+      tomorrowTimes.fajr.difference(  
+    DateTime.now(),  
+  );  
+
+  setState(() {  
+    _nextPrayerName = "الفجر";  
+
+    _timeLeft = difference.isNegative  
+        ? Duration.zero  
+        : difference;  
+
+    _loading = false;  
+  });  
+}
+
+}
+
+String _translatePrayer(
+Prayer prayer,
+) {
+switch (prayer) {
+case Prayer.fajr:
+return "الفجر";
+
+case Prayer.dhuhr:  
+    return "الظهر";  
+
+  case Prayer.asr:  
+    return "العصر";  
+
+  case Prayer.maghrib:  
+    return "المغرب";  
+
+  case Prayer.isha:  
+    return "العشاء";  
+
+  default:  
+    return "الصلاة";  
+}
+
+}
+
+@override
+void dispose() {
+_timer?.cancel();
+
+super.dispose();
+
+}
+
+@override
+Widget build(BuildContext context) {
+if (_loading) {
+return Container(
+height: 145,
+decoration: BoxDecoration(
+color: Colors.white.withOpacity(0.97),
+borderRadius:
+BorderRadius.circular(24),
+),
+child: const Center(
+child: CircularProgressIndicator(
+color: HomeScreen.teal,
+),
+),
 );
 }
 
-// ============================================================
-// التحقق من وجود نص
-// ============================================================
+return Container(  
+  padding: const EdgeInsets.fromLTRB(  
+    18,  
+    17,  
+    18,  
+    18,  
+  ),  
+  decoration: BoxDecoration(  
+    color: Colors.white.withOpacity(0.98),  
+    borderRadius:  
+        BorderRadius.circular(24),  
+    boxShadow: [  
+      BoxShadow(  
+        color: HomeScreen.teal  
+            .withOpacity(0.12),  
+        blurRadius: 16,  
+        offset: const Offset(0, 5),  
+      ),  
+    ],  
+  ),  
+  child: Column(  
+    children: [  
+      Row(  
+        mainAxisAlignment:  
+            MainAxisAlignment.center,  
+        children: [  
+          Container(  
+            padding:  
+                const EdgeInsets.all(7),  
+            decoration: BoxDecoration(  
+              color: HomeScreen.teal  
+                  .withOpacity(0.10),  
+              shape: BoxShape.circle,  
+            ),  
+            child: const Icon(  
+              Icons.access_time_rounded,  
+              color: HomeScreen.teal,  
+              size: 19,  
+            ),  
+          ),  
 
-bool _hasText(dynamic value) {
-if (value == null) {
-return false;
+          const SizedBox(width: 8),  
+
+          Text(  
+            'المتبقي لصلاة $_nextPrayerName',  
+            style: const TextStyle(  
+              color: Colors.black54,  
+              fontSize: 13,  
+              fontWeight: FontWeight.w600,  
+            ),  
+          ),  
+        ],  
+      ),  
+
+      const SizedBox(height: 15),  
+
+      Row(  
+        mainAxisAlignment:  
+            MainAxisAlignment.center,  
+        children: [  
+          _timePart(  
+            _timeLeft.inHours  
+                .toString()  
+                .padLeft(2, '0'),  
+            "ساعة",  
+          ),  
+
+          _buildDivider(),  
+
+          _timePart(  
+            (_timeLeft.inMinutes % 60)  
+                .toString()  
+                .padLeft(2, '0'),  
+            "دقيقة",  
+          ),  
+
+          _buildDivider(),  
+
+          _timePart(  
+            (_timeLeft.inSeconds % 60)  
+                .toString()  
+                .padLeft(2, '0'),  
+            "ثانية",  
+          ),  
+        ],  
+      ),  
+
+      const SizedBox(height: 12),  
+
+      Container(  
+        height: 4,  
+        width: 90,  
+        decoration: BoxDecoration(  
+          gradient:  
+              const LinearGradient(  
+            colors: [  
+              HomeScreen.darkGreen,  
+              HomeScreen.blue,  
+            ],  
+          ),  
+          borderRadius:  
+              BorderRadius.circular(10),  
+        ),  
+      ),  
+    ],  
+  ),  
+);
+
 }
 
-final String text =  
-    value.toString().trim();  
+Widget _timePart(
+String value,
+String label,
+) {
+return Column(
+children: [
+Text(
+value,
+style: const TextStyle(
+color: Colors.black87,
+fontSize: 31,
+fontWeight: FontWeight.w900,
+),
+),
 
-if (text.isEmpty) {  
-  return false;  
-}  
+const SizedBox(height: 1),  
 
-if (text == 'لا يوجد') {  
-  return false;  
-}  
+    Text(  
+      label,  
+      style: const TextStyle(  
+        color: HomeScreen.teal,  
+        fontSize: 10,  
+        fontWeight: FontWeight.bold,  
+      ),  
+    ),  
+  ],  
+);
 
-return true;
+}
 
+Widget _buildDivider() {
+return Padding(
+padding: const EdgeInsets.symmetric(
+horizontal: 10,
+).copyWith(bottom: 15),
+child: const Text(
+':',
+style: TextStyle(
+color: HomeScreen.teal,
+fontSize: 24,
+fontWeight: FontWeight.bold,
+),
+),
+);
 }
 }
