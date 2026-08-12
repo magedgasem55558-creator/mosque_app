@@ -1,21 +1,21 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:adhan/adhan.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 
-import '../services/firebase_service.dart';
 import '../models/mosque_models.dart';
+import '../services/firebase_service.dart';
+import 'donate_screen.dart';
+import 'hisn_el_muslim_page.dart';
+import 'leaderboard_screen.dart';
 import 'login_screen.dart';
 import 'my_children_screen.dart';
-import 'leaderboard_screen.dart';
-import 'donate_screen.dart';
 import 'qibla_screen.dart';
 import 'yasser_dossari_quran_page.dart';
-import 'hisn_el_muslim_page.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -510,71 +510,33 @@ class HomeScreen extends StatelessWidget {
   // ============================================================
 
   Widget _buildInfoRow(FirebaseService service) {
-    return StreamBuilder<NextKhutba>(
-      stream: service.streamNextKhutba(),
-      builder: (context, khutbaSnapshot) {
-        if (khutbaSnapshot.connectionState ==
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('settings')
+          .doc('next_event')
+          .snapshots(),
+      builder: (context, eventSnapshot) {
+        if (eventSnapshot.connectionState ==
             ConnectionState.waiting) {
-          return _buildGlassCard(
-            child: const Padding(
-              padding: EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: teal,
-                  ),
-                  SizedBox(width: 14),
-                  Text(
-                    'جاري جلب بيانات الخطبة...',
-                    style: TextStyle(
-                      color: Colors.black54,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
+          return const SizedBox.shrink();
         }
 
-        final khutba = khutbaSnapshot.data;
+        if (eventSnapshot.hasError ||
+            !eventSnapshot.hasData ||
+            !eventSnapshot.data!.exists) {
+          return const SizedBox.shrink();
+        }
 
-        return StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('settings')
-              .doc('next_event')
-              .snapshots(),
-          builder: (context, eventSnapshot) {
-            if (eventSnapshot.connectionState ==
-                ConnectionState.waiting) {
-              return _buildKhutbaCard(khutba);
-            }
+        final eventData =
+            eventSnapshot.data!.data()
+                as Map<String, dynamic>?;
 
-            if (eventSnapshot.hasError ||
-                !eventSnapshot.hasData ||
-                !eventSnapshot.data!.exists) {
-              return _buildKhutbaCard(khutba);
-            }
+        if (eventData == null ||
+            (eventData['title'] as String? ?? '').isEmpty) {
+          return const SizedBox.shrink();
+        }
 
-            final eventData =
-                eventSnapshot.data!.data()
-                    as Map<String, dynamic>?;
-
-            if (eventData == null ||
-                (eventData['title'] as String? ?? '')
-                    .isEmpty) {
-              return _buildKhutbaCard(khutba);
-            }
-
-            return Column(
-              children: [
-                _buildKhutbaCard(khutba),
-                const SizedBox(height: 10),
-                _buildEventCard(eventData),
-              ],
-            );
-          },
-        );
+        return _buildEventCard(eventData);
       },
     );
   }
@@ -986,10 +948,6 @@ class HomeScreen extends StatelessWidget {
 
         const SizedBox(height: 8),
 
-        // ======================================================
-        // طلب نسخة للمسجد / التواصل مع المطور
-        // ======================================================
-
         Center(
           child: TextButton.icon(
             onPressed: () {
@@ -1049,7 +1007,6 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // الأيقونة
                 Container(
                   width: 62,
                   height: 62,
@@ -1097,10 +1054,6 @@ class HomeScreen extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 18),
-
-                // ==================================================
-                // رقم التواصل
-                // ==================================================
 
                 Container(
                   width: double.infinity,
@@ -1201,10 +1154,6 @@ class HomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 18),
 
-                // ==================================================
-                // زر إغلاق
-                // ==================================================
-
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -1255,7 +1204,7 @@ class HomeScreen extends StatelessWidget {
 // ================================================================
 
 String _formatLectureTime(String? isoTime) {
-  if (isoTime == null) {
+  if (isoTime == null || isoTime.isEmpty) {
     return '';
   }
 
@@ -1291,21 +1240,21 @@ class _RemembranceCarouselState
   Timer? _timer;
 
   final List<String> _remembrances = [
-    "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، سُبْحَانَ اللَّهِ الْعَظِيمِ",
-    "لاَ إِلَهَ إِلاَّ أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظَّالِمِينَ",
-    "سُبْحَانَ اللَّهِ، وَالْحَمْدُ لِلَّهِ، وَلاَ إِلَهَ إِلاَّ اللَّهُ، وَاللَّهُ أَكْبَرُ",
-    "أَسْتَغْفِرُ اللَّهَ الَّذِي لاَ إِلَهَ إِلاَّ هُوَ الْحَيُّ الْقَيُّومُ وَأَتُوبُ إِلَيْهِ",
-    "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ",
-    "لاَ حَوْلَ وَلاَ قُوَّةَ إِلاَّ بِاللَّهِ",
-    "رَبِّ اغْفِرْ لِي وَتُبْ عَلَيَّ إِنَّكَ أَنْتَ التَّوَّابُ الرَّحِيمُ",
-    "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ عَدَدَ خَلْقِهِ وَرِضَا نَفْسِهِ وَزِنَةَ عَرْشِهِ وَمِدَادَ كَلِمَاتِهِ",
-    "اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا، وَرِزْقًا طَيِّبًا، وَعَمَلاً مُتَقَبَّلاً",
-    "اللَّهُمَّ أَجِرْنِي مِنَ النَّارِ",
-    "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ (مائة مرة)",
-    "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
-    "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنْ شَرِّ مَا عَمِلْتُ، وَمِنْ شَرِّ مَا لَمْ أَعْمَلْ",
-    "رَضِيتُ بِاللَّهِ رَبًّا، وَبِالْإِسْلَامِ دِينًا، وَبِمُحَمَّدٍ نَبِيًّا وَرَسُولاً",
-    "يَا حَيُّ يَا قَيُّومُ، بِرَحْمَتِكَ أَسْتَغِيثُ",
+    'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، سُبْحَانَ اللَّهِ الْعَظِيمِ',
+    'لاَ إِلَهَ إِلاَّ أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظَّالِمِينَ',
+    'سُبْحَانَ اللَّهِ، وَالْحَمْدُ لِلَّهِ، وَلاَ إِلَهَ إِلاَّ اللَّهُ، وَاللَّهُ أَكْبَرُ',
+    'أَسْتَغْفِرُ اللَّهَ الَّذِي لاَ إِلَهَ إِلاَّ هُوَ الْحَيُّ الْقَيُّومُ وَأَتُوبُ إِلَيْهِ',
+    'اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ',
+    'لاَ حَوْلَ وَلاَ قُوَّةَ إِلاَّ بِاللَّهِ',
+    'رَبِّ اغْفِرْ لِي وَتُبْ عَلَيَّ إِنَّكَ أَنْتَ التَّوَّابُ الرَّحِيمُ',
+    'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ عَدَدَ خَلْقِهِ وَرِضَا نَفْسِهِ وَزِنَةَ عَرْشِهِ وَمِدَادَ كَلِمَاتِهِ',
+    'اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا، وَرِزْقًا طَيِّبًا، وَعَمَلاً مُتَقَبَّلاً',
+    'اللَّهُمَّ أَجِرْنِي مِنَ النَّارِ',
+    'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ (مائة مرة)',
+    'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
+    'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنْ شَرِّ مَا عَمِلْتُ، وَمِنْ شَرِّ مَا لَمْ أَعْمَلْ',
+    'رَضِيتُ بِاللَّهِ رَبًّا، وَبِالْإِسْلَامِ دِينًا، وَبِمُحَمَّدٍ نَبِيًّا وَرَسُولاً',
+    'يَا حَيُّ يَا قَيُّومُ، بِرَحْمَتِكَ أَسْتَغِيثُ',
   ];
 
   @override
@@ -1421,7 +1370,7 @@ class AutoPrayerCountdownGlass
 
 class _AutoPrayerCountdownGlassState
     extends State<AutoPrayerCountdownGlass> {
-  String _nextPrayerName = "جاري الحساب...";
+  String _nextPrayerName = 'جاري الحساب...';
 
   Duration _timeLeft = Duration.zero;
 
@@ -1438,8 +1387,27 @@ class _AutoPrayerCountdownGlassState
 
   Future<void> _initPrayerLogic() async {
     try {
+      bool serviceEnabled =
+          await Geolocator.isLocationServiceEnabled();
+
+      if (!serviceEnabled) {
+        if (mounted) {
+          setState(() {
+            _loading = false;
+            _nextPrayerName = 'الموقع غير مفعل';
+          });
+        }
+
+        return;
+      }
+
       LocationPermission permission =
-          await Geolocator.requestPermission();
+          await Geolocator.checkPermission();
+
+      if (permission == LocationPermission.denied) {
+        permission =
+            await Geolocator.requestPermission();
+      }
 
       if (permission ==
               LocationPermission.denied ||
@@ -1449,7 +1417,7 @@ class _AutoPrayerCountdownGlassState
           setState(() {
             _loading = false;
             _nextPrayerName =
-                "تعذر تحديد الموقع";
+                'تعذر تحديد الموقع';
           });
         }
 
@@ -1492,7 +1460,7 @@ class _AutoPrayerCountdownGlassState
         setState(() {
           _loading = false;
           _nextPrayerName =
-              "تعذر تحديد الموقع";
+              'تعذر تحديد الموقع';
         });
       }
     }
@@ -1555,7 +1523,7 @@ class _AutoPrayerCountdownGlassState
       );
 
       setState(() {
-        _nextPrayerName = "الفجر";
+        _nextPrayerName = 'الفجر';
 
         _timeLeft = difference.isNegative
             ? Duration.zero
@@ -1571,29 +1539,28 @@ class _AutoPrayerCountdownGlassState
   ) {
     switch (prayer) {
       case Prayer.fajr:
-        return "الفجر";
+        return 'الفجر';
 
       case Prayer.dhuhr:
-        return "الظهر";
+        return 'الظهر';
 
       case Prayer.asr:
-        return "العصر";
+        return 'العصر';
 
       case Prayer.maghrib:
-        return "المغرب";
+        return 'المغرب';
 
       case Prayer.isha:
-        return "العشاء";
+        return 'العشاء';
 
       default:
-        return "الصلاة";
+        return 'الصلاة';
     }
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-
     super.dispose();
   }
 
@@ -1601,37 +1568,40 @@ class _AutoPrayerCountdownGlassState
   Widget build(BuildContext context) {
     if (_loading) {
       return Container(
-        height: 145,
+        height: 105,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.97),
           borderRadius:
-              BorderRadius.circular(24),
+              BorderRadius.circular(20),
         ),
         child: const Center(
-          child: CircularProgressIndicator(
-            color: HomeScreen.teal,
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: HomeScreen.teal,
+            ),
           ),
         ),
       );
     }
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(
-        18,
-        17,
-        18,
-        18,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 11,
       ),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.98),
         borderRadius:
-            BorderRadius.circular(24),
+            BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: HomeScreen.teal
-                .withOpacity(0.12),
-            blurRadius: 16,
-            offset: const Offset(0, 5),
+                .withOpacity(0.10),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -1643,33 +1613,33 @@ class _AutoPrayerCountdownGlassState
             children: [
               Container(
                 padding:
-                    const EdgeInsets.all(7),
+                    const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: HomeScreen.teal
-                      .withOpacity(0.10),
+                      .withOpacity(0.09),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.access_time_rounded,
                   color: HomeScreen.teal,
-                  size: 19,
+                  size: 17,
                 ),
               ),
 
-              const SizedBox(width: 8),
+              const SizedBox(width: 7),
 
               Text(
                 'المتبقي لصلاة $_nextPrayerName',
                 style: const TextStyle(
                   color: Colors.black54,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 15),
+          const SizedBox(height: 8),
 
           Row(
             mainAxisAlignment:
@@ -1679,7 +1649,7 @@ class _AutoPrayerCountdownGlassState
                 _timeLeft.inHours
                     .toString()
                     .padLeft(2, '0'),
-                "ساعة",
+                'ساعة',
               ),
 
               _buildDivider(),
@@ -1688,7 +1658,7 @@ class _AutoPrayerCountdownGlassState
                 (_timeLeft.inMinutes % 60)
                     .toString()
                     .padLeft(2, '0'),
-                "دقيقة",
+                'دقيقة',
               ),
 
               _buildDivider(),
@@ -1697,19 +1667,18 @@ class _AutoPrayerCountdownGlassState
                 (_timeLeft.inSeconds % 60)
                     .toString()
                     .padLeft(2, '0'),
-                "ثانية",
+                'ثانية',
               ),
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 7),
 
           Container(
-            height: 4,
-            width: 90,
+            height: 3,
+            width: 70,
             decoration: BoxDecoration(
-              gradient:
-                  const LinearGradient(
+              gradient: const LinearGradient(
                 colors: [
                   HomeScreen.darkGreen,
                   HomeScreen.blue,
@@ -1734,18 +1703,18 @@ class _AutoPrayerCountdownGlassState
           value,
           style: const TextStyle(
             color: Colors.black87,
-            fontSize: 31,
+            fontSize: 25,
             fontWeight: FontWeight.w900,
           ),
         ),
 
-        const SizedBox(height: 1),
+        const SizedBox(height: 0),
 
         Text(
           label,
           style: const TextStyle(
             color: HomeScreen.teal,
-            fontSize: 10,
+            fontSize: 9,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -1756,13 +1725,13 @@ class _AutoPrayerCountdownGlassState
   Widget _buildDivider() {
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-      ).copyWith(bottom: 15),
+        horizontal: 7,
+      ).copyWith(bottom: 11),
       child: const Text(
         ':',
         style: TextStyle(
           color: HomeScreen.teal,
-          fontSize: 24,
+          fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
       ),
