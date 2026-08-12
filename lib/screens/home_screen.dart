@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:adhan/adhan.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'login_screen.dart';
 import 'my_children_screen.dart';
@@ -64,7 +65,6 @@ class HomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 18),
 
-                // بطاقة الفعالية فقط
                 _buildUpcomingEvent(),
 
                 const SizedBox(height: 12),
@@ -502,7 +502,6 @@ class HomeScreen extends StatelessWidget {
 
   // ============================================================
   // Upcoming Event
-  // لا توجد بطاقة خطبة الجمعة هنا
   // ============================================================
 
   Widget _buildUpcomingEvent() {
@@ -1284,6 +1283,10 @@ class AutoPrayerCountdownGlass
 class _AutoPrayerCountdownGlassState
     extends State<AutoPrayerCountdownGlass>
     with WidgetsBindingObserver {
+
+  static const String _locationRequestKey =
+      'location_request_already_shown';
+
   String _nextPrayerName = "جاري الحساب...";
 
   Duration _timeLeft = Duration.zero;
@@ -1298,6 +1301,31 @@ class _AutoPrayerCountdownGlassState
 
   CalculationParameters? _params;
 
+  // ------------------------------------------------------------
+  // هل تم طلب الموقع من قبل؟
+  // ------------------------------------------------------------
+
+  Future<bool> _wasLocationRequestShown() async {
+    final prefs =
+        await SharedPreferences.getInstance();
+
+    return prefs.getBool(_locationRequestKey) ?? false;
+  }
+
+  // ------------------------------------------------------------
+  // حفظ أن طلب الموقع ظهر للمستخدم
+  // ------------------------------------------------------------
+
+  Future<void> _markLocationRequestShown() async {
+    final prefs =
+        await SharedPreferences.getInstance();
+
+    await prefs.setBool(
+      _locationRequestKey,
+      true,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -1308,7 +1336,7 @@ class _AutoPrayerCountdownGlassState
   }
 
   // ============================================================
-  // إعادة الفحص عند الرجوع من إعدادات الهاتف
+  // عند العودة للتطبيق
   // ============================================================
 
   @override
@@ -1321,21 +1349,25 @@ class _AutoPrayerCountdownGlassState
   }
 
   // ============================================================
-  // بدء نظام الصلاة
+  // بدء النظام
   // ============================================================
 
   Future<void> _initPrayerLogic() async {
-    await _checkLocationAndStart();
+    await _checkLocationAndStart(
+      allowRequestDialog: true,
+    );
   }
 
   // ============================================================
-  // فحص الموقع والصلاحية
+  // فحص الموقع
   // ============================================================
 
-  Future<void> _checkLocationAndStart() async {
+  Future<void> _checkLocationAndStart({
+    bool allowRequestDialog = false,
+  }) async {
     try {
       // --------------------------------------------------------
-      // 1. هل خدمة الموقع مفعلة في الجهاز؟
+      // 1. هل خدمة الموقع مفعلة؟
       // --------------------------------------------------------
 
       final serviceEnabled =
@@ -1350,25 +1382,50 @@ class _AutoPrayerCountdownGlassState
           });
         }
 
-        await _showEnableLocationDialog();
+        // ======================================================
+        // مهم:
+        // نعرض نافذة التفعيل مرة واحدة فقط.
+        // ======================================================
+
+        if (allowRequestDialog) {
+          final alreadyShown =
+              await _wasLocationRequestShown();
+
+          if (!alreadyShown) {
+            await _markLocationRequestShown();
+
+            await _showEnableLocationDialog();
+          }
+        }
 
         return;
       }
 
       // --------------------------------------------------------
-      // 2. فحص صلاحية الموقع
+      // 2. فحص الصلاحية
       // --------------------------------------------------------
 
       LocationPermission permission =
           await Geolocator.checkPermission();
 
+      // --------------------------------------------------------
+      // طلب إذن الموقع من النظام مرة واحدة فقط
+      // --------------------------------------------------------
+
       if (permission == LocationPermission.denied) {
-        permission =
-            await Geolocator.requestPermission();
+        final alreadyShown =
+            await _wasLocationRequestShown();
+
+        if (!alreadyShown) {
+          await _markLocationRequestShown();
+
+          permission =
+              await Geolocator.requestPermission();
+        }
       }
 
       // --------------------------------------------------------
-      // 3. المستخدم رفض الصلاحية
+      // المستخدم رفض
       // --------------------------------------------------------
 
       if (permission == LocationPermission.denied) {
@@ -1384,7 +1441,7 @@ class _AutoPrayerCountdownGlassState
       }
 
       // --------------------------------------------------------
-      // 4. المستخدم منع الصلاحية نهائياً
+      // المستخدم منع نهائياً
       // --------------------------------------------------------
 
       if (permission ==
@@ -1397,13 +1454,23 @@ class _AutoPrayerCountdownGlassState
           });
         }
 
-        await _showPermissionSettingsDialog();
+        // نعرض إعدادات التطبيق مرة واحدة فقط
+        if (allowRequestDialog) {
+          final alreadyShown =
+              await _wasLocationRequestShown();
+
+          if (!alreadyShown) {
+            await _markLocationRequestShown();
+
+            await _showPermissionSettingsDialog();
+          }
+        }
 
         return;
       }
 
       // --------------------------------------------------------
-      // 5. الحصول على الموقع
+      // 3. الحصول على الموقع
       // --------------------------------------------------------
 
       final position =
@@ -1422,13 +1489,22 @@ class _AutoPrayerCountdownGlassState
 
       _params!.madhab = Madhab.shafi;
 
+      // --------------------------------------------------------
       // تحديث مباشر
+      // --------------------------------------------------------
+
       _updatePrayer();
 
-      // إيقاف أي Timer قديم
+      // --------------------------------------------------------
+      // منع وجود Timer قديم
+      // --------------------------------------------------------
+
       _timer?.cancel();
 
+      // --------------------------------------------------------
       // تحديث العداد كل ثانية
+      // --------------------------------------------------------
+
       _timer = Timer.periodic(
         const Duration(seconds: 1),
         (_) {
@@ -1451,47 +1527,80 @@ class _AutoPrayerCountdownGlassState
   }
 
   // ============================================================
-  // إعادة فحص الموقع
+  // إعادة فحص الموقع عند العودة
+  //
+  // هنا لا نطلب الموقع مرة أخرى.
+  // فقط نفحص هل أصبح متاحاً أم لا.
   // ============================================================
 
   Future<void> _checkLocationAgain() async {
     if (!mounted) return;
 
-    final enabled =
-        await Geolocator.isLocationServiceEnabled();
+    try {
+      final enabled =
+          await Geolocator.isLocationServiceEnabled();
 
-    if (!enabled) {
-      _timer?.cancel();
-      _timer = null;
+      if (!enabled) {
+        _timer?.cancel();
+        _timer = null;
 
-      if (mounted) {
-        setState(() {
-          _loading = false;
-          _nextPrayerName =
-              "يجب تفعيل الموقع";
-        });
+        if (mounted) {
+          setState(() {
+            _loading = false;
+            _nextPrayerName =
+                "يجب تفعيل الموقع";
+          });
+        }
+
+        // ======================================================
+        // لا يوجد Dialog هنا أبداً
+        // لأن الطلب تم التعامل معه سابقاً.
+        // ======================================================
+
+        return;
       }
 
-      return;
-    }
+      final permission =
+          await Geolocator.checkPermission();
 
-    final permission =
-        await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied ||
+          permission ==
+              LocationPermission.deniedForever) {
 
-    if (permission == LocationPermission.denied ||
-        permission ==
-            LocationPermission.deniedForever) {
-      return;
-    }
+        if (mounted) {
+          setState(() {
+            _loading = false;
+            _nextPrayerName =
+                permission ==
+                        LocationPermission.deniedForever
+                    ? "السماح بالموقع مطلوب"
+                    : "تم رفض إذن الموقع";
+          });
+        }
 
-    // الموقع أصبح متاحاً
-    if (_coordinates == null) {
-      await _checkLocationAndStart();
+        // لا نعيد requestPermission
+        return;
+      }
+
+      // ======================================================
+      // الموقع متاح والصلاحية موجودة
+      // ======================================================
+
+      if (_coordinates == null) {
+        await _checkLocationAndStart(
+          allowRequestDialog: false,
+        );
+      }
+    } catch (e) {
+      debugPrint(
+        'خطأ في إعادة فحص الموقع: $e',
+      );
     }
   }
 
   // ============================================================
   // Dialog تفعيل الموقع
+  // يظهر مرة واحدة فقط
   // ============================================================
 
   Future<void> _showEnableLocationDialog() async {
@@ -1584,17 +1693,24 @@ class _AutoPrayerCountdownGlassState
 
     _locationDialogShowing = false;
 
+    // ==========================================================
+    // لا نستدعي _checkLocationAndStart مع Dialog
+    //
+    // فقط نفحص هل المستخدم فعّل الموقع.
+    // ==========================================================
+
     await Future.delayed(
       const Duration(milliseconds: 300),
     );
 
     if (mounted) {
-      await _checkLocationAndStart();
+      await _checkLocationAgain();
     }
   }
 
   // ============================================================
   // Dialog الصلاحية المرفوضة نهائياً
+  // يظهر مرة واحدة فقط
   // ============================================================
 
   Future<void> _showPermissionSettingsDialog() async {
@@ -1687,12 +1803,16 @@ class _AutoPrayerCountdownGlassState
 
     _locationDialogShowing = false;
 
+    // ==========================================================
+    // فقط فحص جديد بدون أي طلب أو Dialog
+    // ==========================================================
+
     await Future.delayed(
       const Duration(milliseconds: 300),
     );
 
     if (mounted) {
-      await _checkLocationAndStart();
+      await _checkLocationAgain();
     }
   }
 
@@ -1743,7 +1863,7 @@ class _AutoPrayerCountdownGlassState
       }
 
       // ========================================================
-      // انتهت صلوات اليوم → حساب فجر الغد
+      // انتهت صلوات اليوم → الفجر غداً
       // ========================================================
 
       final tomorrow =
@@ -1865,12 +1985,15 @@ class _AutoPrayerCountdownGlassState
     // ==========================================================
 
     if (_nextPrayerName ==
-        "يجب تفعيل الموقع") {
+            "يجب تفعيل الموقع" ||
+        _nextPrayerName ==
+            "تم رفض إذن الموقع" ||
+        _nextPrayerName ==
+            "السماح بالموقع مطلوب") {
       return _buildLocationRequiredCard();
     }
 
     return Container(
-      // أصغر من البطاقة السابقة
       padding: const EdgeInsets.fromLTRB(
         15,
         13,
@@ -1980,7 +2103,7 @@ class _AutoPrayerCountdownGlassState
   }
 
   // ============================================================
-  // بطاقة طلب تفعيل الموقع
+  // بطاقة الموقع
   // ============================================================
 
   Widget _buildLocationRequiredCard() {
@@ -2017,9 +2140,15 @@ class _AutoPrayerCountdownGlassState
 
           const SizedBox(height: 8),
 
-          const Text(
-            'الموقع غير مفعل',
-            style: TextStyle(
+          Text(
+            _nextPrayerName ==
+                    "السماح بالموقع مطلوب"
+                ? 'السماح بالموقع مطلوب'
+                : _nextPrayerName ==
+                        "تم رفض إذن الموقع"
+                    ? 'تم رفض إذن الموقع'
+                    : 'الموقع غير مفعل',
+            style: const TextStyle(
               color: Colors.black87,
               fontSize: 15,
               fontWeight: FontWeight.w900,
@@ -2042,7 +2171,20 @@ class _AutoPrayerCountdownGlassState
 
           ElevatedButton.icon(
             onPressed: () async {
-              await Geolocator.openLocationSettings();
+              if (_nextPrayerName ==
+                  "السماح بالموقع مطلوب") {
+                await Geolocator.openAppSettings();
+              } else {
+                await Geolocator.openLocationSettings();
+              }
+
+              await Future.delayed(
+                const Duration(milliseconds: 300),
+              );
+
+              if (mounted) {
+                await _checkLocationAgain();
+              }
             },
             icon: const Icon(
               Icons.location_on_rounded,
